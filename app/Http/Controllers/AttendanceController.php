@@ -66,6 +66,10 @@ class AttendanceController extends Controller
             'memo' => ['nullable', 'string'],
             'identity_ids' => ['nullable', 'array'],
             'identity_ids.*' => [Rule::exists('fc_memberships', 'id')->where('user_id', Auth::id())],
+        ], [
+            // spec §6 指定のエラーメッセージ
+            'event_name.required' => '公演名を入力してください',
+            'event_date.required' => '日付を入力してください',
         ]);
 
         $identityIds = $validated['identity_ids'] ?? [];
@@ -106,6 +110,10 @@ class AttendanceController extends Controller
             'memo' => ['nullable', 'string'],
             'identity_ids' => ['nullable', 'array'],
             'identity_ids.*' => [Rule::exists('fc_memberships', 'id')->where('user_id', Auth::id())],
+        ], [
+            // spec §6 指定のエラーメッセージ
+            'event_name.required' => '公演名を入力してください',
+            'event_date.required' => '日付を入力してください',
         ]);
 
         $identityIds = $validated['identity_ids'] ?? [];
@@ -120,5 +128,25 @@ class AttendanceController extends Controller
         $attendance->delete();
         return redirect()->route('attendances.index')
             ->with('success', '参戦記録を削除しました');
+    }
+
+    /**
+     * 当落結果の更新（S5/S6 の入力動線）。
+     * AttendanceIdentity は UserScope 対象外のため、attendance 経由で所有者を明示検証する。
+     */
+    public function updateResult(Request $request, int $pivotId)
+    {
+        $validated = $request->validate([
+            'result' => ['required', 'in:pending,won,lost'],
+        ]);
+
+        $pivot = AttendanceIdentity::where('id', $pivotId)
+            ->whereHas('attendance', fn ($q) => $q->where('user_id', Auth::id()))
+            ->firstOrFail();
+
+        $pivot->update(['result' => $validated['result']]);
+
+        return redirect()->route('attendances.show', $pivot->attendance_id)
+            ->with('success', '当落結果を更新しました');
     }
 }

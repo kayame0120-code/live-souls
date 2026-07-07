@@ -87,25 +87,78 @@ class MultiTenantTest extends TestCase
 
     public function test_他ユーザーの名義にアクセスすると404(): void
     {
-        $group = IdentityGroup::withoutGlobalScopes()->create([
-            'user_id' => $this->other->id,
-            'name' => '他人のグループ',
-        ]);
-
-        $person = Person::withoutGlobalScopes()->create([
-            'user_id' => $this->other->id,
-            'name' => '他人',
-        ]);
-
-        $membership = FcMembership::withoutGlobalScopes()->create([
-            'user_id' => $this->other->id,
-            'person_id' => $person->id,
-            'group_id' => $group->id,
-            'artist_name' => 'テスト',
-        ]);
+        $membership = $this->createMembershipFor($this->other);
 
         $this->actingAs($this->user)
             ->get(route('identities.show', $membership))
             ->assertStatus(404);
+    }
+
+    public function test_他ユーザーの名義IDでは参戦登録できない(): void
+    {
+        $membership = $this->createMembershipFor($this->other);
+
+        $this->actingAs($this->user)
+            ->post(route('attendances.store'), [
+                'event_name' => 'テスト公演',
+                'event_date' => '2026-07-01',
+                'status' => 'attended',
+                'identity_ids' => [$membership->id],
+            ])
+            ->assertSessionHasErrors('identity_ids.0');
+    }
+
+    public function test_他ユーザーのグループIDでは名義登録できない(): void
+    {
+        $otherGroup = IdentityGroup::withoutGlobalScopes()->create([
+            'user_id' => $this->other->id,
+            'name' => '他人のグループ',
+        ]);
+
+        $this->actingAs($this->user)
+            ->post(route('identities.store'), [
+                'person_name' => 'テスト太郎',
+                'group_id' => $otherGroup->id,
+                'artist_name' => 'テスト',
+            ])
+            ->assertSessionHasErrors('group_id');
+    }
+
+    public function test_他ユーザーの当落結果は更新できない(): void
+    {
+        $membership = $this->createMembershipFor($this->other);
+
+        $attendance = Attendance::withoutGlobalScopes()->create([
+            'user_id' => $this->other->id,
+            'event_name' => '他人の公演',
+            'event_date' => '2026-07-01',
+        ]);
+        $attendance->fcMemberships()->attach($membership->id, ['result' => 'pending']);
+        $pivotId = $attendance->fcMemberships()->withoutGlobalScopes()->first()->pivot->id;
+
+        $this->actingAs($this->user)
+            ->patch(route('attendance-identities.update-result', $pivotId), ['result' => 'won'])
+            ->assertStatus(404);
+    }
+
+    /** 指定ユーザーの名義（グループ・名義人込み）を作成するヘルパー */
+    private function createMembershipFor(User $owner): FcMembership
+    {
+        $group = IdentityGroup::withoutGlobalScopes()->create([
+            'user_id' => $owner->id,
+            'name' => 'グループ',
+        ]);
+
+        $person = Person::withoutGlobalScopes()->create([
+            'user_id' => $owner->id,
+            'name' => '名義人',
+        ]);
+
+        return FcMembership::withoutGlobalScopes()->create([
+            'user_id' => $owner->id,
+            'person_id' => $person->id,
+            'group_id' => $group->id,
+            'artist_name' => 'テスト',
+        ]);
     }
 }

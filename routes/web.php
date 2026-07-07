@@ -10,15 +10,20 @@ use App\Http\Controllers\LotController;
 use App\Http\Controllers\VenueController;
 use Illuminate\Support\Facades\Route;
 
-// 招待付き登録（認証不要）
-Route::get('/register/{code}', [InvitedRegisterController::class, 'show'])->name('register.show');
-Route::post('/register/{code}', [InvitedRegisterController::class, 'store'])->name('register.store');
+// 招待付き登録（認証不要）。コード総当たり対策でレート制限
+Route::middleware('throttle:10,1')->group(function () {
+    Route::get('/register/{code}', [InvitedRegisterController::class, 'show'])->name('register.show');
+    Route::post('/register/{code}', [InvitedRegisterController::class, 'store'])->name('register.store');
+});
 
 // 認証必須
 Route::middleware('auth')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
 
     Route::resource('attendances', AttendanceController::class);
+    // 当落結果の更新（S5/S6 の入力動線・参戦詳細から）
+    Route::patch('/attendance-identities/{pivotId}/result', [AttendanceController::class, 'updateResult'])
+        ->name('attendance-identities.update-result');
 
     Route::get('/identities', [IdentityController::class, 'index'])->name('identities.index');
     Route::get('/identities/create', [IdentityController::class, 'create'])->name('identities.create');

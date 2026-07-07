@@ -42,7 +42,8 @@
 
         <div class="form-group">
             <label class="form-label" for="fc_password">パスワード</label>
-            <input class="form-input" type="password" id="fc_password" name="fc_password" value="{{ old('fc_password', $fcMembership->password) }}" placeholder="変更する場合のみ入力">
+            {{-- 復号済みパスワードをHTMLに出力しない。空のままなら既存値を維持 --}}
+            <input class="form-input" type="password" id="fc_password" name="fc_password" value="" placeholder="変更する場合のみ入力（空欄なら現在のまま）">
         </div>
 
         <div style="display:flex; gap:12px;">

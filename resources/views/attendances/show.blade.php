@@ -70,12 +70,20 @@
     <div class="detail-section">
         <div class="detail-label">名義・当落</div>
         @foreach($attendance->fcMemberships as $m)
-        <div style="display:flex; align-items:center; gap:8px; padding:8px 0; font-size:13px;">
+        <div style="display:flex; align-items:center; gap:8px; padding:8px 0; font-size:13px; flex-wrap:wrap;">
             <span class="dot" style="--oshi-color: {{ $m->oshi_color ?? '#C7414F' }}"></span>
             <span style="flex:1">{{ $m->displayName() }}</span>
-            <span class="st {{ ['won'=>'win','lost'=>'lose','pending'=>'wait'][$m->pivot->result] }}">
-                {{ ['won'=>'当選','lost'=>'落選','pending'=>'未発表'][$m->pivot->result] }}
-            </span>
+            {{-- 当落結果の更新フォーム（S5/S6 の入力動線） --}}
+            <form method="POST" action="{{ route('attendance-identities.update-result', $m->pivot->id) }}"
+                  style="display:flex; align-items:center; gap:6px;">
+                @csrf @method('PATCH')
+                <select name="result" class="form-select" style="width:auto; padding:4px 28px 4px 10px; font-size:11px;">
+                    <option value="pending" {{ $m->pivot->result === 'pending' ? 'selected' : '' }}>未発表</option>
+                    <option value="won" {{ $m->pivot->result === 'won' ? 'selected' : '' }}>当選</option>
+                    <option value="lost" {{ $m->pivot->result === 'lost' ? 'selected' : '' }}>落選</option>
+                </select>
+                <button type="submit" class="btn btn-secondary btn-sm" style="padding:5px 12px;">更新</button>
+            </form>
         </div>
         @endforeach
     </div>

@@ -67,6 +67,9 @@ class InvitedRegisterController extends Controller
 
         Auth::login($user);
 
+        // セッション固定攻撃対策
+        $request->session()->regenerate();
+
         return redirect('/');
     }
 

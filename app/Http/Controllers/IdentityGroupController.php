@@ -26,6 +26,9 @@ class IdentityGroupController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:50'],
+        ], [
+            // spec §6 指定のエラーメッセージ
+            'name.required' => 'グループ名を入力してください',
         ]);
 
         $maxOrder = IdentityGroup::max('sort_order') ?? -1;
@@ -49,6 +52,9 @@ class IdentityGroupController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:50'],
+        ], [
+            // spec §6 指定のエラーメッセージ
+            'name.required' => 'グループ名を入力してください',
         ]);
 
         $identityGroup->update($validated);

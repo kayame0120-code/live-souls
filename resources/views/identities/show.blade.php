@@ -18,7 +18,8 @@
         <div class="m-kind">MEMBERSHIP</div>
         <div class="m-name">{{ $fcMembership->person->name }}@if($fcMembership->person->label)<small>{{ $fcMembership->person->label }}</small>@endif</div>
         @if($fcMembership->member_no)
-        <div class="m-no">No. {{ $fcMembership->member_no }}</div>
+        {{-- S4: 名義詳細では会員番号も伏字（コピーで取得） --}}
+        <div class="m-no">No. ••••••••</div>
         @endif
     </div>
 
@@ -27,7 +28,7 @@
     <div class="detail-section">
         <div class="detail-label">会員番号</div>
         <div style="display:flex; align-items:center; gap:8px;">
-            <div class="detail-value">{{ $fcMembership->member_no }}</div>
+            <div class="detail-value">••••••••</div>
             <button class="copy-btn" data-copy="{{ $fcMembership->member_no }}" type="button">コピー</button>
         </div>
     </div>

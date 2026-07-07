@@ -48,17 +48,23 @@ class IdentityService
                 'label' => $personData['label'] ?? null,
             ]);
 
-            $membership->update([
+            $update = [
                 'group_id' => $membershipData['group_id'],
                 'artist_name' => $membershipData['artist_name'],
                 'club_name' => $membershipData['club_name'] ?? null,
                 'member_no' => $membershipData['member_no'] ?? null,
                 'login_id' => $membershipData['login_id'] ?? null,
-                'password' => $membershipData['password'] ?? null,
                 'joined_month' => $membershipData['joined_month'] ?? null,
                 'renewal_cycle' => $membershipData['renewal_cycle'] ?? null,
                 'oshi_color' => $membershipData['oshi_color'] ?? null,
-            ]);
+            ];
+
+            // FCパスワードは入力があった場合のみ更新（空送信で既存値を消さない）
+            if (! empty($membershipData['password'])) {
+                $update['password'] = $membershipData['password'];
+            }
+
+            $membership->update($update);
 
             return $membership->fresh();
         });
