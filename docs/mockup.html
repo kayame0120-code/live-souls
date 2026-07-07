@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>現場手帖 — UIモック</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ---- 世界観トークン（FC事務局 × ヲタ活手帳） ---- */
+  :root{
+    --paper:#FAFAF7;        /* 台帳の紙 */
+    --card:#FFFFFF;         /* 記録カード */
+    --ink:#23252B;          /* 本文の墨 */
+    --ink-sub:#8A8C92;      /* 補記 */
+    --keisen:#E9E8E2;       /* 罫線 */
+    --keisen-strong:#D8D7D0;
+    --oshi:#C7414F;         /* 担当色（名義ごとに上書きされる唯一の有彩色） */
+    --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:'Zen Kaku Gothic New',sans-serif;
+    background:#EBEAE5;
+    color:var(--ink);
+    display:flex;justify-content:center;
+    -webkit-font-smoothing:antialiased;
+  }
+  .phone{
+    width:100%;max-width:420px;min-height:100dvh;
+    background:var(--paper);
+    display:flex;flex-direction:column;
+    box-shadow:0 0 40px rgba(0,0,0,.08);
+  }
+
+  /* ---- ヘッダー：事務局の表札 ---- */
+  header{
+    padding:18px 20px 12px;
+    display:flex;align-items:baseline;justify-content:space-between;
+    border-bottom:1px solid var(--keisen);
+    background:var(--paper);
+  }
+  .app-name{font-size:17px;font-weight:700;letter-spacing:.14em}
+  .app-name small{font-size:10px;font-weight:500;color:var(--ink-sub);letter-spacing:.22em;margin-left:8px}
+  .today{font-size:11px;color:var(--ink-sub);letter-spacing:.06em}
+
+  main{flex:1;overflow-y:auto;padding-bottom:76px}
+  .screen{display:none;padding:20px 20px 28px}
+  .screen.active{display:block}
+
+  .sec-label{
+    font-size:11px;font-weight:700;color:var(--ink-sub);
+    letter-spacing:.2em;margin:26px 0 10px;
+  }
+  .sec-label:first-child{margin-top:2px}
+
+  /* ---- ホーム：次の現場 ---- */
+  .next-card{
+    background:var(--card);border:1px solid var(--keisen);
+    border-radius:var(--radius);padding:20px;
+    position:relative;overflow:hidden;
+  }
+  .next-card::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:4px;
+    background:var(--oshi);
+  }
+  .countdown{display:flex;align-items:baseline;gap:6px;margin-bottom:12px}
+  .countdown .num{font-size:44px;font-weight:700;line-height:1;letter-spacing:.02em;font-feature-settings:"tnum"}
+  .countdown .unit{font-size:13px;color:var(--ink-sub);font-weight:500}
+  .countdown .label{font-size:12px;color:var(--ink-sub);margin-left:auto;letter-spacing:.1em}
+  .next-title{font-size:16px;font-weight:700;margin-bottom:8px;line-height:1.5}
+  .next-meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink-sub)}
+  .next-meta b{color:var(--ink);font-weight:500}
+  .meigi-chip{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:11px;font-weight:500;
+    border:1px solid var(--keisen-strong);border-radius:999px;
+    padding:3px 10px;margin-top:12px;background:var(--paper);
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--oshi);flex:none}
+
+  /* ---- 積み上げ台帳（統計行） ---- */
+  .ledger{
+    display:grid;grid-template-columns:1fr 1fr 1fr;
+    background:var(--card);border:1px solid var(--keisen);
+    border-radius:var(--radius);overflow:hidden;
+  }
+  .ledger div{padding:14px 8px;text-align:center}
+  .ledger div + div{border-left:1px solid var(--keisen)}
+  .ledger .v{font-size:22px;font-weight:700;font-feature-settings:"tnum"}
+  .ledger .k{font-size:10px;color:var(--ink-sub);letter-spacing:.12em;margin-top:3px}
+
+  /* ---- 参戦記録カード ---- */
+  .filter-row{display:flex;gap:8px;margin-bottom:14px}
+  .chip{
+    font-size:12px;font-weight:500;padding:5px 14px;border-radius:999px;
+    border:1px solid var(--keisen-strong);color:var(--ink-sub);background:var(--card);
+  }
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .rec{
+    background:var(--card);border:1px solid var(--keisen);
+    border-radius:var(--radius);padding:16px 18px;margin-bottom:12px;
+  }
+  .rec-head{display:flex;align-items:flex-start;gap:10px}
+  .rec-head .dot{margin-top:6px}
+  .rec-title{font-size:14px;font-weight:700;line-height:1.5;flex:1}
+  .rec-date{font-size:11px;color:var(--ink-sub);white-space:nowrap;font-feature-settings:"tnum"}
+  .rec-meta{
+    display:flex;flex-wrap:wrap;gap:4px 16px;
+    font-size:12px;color:var(--ink-sub);
+    margin:10px 0 0 18px;
+  }
+  .rec-meta b{color:var(--ink);font-weight:500}
+  .rec-note{
+    margin:10px 0 0 18px;padding:10px 12px;
+    background:var(--paper);border-left:2px solid var(--keisen-strong);
+    font-size:12px;line-height:1.7;color:var(--ink);border-radius:0 8px 8px 0;
+  }
+
+  /* ---- 名義カード（boldness投資先：会員証様式） ---- */
+  .m-card{
+    background:var(--card);border:1px solid var(--keisen);
+    border-radius:var(--radius);padding:18px 20px 16px;margin-bottom:14px;
+    position:relative;overflow:hidden;
+  }
+  .m-card::before{
+    content:"";position:absolute;left:0;right:0;top:0;height:5px;
+    background:var(--oshi);
+  }
+  .m-club{
+    font-size:11px;font-weight:700;letter-spacing:.24em;
+    color:var(--oshi);margin-top:4px;
+  }
+  .m-kind{font-size:9px;letter-spacing:.3em;color:var(--ink-sub);margin-top:2px}
+  .m-name{font-size:19px;font-weight:700;margin:14px 0 2px;letter-spacing:.06em}
+  .m-name small{font-size:10px;color:var(--ink-sub);font-weight:500;margin-left:8px;letter-spacing:.1em}
+  .m-no{
+    font-size:14px;font-weight:500;letter-spacing:.28em;
+    color:var(--ink);font-feature-settings:"tnum";margin-bottom:14px;
+  }
+  .m-foot{
+    display:flex;align-items:center;justify-content:space-between;
+    border-top:1px dashed var(--keisen-strong);padding-top:10px;
+    font-size:11px;color:var(--ink-sub);
+  }
+  .m-foot b{color:var(--ink);font-weight:500}
+  .badge{
+    font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;
+    background:var(--oshi);color:#fff;letter-spacing:.06em;
+  }
+  .badge.ok{background:transparent;color:var(--ink-sub);border:1px solid var(--keisen-strong);font-weight:500}
+  .privacy-note{
+    font-size:10px;color:var(--ink-sub);line-height:1.7;
+    margin-top:16px;padding-top:12px;border-top:1px solid var(--keisen);
+    letter-spacing:.04em;
+  }
+
+  /* ---- 当落 ---- */
+  .lot{
+    background:var(--card);border:1px solid var(--keisen);
+    border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;
+  }
+  .lot-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .lot-title{font-size:13px;font-weight:700;line-height:1.5;flex:1}
+  .lot-sub{font-size:11px;color:var(--ink-sub);margin-top:2px}
+  .lot-rows{margin-top:10px;border-top:1px solid var(--keisen)}
+  .lot-row{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 0;border-bottom:1px solid var(--keisen);
+    font-size:12px;
+  }
+  .lot-row:last-child{border-bottom:none}
+  .lot-row .who{flex:1;display:flex;align-items:center;gap:7px}
+  .st{
+    font-size:10px;font-weight:700;letter-spacing:.14em;
+    padding:3px 10px;border-radius:999px;min-width:58px;text-align:center;
+  }
+  .st.win{background:var(--oshi);color:#fff}
+  .st.lose{background:var(--keisen);color:var(--ink-sub)}
+  .st.wait{border:1px solid var(--keisen-strong);color:var(--ink-sub)}
+
+  /* ---- 記帳ボタン ---- */
+  .fab{
+    position:fixed;bottom:78px;right:max(16px,calc(50% - 210px + 16px));
+    background:var(--ink);color:#fff;border:none;
+    font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.1em;
+    padding:13px 20px;border-radius:999px;
+    box-shadow:0 6px 18px rgba(0,0,0,.18);cursor:pointer;
+  }
+  .fab:focus-visible{outline:2px solid var(--oshi);outline-offset:2px}
+
+  /* ---- 下部ナビ ---- */
+  nav{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+    width:100%;max-width:420px;
+    display:grid;grid-template-columns:repeat(4,1fr);
+    background:rgba(250,250,247,.96);backdrop-filter:blur(8px);
+    border-top:1px solid var(--keisen);
+  }
+  nav button{
+    font-family:inherit;background:none;border:none;cursor:pointer;
+    padding:10px 0 max(10px, env(safe-area-inset-bottom));
+    font-size:10.5px;font-weight:500;letter-spacing:.08em;
+    color:var(--ink-sub);display:flex;flex-direction:column;align-items:center;gap:4px;
+  }
+  nav button .bar{width:18px;height:3px;border-radius:2px;background:transparent}
+  nav button.on{color:var(--ink);font-weight:700}
+  nav button.on .bar{background:var(--ink)}
+  nav button:focus-visible{outline:2px solid var(--oshi);outline-offset:-2px}
+
+  @media (prefers-reduced-motion: no-preference){
+    .screen.active{animation:fade .18s ease}
+    @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <header>
+    <div class="app-name">現場手帖<small>GENBA TECHO</small></div>
+    <div class="today">2026.07.07（火）</div>
+  </header>
+
+  <main>
+    <!-- ================= ホーム ================= -->
+    <section class="screen active" id="scr-home">
+      <div class="sec-label">次の現場</div>
+      <div class="next-card" style="--oshi:#7B5CC6">
+        <div class="countdown">
+          <span class="num">18</span><span class="unit">日</span>
+          <span class="label">07.25（土）</span>
+        </div>
+        <div class="next-title">LUMIÈRE LIVE TOUR 2026<br>「Prism of Night」</div>
+        <div class="next-meta">
+          <span>会場 <b>横浜アリーナ</b></span>
+          <span>開演 <b>17:00</b></span>
+        </div>
+        <span class="meigi-chip"><span class="dot"></span>紫の名義（自名義）で入場</span>
+      </div>
+
+      <div class="sec-label">積み上げ</div>
+      <div class="ledger">
+        <div><div class="v">12</div><div class="k">今年の参戦</div></div>
+        <div><div class="v">3</div><div class="k">当落待ち</div></div>
+        <div><div class="v">4</div><div class="k">名義</div></div>
+      </div>
+
+      <div class="sec-label">直近の記録</div>
+      <div class="rec">
+        <div class="rec-head">
+          <span class="dot" style="--oshi:#7B5CC6"></span>
+          <div class="rec-title">LUMIÈRE ARENA TOUR「Aurora」大阪 2日目</div>
+          <div class="rec-date">06.14</div>
+        </div>
+        <div class="rec-meta">
+          <span>座席 <b>スタンド上手 12列</b></span>
+          <span>同行 <b>ゆきちゃん</b></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 参戦記録 ================= -->
+    <section class="screen" id="scr-rec">
+      <div class="filter-row">
+        <span class="chip on">2026</span>
+        <span class="chip">2025</span>
+        <span class="chip">すべて</span>
+      </div>
+
+      <div class="rec">
+        <div class="rec-head">
+          <span class="dot" style="--oshi:#7B5CC6"></span>
+          <div class="rec-title">LUMIÈRE ARENA TOUR「Aurora」大阪 2日目</div>
+          <div class="rec-date">2026.06.14</div>
+        </div>
+        <div class="rec-meta">
+          <span>会場 <b>大阪城ホール</b></span>
+          <span>座席 <b>スタンド上手 12列</b></span>
+          <span>名義 <b>紫の名義</b></span>
+          <span>同行 <b>ゆきちゃん</b></span>
+        </div>
+        <div class="rec-note">アンコールで銀テ2本確保。MCの新曲裏話は今回だけ？帰りに崎陽軒。</div>
+      </div>
+
+      <div class="rec">
+        <div class="rec-head">
+          <span class="dot" style="--oshi:#3D77C9"></span>
+          <div class="rec-title">8PEACE STADIUM「BLUE HOUR」東京</div>
+          <div class="rec-date">2026.05.05</div>
+        </div>
+        <div class="rec-meta">
+          <span>会場 <b>味の素スタジアム</b></span>
+          <span>座席 <b>アリーナ B4ブロック</b></span>
+          <span>名義 <b>母名義</b></span>
+        </div>
+        <div class="rec-note">花道めちゃくちゃ近かった。トロッコ通過は下手側が正解。</div>
+      </div>
+
+      <div class="rec">
+        <div class="rec-head">
+          <span class="dot" style="--oshi:#7B5CC6"></span>
+          <div class="rec-title">LUMIÈRE ARENA TOUR「Aurora」横浜 初日</div>
+          <div class="rec-date">2026.04.11</div>
+        </div>
+        <div class="rec-meta">
+          <span>会場 <b>横浜アリーナ</b></span>
+          <span>座席 <b>センター C2ブロック</b></span>
+          <span>名義 <b>紫の名義</b></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 名義 ================= -->
+    <section class="screen" id="scr-meigi">
+      <div class="sec-label">名義台帳</div>
+
+      <div class="m-card" style="--oshi:#7B5CC6">
+        <div class="m-club">LUMIÈRE FAMILY CLUB</div>
+        <div class="m-kind">MEMBERSHIP</div>
+        <div class="m-name">片倉 菖<small>自名義</small></div>
+        <div class="m-no">No. 0482 1957 33</div>
+        <div class="m-foot">
+          <span>入会 <b>2019.03</b>（8年目）</span>
+          <span class="badge">更新まで24日</span>
+        </div>
+      </div>
+
+      <div class="m-card" style="--oshi:#3D77C9">
+        <div class="m-club">8PEACE OFFICIAL FC</div>
+        <div class="m-kind">MEMBERSHIP</div>
+        <div class="m-name">片倉 洋子<small>母名義</small></div>
+        <div class="m-no">No. 1120 8834 07</div>
+        <div class="m-foot">
+          <span>入会 <b>2022.11</b>（4年目）</span>
+          <span class="badge ok">更新済</span>
+        </div>
+      </div>
+
+      <div class="m-card" style="--oshi:#D8A03C">
+        <div class="m-club">LUMIÈRE FAMILY CLUB</div>
+        <div class="m-kind">MEMBERSHIP</div>
+        <div class="m-name">佐藤 由紀<small>ゆきちゃん共同</small></div>
+        <div class="m-no">No. 0771 2245 90</div>
+        <div class="m-foot">
+          <span>入会 <b>2021.06</b>（6年目）</span>
+          <span class="badge ok">更新済</span>
+        </div>
+      </div>
+
+      <p class="privacy-note">名義情報はこの端末の中にだけ保存されます。外部への送信は行いません。</p>
+    </section>
+
+    <!-- ================= 当落 ================= -->
+    <section class="screen" id="scr-lot">
+      <div class="sec-label">当落待ち</div>
+
+      <div class="lot">
+        <div class="lot-head">
+          <div>
+            <div class="lot-title">LUMIÈRE「Prism of Night」東京ドーム</div>
+            <div class="lot-sub">発表予定 07.15（水）</div>
+          </div>
+        </div>
+        <div class="lot-rows">
+          <div class="lot-row">
+            <span class="who"><span class="dot" style="--oshi:#7B5CC6"></span>自名義・1枚</span>
+            <span class="st wait">未発表</span>
+          </div>
+          <div class="lot-row">
+            <span class="who"><span class="dot" style="--oshi:#D8A03C"></span>ゆきちゃん共同・2枚</span>
+            <span class="st wait">未発表</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-label">結果</div>
+
+      <div class="lot">
+        <div class="lot-head">
+          <div>
+            <div class="lot-title">LUMIÈRE「Prism of Night」横浜アリーナ</div>
+            <div class="lot-sub">発表 06.20（土）</div>
+          </div>
+        </div>
+        <div class="lot-rows">
+          <div class="lot-row">
+            <span class="who"><span class="dot" style="--oshi:#7B5CC6"></span>自名義・1枚</span>
+            <span class="st win">当選</span>
+          </div>
+          <div class="lot-row">
+            <span class="who"><span class="dot" style="--oshi:#D8A03C"></span>ゆきちゃん共同・2枚</span>
+            <span class="st lose">落選</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lot">
+        <div class="lot-head">
+          <div>
+            <div class="lot-title">8PEACE「BLUE HOUR」追加公演 名古屋</div>
+            <div class="lot-sub">発表 06.02（火）</div>
+          </div>
+        </div>
+        <div class="lot-rows">
+          <div class="lot-row">
+            <span class="who"><span class="dot" style="--oshi:#3D77C9"></span>母名義・2枚</span>
+            <span class="st lose">落選</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <button class="fab" id="fab">＋ 参戦を記録</button>
+
+  <nav aria-label="メインナビゲーション">
+    <button class="on" data-scr="scr-home"><span class="bar"></span>ホーム</button>
+    <button data-scr="scr-rec"><span class="bar"></span>参戦記録</button>
+    <button data-scr="scr-meigi"><span class="bar"></span>名義</button>
+    <button data-scr="scr-lot"><span class="bar"></span>当落</button>
+  </nav>
+</div>
+
+<script>
+  const navBtns = document.querySelectorAll('nav button');
+  const screens = document.querySelectorAll('.screen');
+  const fab = document.getElementById('fab');
+  navBtns.forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      navBtns.forEach(b=>b.classList.remove('on'));
+      screens.forEach(s=>s.classList.remove('active'));
+      btn.classList.add('on');
+      document.getElementById(btn.dataset.scr).classList.add('active');
+      // 記帳ボタンは名義画面では非表示（機微情報画面に記録動線を混ぜない）
+      fab.style.display = btn.dataset.scr === 'scr-meigi' ? 'none' : 'block';
+      document.querySelector('main').scrollTo(0,0);
+    });
+  });
+</script>
+</body>
+</html>
