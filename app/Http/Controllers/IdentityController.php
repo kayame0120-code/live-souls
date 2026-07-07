@@ -6,6 +6,8 @@ use App\Models\FcMembership;
 use App\Models\IdentityGroup;
 use App\Services\IdentityService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class IdentityController extends Controller
 {
@@ -35,7 +37,7 @@ class IdentityController extends Controller
             'phone' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
             'label' => ['nullable', 'string', 'max:255'],
-            'group_id' => ['required', 'exists:identity_groups,id'],
+            'group_id' => ['required', Rule::exists('identity_groups', 'id')->where('user_id', Auth::id())],
             'artist_name' => ['required', 'string', 'max:255'],
             'club_name' => ['nullable', 'string', 'max:255'],
             'member_no' => ['nullable', 'string', 'max:255'],
@@ -93,7 +95,7 @@ class IdentityController extends Controller
             'phone' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
             'label' => ['nullable', 'string', 'max:255'],
-            'group_id' => ['required', 'exists:identity_groups,id'],
+            'group_id' => ['required', Rule::exists('identity_groups', 'id')->where('user_id', Auth::id())],
             'artist_name' => ['required', 'string', 'max:255'],
             'club_name' => ['nullable', 'string', 'max:255'],
             'member_no' => ['nullable', 'string', 'max:255'],

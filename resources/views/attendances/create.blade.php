@@ -108,20 +108,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(r => r.json())
                 .then(venues => {
                     if (venues.length === 0) { sugBox.style.display = 'none'; return; }
-                    sugBox.innerHTML = venues.map(v =>
-                        '<div style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--color-keisen)" ' +
-                        'data-id="' + v.id + '" data-name="' + v.name + '">' +
-                        v.name + (v.address ? ' <span style="color:var(--color-ink-sub);font-size:11px">' + v.address + '</span>' : '') +
-                        '</div>'
-                    ).join('');
-                    sugBox.style.display = 'block';
-                    sugBox.querySelectorAll('div').forEach(d => {
+                    sugBox.textContent = '';
+                    venues.forEach(v => {
+                        const d = document.createElement('div');
+                        d.style.cssText = 'padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--color-keisen)';
+                        d.dataset.id = v.id;
+                        d.dataset.name = v.name;
+                        d.textContent = v.name;
+                        if (v.address) {
+                            const span = document.createElement('span');
+                            span.style.cssText = 'color:var(--color-ink-sub);font-size:11px;margin-left:6px';
+                            span.textContent = v.address;
+                            d.appendChild(span);
+                        }
                         d.addEventListener('click', () => {
                             input.value = d.dataset.name;
                             hiddenId.value = d.dataset.id;
                             sugBox.style.display = 'none';
                         });
+                        sugBox.appendChild(d);
                     });
+                    sugBox.style.display = 'block';
                 });
         }, 300);
     });

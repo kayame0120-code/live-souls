@@ -78,7 +78,9 @@ class IdentityGroupController extends Controller
         ]);
 
         foreach ($validated['order'] as $index => $id) {
-            IdentityGroup::where('id', $id)->update(['sort_order' => $index]);
+            IdentityGroup::where('id', $id)
+                ->where('user_id', Auth::id())
+                ->update(['sort_order' => $index]);
         }
 
         return response()->json(['ok' => true]);

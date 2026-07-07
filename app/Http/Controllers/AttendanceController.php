@@ -8,6 +8,7 @@ use App\Models\FcMembership;
 use App\Services\AttendanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class AttendanceController extends Controller
 {
@@ -64,7 +65,7 @@ class AttendanceController extends Controller
             'companion' => ['nullable', 'string', 'max:255'],
             'memo' => ['nullable', 'string'],
             'identity_ids' => ['nullable', 'array'],
-            'identity_ids.*' => ['exists:fc_memberships,id'],
+            'identity_ids.*' => [Rule::exists('fc_memberships', 'id')->where('user_id', Auth::id())],
         ]);
 
         $identityIds = $validated['identity_ids'] ?? [];
@@ -104,7 +105,7 @@ class AttendanceController extends Controller
             'companion' => ['nullable', 'string', 'max:255'],
             'memo' => ['nullable', 'string'],
             'identity_ids' => ['nullable', 'array'],
-            'identity_ids.*' => ['exists:fc_memberships,id'],
+            'identity_ids.*' => [Rule::exists('fc_memberships', 'id')->where('user_id', Auth::id())],
         ]);
 
         $identityIds = $validated['identity_ids'] ?? [];
