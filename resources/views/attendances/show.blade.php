@@ -40,7 +40,8 @@
     </div>
     @endif
 
-    @if($attendance->open_time || $attendance->start_time)
+    {{-- ★v1.3（QV13-1）：開演は公演(event)の属性を参照。開場(open_time)は event に相当が無いため参戦側を暫定表示。 --}}
+    @if($attendance->open_time || $attendance->event?->start_time)
     <div class="detail-section">
         <div style="display:flex; gap:24px;">
             @if($attendance->open_time)
@@ -49,10 +50,10 @@
                 <div class="detail-value">{{ \Carbon\Carbon::parse($attendance->open_time)->format('H:i') }}</div>
             </div>
             @endif
-            @if($attendance->start_time)
+            @if($attendance->event?->start_time)
             <div>
                 <div class="detail-label">開演</div>
-                <div class="detail-value">{{ \Carbon\Carbon::parse($attendance->start_time)->format('H:i') }}</div>
+                <div class="detail-value">{{ $attendance->event->start_time->format('H:i') }}</div>
             </div>
             @endif
         </div>

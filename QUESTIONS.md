@@ -2,6 +2,85 @@
 
 ## 未解決・保留（安全側で仮置き中）
 
+### QV13-1 ✅解決: 開演の源は events.start_time に一本化（2026-07-09）
+
+- **決着**: spec.md §4 events に「開演の源は events.start_time に一本化する」を明記（追記済み）。
+- **実装**: 参戦詳細（`attendances/show`）・次の現場（`home`）の開演表示を `attendance->event?->start_time` 参照へ切替。公演カード（`events/index`）・公演登録（`events/create`）・確認テーブルに開演を追加。
+- **残処理**: 既存 `attendances.start_time` / `open_time` カラムは物理削除しない（§8対象外）。開場(open_time)は event 相当が無いため参戦側を暫定表示のまま。参戦記録一覧カード（`attendances/index`）への開演表示は任意の追加項目として未実施（必要なら次段）。
+- （以下は当初記録）
+
+### QV13-1（当初記録）: 開演の真実の源が二重化（events.start_time ↔ attendances.start_time/open_time）
+
+- **発見日**: 2026-07-09（v1.3 A 着手時）
+- **矛盾**: cc_instructions v1.3 §2 は「開演は event 由来で表示・昼夜同定も event.start_time」とする一方、
+  同§で「attendances 側のスキーマ変更は不要」とも言い、**既存の `attendances.start_time` / `attendances.open_time` に一切言及がない**。
+  実装では既に参戦が自前の start_time/open_time を持ち、`home.blade`（次の現場）・`attendances/show`（開場/開演）で表示に使用中。
+  → 同一参戦で「参戦側 start_time」と「公演側 start_time」が食い違い得る（どちらを開演の正とするか未定）。
+- **安全側で仮置き**: **events.start_time の追加（migration＋Event モデル）だけ確定**し、
+  表示の張り替え（参戦カード・次の現場・参戦詳細を event.start_time 源へ移す）は**保留**。
+  既存の参戦側時刻表示は**現状のまま温存**（破壊しない）。doc も「attendances 側スキーマ変更不要」なのでカラム削除もしない。
+- **決めてほしいこと（片倉）**:
+  1. 開演表示の正は「公演(event)」に一本化するか、参戦側の手入力時刻を残すか。
+  2. 一本化するなら、既存 attendances.start_time/open_time の扱い（表示から外すだけ / 将来 deprecate）。
+- **spec 反映**: 本件は spec.md v1.3 側で「開演の源」を明記して解消すべき（現 spec.md は v1.2 で start_time の記述なし＝QV13-4）。
+
+### QV13-2 ✅解除: B（一括インポート解析のPHP移植）実装済み（2026-07-09）
+
+- **解除**: `docs/EventImportDemo.jsx` 投入を確認。`App\Services\EventImportParser` へ parse() を1:1移植（正規表現・NOISE辞書・状態機械・境界判定を写経・改善なし）。
+- **配線**: `EventController::importParse/importStore` を新パーサへ。重複キーを `venue_id × event_date × start_time` に更新（`EventService::findDuplicates`）。確認テーブルに開演列・未解析行表示を追加。
+- **検証**: `tests/Unit/EventImportParserTest`（SAMPLEで6公演・tour・昼夜別・ノイズ遮断・未解析保持）＋`tests/Feature/EventDuplicateKeyTest`（重複キー・昼夜別レコード）。※実行は人間がWSLで（下記REPORT参照）。
+- **残**: 旧 `LotImportService` は未使用化（削除はせず・自身のテストは緑のまま）。
+- （以下は当初記録）
+
+### QV13-2（当初記録）: B（一括インポート解析のPHP移植）は原本欠落で未着手
+
+- **発見日**: 2026-07-09
+- **doc根拠**: v1.3 §3「`EventImportDemo.jsx` の `parse()` が正。挙動を変えず1:1で写経・改善禁止」。
+- **状況**: **`EventImportDemo.jsx` がリポジトリ・アップロードのどこにも存在しない**（.jsx 皆無・全文grep済み）。
+  写経すべき原本（正規表現・NOISE/HEAD定数・状態機械）と、T1 の機械検証に必要な **SAMPLE入力＋期待45件** が無い。
+- **仮置き（安全側）**: 実装しない。パーサを推測で書くこと（＝独自決定）は禁止規定により回避。
+- **解除条件**: `EventImportDemo.jsx`（parse本体・定数・SAMPLE入力・期待出力を含む）を `docs/` か `tests/fixtures/` に投入。
+
+### QV13-3: C（360°会場ビュー）は arena-view 資産欠落で器のみ／未着手
+
+- **発見日**: 2026-07-09
+- **doc根拠**: v1.3 §4「中身は arena-view の `venue_engine_template.html` を Blade に組込／key→会場設定 対応表を移植」、§4-4/4-5「座席3段フォールバックは seat→座席ID の正規化対応表で引く」。
+- **状況**: **`venue_engine_template.html`・key→会場設定 対応表・seat正規化対応表 が一切存在しない**（別プロジェクト arena-view 側）。
+  器（route/controller/404/導線出し分け/3段フォールバックの制御）は書けるが、①②の座席解決も 360°実体も入れられず、③(会場のみ)の空画面にしかならない。
+- **仮置き（安全側）**: 未着手（空の器を先行させるかは片倉判断・前回選択肢②）。
+- **解除条件**: arena-view 一式（HTMLテンプレート＋key対応表＋seat正規化表）を投入。
+
+### QV13-4 ✅クローズ: v1.3 の正本 spec.md 配置済み（2026-07-09）
+
+- `docs/spec.md` が v1.3 に更新されたことを確認（ヘッダ「v1.3」）。開演の源（QV13-1）も §4 に追記済み。ガバナンス上の穴は解消。
+- （以下は当初記録）
+
+### QV13-4（当初記録）: v1.3 の正本 spec.md が未更新（現物は v1.2）
+
+- **発見日**: 2026-07-09
+- **矛盾**: cc_instructions v1.3 は「正本: docs/spec.md v1.3」を前提に書かれているが、**`docs/spec.md` の現物は v1.2**（start_time・arena_view・昼夜同定の記載なし）。
+- **影響**: 本書の衝突規定＝spec.md 優先。v1.2 に無い A/B/C は形式上"spec外"のまま。ガバナンス上、spec.md を v1.3 へ更新してから本実装を確定させるのが筋。
+- **仮置き**: A のコア（追加のみ・非破壊・可逆）は先行実装。B/C は spec.md v1.3 と原本が揃うまで保留。
+
+### QV13-5 ✅解決（要合意・指示書からの逸脱）: start_time は cast を廃しアクセサで H:i:s 保存に変更（2026-07-09）
+
+- **実証**: `EventDuplicateKeyTest > 開演違いは重複扱いにならない` が FAIL（whereTime が 0 件）。指示書指定の `datetime:H:i` cast が `time` 列に `Y-m-d H:i:s` を書き、SQLite突合ズレ＋**PostgreSQLでは INSERT 自体が失敗する**ことを裏付けた（他100件は緑）。
+- **対応**: `Event` の `casts()` から `start_time` を外し、**アクセサ/ミューテータ**へ差し替え（get=Carbon／set=`H:i:s` 文字列）。`EventService::findDuplicates` は突合値を `H:i:s` へ正規化して `where` 比較。表示側の `->format('H:i')` は変更不要。
+- **指示書との関係**: cc_instructions v1.3 §1-1 の `'datetime:H:i'`（[確定]）からの**意図的な逸脱**。理由は上記の time 列非互換（本番破壊）。spec/指示書側の cast 記述を本アクセサ方式へ改める要合意（片倉）。
+- **再検証**: `php artisan test --filter=EventDuplicateKeyTest` が緑になることを確認（人間がWSLで実行・下記）。
+- （以下は当初記録）
+
+### QV13-5（当初記録）: events.start_time の cast（`datetime:H:i`）× `time` カラムの保存挙動は要検証
+
+- **発見日**: 2026-07-09（A/B実装時）
+- **論点**: cc_instructions v1.3 §1-1 が指定する cast は `'start_time' => 'datetime:H:i'`。だが列型は `time`。
+  Eloquent の datetime cast は保存時に既定で `Y-m-d H:i:s` へ整形するため、`time` カラム（特に **PostgreSQL**）に日付付き文字列を入れて弾かれる／`findDuplicates` の `whereTime` 突合がズレる恐れがある。
+- **状況**: 指示書の指定（[確定]）通りに実装済み。SQLite（ローカル）は緩く通る可能性が高いが、**本番 PostgreSQL で `EventDuplicateKeyTest` と登録の実挙動を要確認**。
+- **不都合が出た場合の候補**: cast を外して素の文字列（`H:i`）保存にする／`time` 用のカスタムキャストにする／列を `string` にする。いずれも spec/指示書の変更を伴うため、勝手に変えず本欄で合意してから。
+- **検証手段**: `php artisan test --filter=EventDuplicateKeyTest` の生出力を REPORT.md に貼る。
+
+---
+
 ### QV12-1: heic 受付は libheif 未導入のため保留（安全側=拒否で仮置き）
 
 - **発見日**: 2026-07-08（v1.2改修）

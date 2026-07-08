@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>現場手帖 — UIモック</title>
+<title>現場手帖 — UIモック v1.3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -38,14 +38,31 @@
   header{
     padding:18px 20px 12px;
     display:flex;align-items:baseline;justify-content:space-between;
-    border-bottom:1px solid var(--keisen);
     background:var(--paper);
   }
   .app-name{font-size:17px;font-weight:700;letter-spacing:.14em}
   .app-name small{font-size:10px;font-weight:500;color:var(--ink-sub);letter-spacing:.22em;margin-left:8px}
   .today{font-size:11px;color:var(--ink-sub);letter-spacing:.06em}
 
-  main{flex:1;overflow-y:auto;padding-bottom:76px}
+  /* ---- 上部ナビ（pill型・横スクロール許容） ---- */
+  nav{
+    display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    padding:4px 20px 14px;
+    border-bottom:1px solid var(--keisen);
+    background:var(--paper);
+    scrollbar-width:none;
+  }
+  nav::-webkit-scrollbar{display:none}
+  nav button{
+    font-family:inherit;background:var(--card);cursor:pointer;flex:none;
+    border:1px solid var(--keisen-strong);border-radius:999px;
+    padding:7px 16px;font-size:12.5px;font-weight:500;letter-spacing:.06em;
+    color:var(--ink-sub);white-space:nowrap;
+  }
+  nav button.on{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:700}
+  nav button:focus-visible{outline:2px solid var(--oshi);outline-offset:2px}
+
+  main{flex:1;overflow-y:auto;padding-bottom:90px}
   .screen{display:none;padding:20px 20px 28px}
   .screen.active{display:block}
 
@@ -80,6 +97,22 @@
   }
   .dot{width:8px;height:8px;border-radius:50%;background:var(--oshi);flex:none}
 
+  /* ---- 「参戦した？」確認（公演日経過・v1.2追加） ---- */
+  .confirm-card{
+    background:#FBF7EE;border:1px solid #EADFC7;
+    border-radius:var(--radius);padding:16px 18px;
+  }
+  .confirm-lead{font-size:12px;color:#9A7B34;font-weight:700;letter-spacing:.08em;margin-bottom:10px}
+  .confirm-title{font-size:14px;font-weight:700;line-height:1.5;margin-bottom:4px}
+  .confirm-sub{font-size:11px;color:var(--ink-sub);margin-bottom:12px;font-feature-settings:"tnum"}
+  .confirm-actions{display:flex;gap:8px}
+  .confirm-actions button{
+    flex:1;font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.06em;
+    padding:9px 0;border-radius:10px;cursor:pointer;border:1px solid var(--keisen-strong);
+  }
+  .btn-attended{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .btn-skipped{background:var(--card);color:var(--ink-sub)}
+
   /* ---- 積み上げ台帳（統計行） ---- */
   .ledger{
     display:grid;grid-template-columns:1fr 1fr 1fr;
@@ -96,6 +129,7 @@
   .chip{
     font-size:12px;font-weight:500;padding:5px 14px;border-radius:999px;
     border:1px solid var(--keisen-strong);color:var(--ink-sub);background:var(--card);
+    cursor:pointer;white-space:nowrap;
   }
   .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
   .rec{
@@ -118,25 +152,33 @@
     font-size:12px;line-height:1.7;color:var(--ink);border-radius:0 8px 8px 0;
   }
 
-  /* ---- 名義カード（boldness投資先：会員証様式） ---- */
-  /* v1.1: 担当色はバー表現を廃止し丸スウォッチで表現 */
+  /* ---- 名義：FCタブ束ね ---- */
+  .fc-tabs{
+    display:flex;gap:8px;margin-bottom:18px;overflow-x:auto;
+    padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  .fc-tabs::-webkit-scrollbar{display:none}
+  .fc-tab{
+    font-size:12px;font-weight:700;padding:7px 16px;border-radius:999px;
+    border:1px solid var(--keisen-strong);color:var(--ink-sub);background:var(--card);
+    cursor:pointer;white-space:nowrap;letter-spacing:.04em;flex:none;
+  }
+  .fc-tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .fc-tab.add{color:var(--ink-sub);border-style:dashed;font-weight:500;padding:7px 13px}
+
+  /* ---- 名義カード（会員証様式・タブ束ね版） ---- */
   .m-card{
-    background:var(--card);border:1px solid var(--keisen);
-    border-radius:var(--radius);padding:18px 20px 16px;margin-bottom:14px;
-    position:relative;overflow:hidden;
+    background:color-mix(in srgb, var(--oshi) 7%, #fff);
+    border:3px solid var(--oshi);
+    border-radius:20px;padding:18px 20px 16px;margin-bottom:14px;
+    position:relative;
   }
-  .swatch{
-    position:absolute;top:16px;right:18px;
-    width:18px;height:18px;border-radius:50%;
-    background:var(--oshi);
-    box-shadow:inset 0 0 0 2px rgba(255,255,255,.35);
+  .m-cardhead{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+  .m-swatch{
+    width:16px;height:16px;border-radius:50%;background:var(--oshi);
+    border:1px solid rgba(0,0,0,.12);flex:none;
   }
-  .m-club{
-    font-size:11px;font-weight:700;letter-spacing:.24em;
-    color:var(--oshi);margin-top:4px;
-  }
-  .m-kind{font-size:9px;letter-spacing:.3em;color:var(--ink-sub);margin-top:2px}
-  .m-name{font-size:19px;font-weight:700;margin:14px 0 2px;letter-spacing:.06em}
+  .m-name{font-size:18px;font-weight:700;letter-spacing:.06em}
   .m-name small{font-size:10px;color:var(--ink-sub);font-weight:500;margin-left:8px;letter-spacing:.1em}
   .m-no{
     font-size:14px;font-weight:500;letter-spacing:.28em;
@@ -153,10 +195,251 @@
     background:var(--oshi);color:#fff;letter-spacing:.06em;
   }
   .badge.ok{background:transparent;color:var(--ink-sub);border:1px solid var(--keisen-strong);font-weight:500}
-  .privacy-note{
-    font-size:10px;color:var(--ink-sub);line-height:1.7;
-    margin-top:16px;padding-top:12px;border-top:1px solid var(--keisen);
-    letter-spacing:.04em;
+  .m-add{
+    width:100%;border:1px dashed var(--keisen-strong);background:var(--card);
+    border-radius:var(--radius);padding:14px;color:var(--ink-sub);
+    font-family:inherit;font-size:12px;font-weight:500;letter-spacing:.08em;cursor:pointer;
+  }
+  .m-card.tappable{cursor:pointer}
+
+  /* ---- 詳細画面 共通（戻る・ヘッダ） ---- */
+  .detail-back{
+    display:inline-flex;align-items:center;gap:5px;
+    font-family:inherit;background:none;border:none;cursor:pointer;
+    font-size:12px;color:var(--ink-sub);font-weight:500;letter-spacing:.04em;
+    margin-bottom:16px;padding:0;
+  }
+  .detail-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .detail-topbar .detail-back{margin-bottom:0}
+  .detail-edit{
+    font-family:inherit;background:var(--card);cursor:pointer;
+    border:1px solid var(--keisen-strong);border-radius:999px;
+    padding:6px 16px;font-size:12px;font-weight:700;color:var(--ink);letter-spacing:.06em;
+  }
+  .d-block{
+    background:var(--card);border:1px solid var(--keisen);
+    border-radius:var(--radius);padding:16px 18px;margin-bottom:14px;
+  }
+  .d-block .d-h{
+    font-size:11px;font-weight:700;color:var(--ink-sub);letter-spacing:.16em;
+    margin-bottom:12px;
+  }
+  .d-row{
+    display:flex;justify-content:space-between;gap:14px;
+    padding:9px 0;border-bottom:1px solid var(--keisen);font-size:13px;
+  }
+  .d-row:last-child{border-bottom:none}
+  .d-row .k{color:var(--ink-sub);white-space:nowrap;flex:none}
+  .d-row .v{color:var(--ink);font-weight:500;text-align:right}
+  .d-row .v.mono{font-feature-settings:"tnum";letter-spacing:.1em}
+
+  /* 参戦詳細：ヒーロー */
+  .att-hero{
+    border-radius:var(--radius);padding:20px;margin-bottom:14px;position:relative;
+    background:color-mix(in srgb, var(--oshi) 8%, #fff);
+    border:1px solid color-mix(in srgb, var(--oshi) 30%, var(--keisen));
+  }
+  .att-hero::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:4px;
+    background:var(--oshi);border-radius:var(--radius) 0 0 var(--radius);
+  }
+  .att-date{font-size:12px;color:var(--ink-sub);font-feature-settings:"tnum";letter-spacing:.06em}
+  .att-title{font-size:17px;font-weight:700;line-height:1.5;margin:6px 0 12px}
+  .att-meigi{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;
+    background:var(--card);border:1px solid var(--keisen-strong);border-radius:999px;padding:4px 12px;
+  }
+  /* コピー可能フィールド（伏字） */
+  .copy-field{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:9px 0;border-bottom:1px solid var(--keisen);font-size:13px;
+  }
+  .copy-field:last-child{border-bottom:none}
+  .copy-field .cf-k{color:var(--ink-sub);flex:none}
+  .copy-field .cf-v{
+    flex:1;text-align:right;font-feature-settings:"tnum";letter-spacing:.08em;
+    color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .copy-btn{
+    flex:none;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.08em;
+    padding:4px 10px;border-radius:999px;border:1px solid var(--keisen-strong);
+    background:var(--card);color:var(--ink-sub);cursor:pointer;
+  }
+  /* 名義詳細：申込公演の当落一覧（率なし） */
+  .apply-row{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 0;border-bottom:1px solid var(--keisen);font-size:12.5px;
+  }
+  .apply-row:last-child{border-bottom:none}
+  .apply-row .ar-body{flex:1;min-width:0}
+  .apply-row .ar-name{font-weight:500;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .apply-row .ar-date{font-size:10.5px;color:var(--ink-sub);margin-top:2px;font-feature-settings:"tnum"}
+  .ar-st{
+    font-size:10px;font-weight:700;letter-spacing:.1em;flex:none;
+    padding:3px 10px;border-radius:999px;min-width:52px;text-align:center;
+  }
+  .ar-st.won{background:var(--oshi);color:#fff}
+  .ar-st.lost{background:var(--keisen);color:var(--ink-sub)}
+  .ar-st.pending{border:1px solid var(--keisen-strong);color:var(--ink-sub)}
+  .thumb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .thumb{
+    aspect-ratio:1;border-radius:10px;background:var(--keisen);
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;color:var(--ink-sub);
+  }
+  .venue-view-btn{
+    width:100%;font-family:inherit;cursor:pointer;text-align:left;
+    background:var(--ink);color:#fff;border:none;border-radius:var(--radius);
+    padding:15px 18px;display:flex;flex-direction:column;gap:3px;margin-top:4px;
+  }
+  .venue-view-btn span{font-size:13px;font-weight:700;letter-spacing:.06em}
+  .venue-view-btn small{font-size:10.5px;color:rgba(255,255,255,.6);letter-spacing:.04em}
+
+  /* 会場詳細：見え方マッピング */
+  .venue-hero{
+    background:var(--card);border:1px solid var(--keisen);border-radius:var(--radius);
+    padding:18px 20px;margin-bottom:14px;
+  }
+  .venue-hero .vh-name{font-size:18px;font-weight:700;letter-spacing:.06em;margin-bottom:4px}
+  .venue-hero .vh-sub{font-size:11.5px;color:var(--ink-sub)}
+  .view-tile{
+    background:var(--card);border:1px solid var(--keisen);border-radius:12px;
+    overflow:hidden;margin-bottom:12px;
+  }
+  .view-photo{
+    aspect-ratio:4/3;background:var(--keisen);
+    display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-sub);
+  }
+  .view-cap{padding:10px 14px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .view-seat{font-size:12px;font-weight:700}
+  .view-by{font-size:10.5px;color:var(--ink-sub);white-space:nowrap}
+
+  /* 360°ビュー導線（対応会場のみ・v1.3追加） */
+  .arena-view-btn{
+    width:100%;font-family:inherit;cursor:pointer;text-align:left;
+    background:linear-gradient(135deg,#2A2C34,#3A3D48);color:#fff;border:none;
+    border-radius:var(--radius);padding:16px 18px;margin-bottom:14px;
+    display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;
+  }
+  .arena-view-btn::after{
+    content:"";position:absolute;right:-30px;top:50%;transform:translateY(-50%);
+    width:120px;height:120px;border-radius:50%;
+    background:radial-gradient(circle,rgba(199,65,79,.35),transparent 70%);
+  }
+  .av-icon{
+    width:40px;height:40px;border-radius:50%;flex:none;
+    border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;
+    justify-content:center;font-size:18px;position:relative;z-index:1;
+  }
+  .av-body{flex:1;position:relative;z-index:1}
+  .av-title{font-size:14px;font-weight:700;letter-spacing:.06em}
+  .av-sub{font-size:10.5px;color:rgba(255,255,255,.65);margin-top:2px;letter-spacing:.04em}
+  .av-arrow{font-size:18px;color:rgba(255,255,255,.5);position:relative;z-index:1}
+
+  /* 360°ビュー フルスクリーン画面 */
+  #scr-arena-view.active{padding:0}
+  .av-stage{
+    position:relative;width:100%;min-height:calc(100dvh - 120px);
+    background:radial-gradient(ellipse at 50% 35%,#3A3D48,#1C1D22 75%);
+    display:flex;flex-direction:column;
+  }
+  .av-close{
+    position:absolute;top:16px;left:16px;z-index:5;
+    font-family:inherit;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.2);
+    color:#fff;font-size:12px;font-weight:500;letter-spacing:.04em;
+    padding:8px 14px;border-radius:999px;cursor:pointer;backdrop-filter:blur(6px);
+  }
+  .av-canvas{
+    flex:1;position:relative;display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+  }
+  /* 円形ドームの示唆（同心楕円） */
+  .av-canvas::before{
+    content:"";position:absolute;width:150%;height:70%;left:-25%;top:15%;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,.06);
+    box-shadow:0 0 0 40px rgba(255,255,255,.03),0 0 0 90px rgba(255,255,255,.02),
+               inset 0 0 80px rgba(199,65,79,.08);
+  }
+  .av-canvas-note{text-align:center;color:rgba(255,255,255,.75);z-index:1;padding:0 30px}
+  .av-canvas-icon{
+    font-size:34px;color:var(--oshi);margin-bottom:10px;
+    text-shadow:0 0 20px rgba(199,65,79,.6);
+  }
+  .av-canvas-title{font-size:15px;font-weight:700;letter-spacing:.14em;margin-bottom:8px}
+  .av-canvas-desc{font-size:11px;line-height:1.9;color:rgba(255,255,255,.5)}
+  /* 自席ピック */
+  .av-pin{
+    position:absolute;left:62%;top:44%;transform:translate(-50%,-100%);
+    z-index:3;text-align:center;
+  }
+  .av-pin-dot{
+    width:16px;height:16px;border-radius:50%;background:var(--oshi);margin:0 auto;
+    box-shadow:0 0 0 6px rgba(199,65,79,.25),0 0 16px rgba(199,65,79,.8);
+    animation:pin-pulse 2s ease-in-out infinite;
+  }
+  @keyframes pin-pulse{
+    0%,100%{box-shadow:0 0 0 6px rgba(199,65,79,.25),0 0 16px rgba(199,65,79,.8)}
+    50%{box-shadow:0 0 0 11px rgba(199,65,79,.12),0 0 22px rgba(199,65,79,.9)}
+  }
+  .av-pin-label{
+    margin-top:8px;font-size:11px;font-weight:700;color:#fff;
+    background:rgba(199,65,79,.9);padding:5px 11px;border-radius:8px;
+    white-space:nowrap;letter-spacing:.04em;line-height:1.4;
+  }
+  .av-pin-label small{font-size:9px;font-weight:500;color:rgba(255,255,255,.75);letter-spacing:.1em}
+  .av-hud{
+    position:relative;z-index:4;padding:14px 18px max(14px,env(safe-area-inset-bottom));
+    background:linear-gradient(to top,rgba(0,0,0,.55),transparent);
+    display:flex;flex-direction:column;gap:3px;
+  }
+  .av-hud-seat{font-size:12.5px;font-weight:700;color:#fff;letter-spacing:.04em}
+  .av-hud-hint{font-size:10.5px;color:rgba(255,255,255,.55);letter-spacing:.06em}
+
+  /* ---- 編集フォーム ---- */
+  .f-field{margin-bottom:14px}
+  .f-field > label{
+    display:block;font-size:11px;font-weight:700;color:var(--ink-sub);
+    letter-spacing:.1em;margin-bottom:6px;
+  }
+  .f-field > label .opt{font-weight:400;color:var(--ink-sub);letter-spacing:0}
+  .f-input{
+    width:100%;font-family:inherit;font-size:14px;color:var(--ink);
+    background:var(--card);border:1px solid var(--keisen-strong);border-radius:10px;
+    padding:11px 13px;
+  }
+  .f-input::placeholder{color:var(--ink-sub)}
+  .f-input:focus{outline:2px solid var(--oshi);outline-offset:1px;border-color:transparent}
+  .f-hint{font-size:10.5px;color:var(--ink-sub);margin-top:5px;line-height:1.6}
+  /* 担当色プリセット11色スウォッチ */
+  .swatch-picker{display:flex;flex-wrap:wrap;gap:10px;padding:2px 0}
+  .swatch-opt{
+    width:30px;height:30px;border-radius:50%;cursor:pointer;
+    border:2px solid transparent;box-shadow:0 0 0 1px rgba(0,0,0,.12) inset;
+    position:relative;
+  }
+  .swatch-opt.sel{border-color:var(--ink)}
+  .swatch-opt.sel::after{
+    content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:13px;font-weight:700;text-shadow:0 0 3px rgba(0,0,0,.5);
+  }
+  /* 保存/キャンセル固定バー */
+  .form-bar{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+    width:100%;max-width:420px;display:flex;gap:10px;
+    padding:12px 20px max(12px, env(safe-area-inset-bottom));
+    background:rgba(250,250,247,.97);backdrop-filter:blur(8px);
+    border-top:1px solid var(--keisen);
+  }
+  .form-bar button{
+    flex:1;font-family:inherit;font-size:13px;font-weight:700;letter-spacing:.06em;
+    padding:12px 0;border-radius:10px;cursor:pointer;
+  }
+  .fb-cancel{background:var(--card);color:var(--ink-sub);border:1px solid var(--keisen-strong)}
+  .fb-save{background:var(--ink);color:#fff;border:1px solid var(--ink);flex:2}
+  .f-danger{
+    width:100%;font-family:inherit;font-size:12px;font-weight:500;letter-spacing:.06em;
+    background:none;border:none;color:var(--oshi);cursor:pointer;padding:14px;margin-top:6px;
   }
 
   /* ---- 当落 ---- */
@@ -175,55 +458,47 @@
   }
   .lot-row:last-child{border-bottom:none}
   .lot-row .who{flex:1;display:flex;align-items:center;gap:7px}
-  .st{
-    font-size:10px;font-weight:700;letter-spacing:.14em;
-    padding:3px 10px;border-radius:999px;min-width:58px;text-align:center;
+  .lot-select{
+    font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.08em;
+    padding:4px 8px;border-radius:999px;border:1px solid var(--keisen-strong);
+    background:var(--card);color:var(--ink-sub);cursor:pointer;
   }
-  .st.win{background:var(--oshi);color:#fff}
-  .st.lose{background:var(--keisen);color:var(--ink-sub)}
-  .st.wait{border:1px solid var(--keisen-strong);color:var(--ink-sub)}
+  .lot-select[data-v="won"]{background:var(--oshi);color:#fff;border-color:var(--oshi)}
+  .lot-select[data-v="lost"]{background:var(--keisen);color:var(--ink-sub)}
 
-  /* ---- v1.1: 当落導線ボタン ---- */
-  .lot-actions{display:flex;gap:8px;margin-bottom:16px}
-  .lot-actions a{
-    flex:1;display:flex;align-items:center;justify-content:center;
-    font-size:12px;font-weight:700;letter-spacing:.08em;
-    padding:11px 0;border-radius:999px;text-decoration:none;cursor:pointer;
+  /* ---- 公演（共有マスタ・v1.2追加タブ） ---- */
+  .ev-lead{
+    font-size:11px;color:var(--ink-sub);line-height:1.7;margin-bottom:14px;
+    padding:11px 14px;background:var(--card);border:1px solid var(--keisen);border-radius:10px;
   }
-  .lot-actions .primary{background:var(--ink);color:#fff}
-  .lot-actions .secondary{border:1px solid var(--keisen-strong);color:var(--ink)}
-
-  /* ---- v1.1: 見え方マッピング（写真タイル） ---- */
-  .photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .photo-tile{
+  .ev-actions{display:flex;gap:8px;margin-bottom:18px}
+  .ev-actions button{
+    flex:1;font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.06em;
+    padding:11px 0;border-radius:10px;cursor:pointer;
+  }
+  .ev-new{background:var(--ink);color:#fff;border:1px solid var(--ink)}
+  .ev-import{background:var(--card);color:var(--ink);border:1px solid var(--keisen-strong)}
+  .ev{
     background:var(--card);border:1px solid var(--keisen);
-    border-radius:10px;overflow:hidden;
+    border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;
+    display:flex;align-items:baseline;gap:12px;
   }
-  .photo-tile .ph{
-    aspect-ratio:4/3;background:linear-gradient(135deg,var(--keisen) 0%,var(--keisen-strong) 100%);
-    display:flex;align-items:center;justify-content:center;
-    font-size:10px;color:var(--ink-sub);letter-spacing:.2em;
+  .ev-date{
+    font-size:11px;font-weight:700;color:var(--oshi);white-space:nowrap;
+    font-feature-settings:"tnum";letter-spacing:.04em;flex:none;min-width:44px;text-align:center;
   }
-  .photo-tile .meta{padding:8px 10px;font-size:10.5px;color:var(--ink-sub);line-height:1.6}
-  .photo-tile .meta b{color:var(--ink);font-weight:500}
-
-  /* ---- v1.1: 参戦登録フォーム（座席3フィールド） ---- */
-  .form-label{
-    display:block;font-size:11px;font-weight:700;color:var(--ink-sub);
-    letter-spacing:.16em;margin:14px 0 6px;
+  .ev-body{flex:1}
+  .ev-name{font-size:13px;font-weight:700;line-height:1.5}
+  .ev-venue{font-size:11px;color:var(--ink-sub);margin-top:3px}
+  .ev-time{
+    display:inline-block;margin-left:6px;font-size:10px;font-weight:700;
+    color:var(--oshi);font-feature-settings:"tnum";letter-spacing:.04em;
   }
-  .form-input{
-    width:100%;padding:10px 14px;font-size:14px;font-family:inherit;
-    border:1px solid var(--keisen-strong);border-radius:10px;
-    background:var(--paper);color:var(--ink);
-  }
-  .seat-fields{display:flex;gap:8px}
-  .seat-fields .form-input:first-child{flex:2}
-  .seat-fields .form-input{flex:1}
+  .ev-count{font-size:10px;color:var(--ink-sub);white-space:nowrap;flex:none}
 
   /* ---- 記帳ボタン ---- */
   .fab{
-    position:fixed;bottom:78px;right:max(16px,calc(50% - 210px + 16px));
+    position:fixed;bottom:20px;right:max(16px,calc(50% - 210px + 16px));
     background:var(--ink);color:#fff;border:none;
     font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.1em;
     padding:13px 20px;border-radius:999px;
@@ -231,168 +506,34 @@
   }
   .fab:focus-visible{outline:2px solid var(--oshi);outline-offset:2px}
 
-  /* ---- 下部ナビ ---- */
-  nav{
-    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-    width:100%;max-width:420px;
-    display:grid;grid-template-columns:repeat(4,1fr);
-    background:rgba(250,250,247,.96);backdrop-filter:blur(8px);
-    border-top:1px solid var(--keisen);
-  }
-  nav button{
-    font-family:inherit;background:none;border:none;cursor:pointer;
-    padding:10px 0 max(10px, env(safe-area-inset-bottom));
-    font-size:10.5px;font-weight:500;letter-spacing:.08em;
-    color:var(--ink-sub);display:flex;flex-direction:column;align-items:center;gap:4px;
-  }
-  nav button .bar{width:18px;height:3px;border-radius:2px;background:transparent}
-  nav button.on{color:var(--ink);font-weight:700}
-  nav button.on .bar{background:var(--ink)}
-  nav button:focus-visible{outline:2px solid var(--oshi);outline-offset:-2px}
-
   @media (prefers-reduced-motion: no-preference){
     .screen.active{animation:fade .18s ease}
     @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
   }
-
-  /* ================= v1.2 追加 ================= */
-  /* --- 汎用セレクト・検索付きセレクト --- */
-  .form-select{
-    width:100%;padding:10px 14px;font-size:14px;font-family:inherit;
-    border:1px solid var(--keisen-strong);border-radius:10px;
-    background:var(--paper);color:var(--ink);appearance:none;
-    background-image:linear-gradient(45deg,transparent 50%,var(--ink-sub) 50%),linear-gradient(135deg,var(--ink-sub) 50%,transparent 50%);
-    background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;
-    background-size:5px 5px,5px 5px;background-repeat:no-repeat;
-  }
-  .combo{position:relative}
-  .combo .form-input{margin:0}
-  .combo-list{
-    margin-top:6px;border:1px solid var(--keisen);border-radius:10px;
-    background:var(--card);overflow:hidden;
-  }
-  .combo-list button{
-    display:block;width:100%;text-align:left;background:none;border:none;
-    font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer;
-    padding:10px 14px;border-bottom:1px solid var(--keisen);
-  }
-  .combo-list button:last-child{border-bottom:none}
-  .combo-list button:hover,.combo-list button.on{background:var(--paper)}
-  .combo-list .sub{font-size:11px;color:var(--ink-sub);margin-top:2px}
-  .combo-empty{padding:10px 14px;font-size:12px;color:var(--ink-sub)}
-  .combo-empty a{color:var(--ink);font-weight:700}
-
-  /* --- 公演セレクト後の自動表示（読取専用） --- */
-  .ev-auto{
-    margin:12px 0 4px;padding:12px 14px;border-radius:10px;
-    background:var(--paper);border:1px dashed var(--keisen-strong);
-    font-size:12px;color:var(--ink-sub);line-height:1.9;
-  }
-  .ev-auto b{color:var(--ink);font-weight:500}
-  .ev-auto .tag{font-size:9px;letter-spacing:.2em;color:var(--ink-sub);display:block;margin-bottom:4px}
-
-  /* --- コピー行（伏字＋コピー：login_id / email / password） --- */
-  .copy-list{margin-top:6px;border:1px solid var(--keisen);border-radius:12px;overflow:hidden;background:var(--card)}
-  .copy-row{
-    display:flex;align-items:center;gap:10px;
-    padding:12px 14px;border-bottom:1px solid var(--keisen);
-  }
-  .copy-row:last-child{border-bottom:none}
-  .copy-row .lbl{font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--ink-sub);width:78px;flex:none}
-  .copy-row .val{flex:1;font-size:13px;color:var(--ink);font-feature-settings:"tnum";letter-spacing:.06em}
-  .copy-row .val.mask{letter-spacing:.18em}
-  .copy-btn{
-    font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.08em;
-    border:1px solid var(--keisen-strong);background:var(--paper);color:var(--ink);
-    padding:6px 12px;border-radius:999px;cursor:pointer;flex:none;
-  }
-  .copy-btn:active{background:var(--ink);color:#fff}
-
-  /* --- 色プリセット・セレクト（丸スウォッチ選択） --- */
-  .swatch-picker{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
-  .swatch-opt{
-    width:30px;height:30px;border-radius:50%;cursor:pointer;
-    border:1px solid var(--keisen-strong);position:relative;
-  }
-  .swatch-opt.sel{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--ink)}
-  .swatch-opt.sel::after{
-    content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    font-size:13px;font-weight:700;color:#fff;text-shadow:0 0 2px rgba(0,0,0,.5);
-  }
-
-  /* --- 公演一覧カード（共有マスタ） --- */
-  .ev-card{
-    background:var(--card);border:1px solid var(--keisen);
-    border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;
-    display:flex;align-items:flex-start;gap:12px;
-  }
-  .ev-card .d{font-size:11px;color:var(--ink-sub);font-feature-settings:"tnum";white-space:nowrap;padding-top:2px}
-  .ev-card .t{font-size:13px;font-weight:700;line-height:1.5;flex:1}
-  .ev-card .v{font-size:11px;color:var(--ink-sub);margin-top:3px}
-  .ev-card .shared{font-size:9px;letter-spacing:.14em;color:var(--ink-sub);border:1px solid var(--keisen-strong);border-radius:999px;padding:2px 8px;flex:none}
-
-  /* --- 重複警告 --- */
-  .warn{
-    font-size:11.5px;color:#8A5A00;background:#FBF3E2;border:1px solid #EBD9A8;
-    border-radius:10px;padding:10px 12px;margin:10px 0;line-height:1.6;
-  }
-
-  /* --- 一括インポート確認テーブル --- */
-  .imp-row{
-    display:grid;grid-template-columns:96px 1fr 30px;gap:8px;align-items:center;
-    padding:8px 0;border-bottom:1px solid var(--keisen);
-  }
-  .imp-row input{font-size:12px;padding:7px 9px}
-  .imp-row .rm{font-size:16px;color:var(--ink-sub);text-align:center;cursor:pointer;background:none;border:none}
-  .imp-head{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--ink-sub);
-    display:grid;grid-template-columns:96px 1fr 30px;gap:8px;padding-bottom:4px}
-
-  /* --- ホーム：参戦した？確認カード --- */
-  .confirm-card{
-    background:var(--card);border:1px solid var(--keisen);border-radius:var(--radius);
-    padding:16px 18px;margin-bottom:12px;position:relative;overflow:hidden;
-  }
-  .confirm-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--oshi)}
-  .confirm-q{font-size:13px;font-weight:700;margin-bottom:2px}
-  .confirm-sub{font-size:11px;color:var(--ink-sub);margin-bottom:12px}
-  .confirm-actions{display:flex;gap:8px}
-  .confirm-actions button{
-    flex:1;font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.06em;
-    padding:10px 0;border-radius:999px;cursor:pointer;border:1px solid var(--keisen-strong);
-    background:var(--paper);color:var(--ink);
-  }
-  .confirm-actions button.yes{background:var(--ink);color:#fff;border-color:var(--ink)}
-
-  /* --- 汎用ボタン・戻る導線 --- */
-  .btn-primary{
-    width:100%;font-family:inherit;font-size:13px;font-weight:700;letter-spacing:.08em;
-    padding:13px 0;border-radius:999px;border:none;background:var(--ink);color:#fff;
-    cursor:pointer;margin-top:18px;
-  }
-  .link-row{display:flex;gap:8px;margin-bottom:14px}
-  .link-row a{
-    flex:1;text-align:center;font-size:12px;font-weight:700;letter-spacing:.06em;
-    padding:11px 0;border-radius:999px;text-decoration:none;cursor:pointer;
-    border:1px solid var(--keisen-strong);color:var(--ink);
-  }
-  .link-row a.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .back-link{font-size:12px;color:var(--ink-sub);cursor:pointer;display:inline-block;margin-bottom:8px}
 </style>
 </head>
 <body>
 <div class="phone">
   <header>
     <div class="app-name">現場手帖<small>GENBA TECHO</small></div>
-    <div class="today">2026.07.07（火）</div>
+    <div class="today">2026.07.08（水）</div>
   </header>
+
+  <nav aria-label="メインナビゲーション">
+    <button class="on" data-scr="scr-home">ホーム</button>
+    <button data-scr="scr-rec">参戦記録</button>
+    <button data-scr="scr-meigi">名義</button>
+    <button data-scr="scr-lot">当落</button>
+    <button data-scr="scr-event">公演</button>
+  </nav>
 
   <main>
     <!-- ================= ホーム ================= -->
     <section class="screen active" id="scr-home">
       <div class="sec-label">次の現場</div>
-      <div class="next-card" style="--oshi:#7B5CC6">
+      <div class="next-card" style="--oshi:#8957A1">
         <div class="countdown">
-          <span class="num">18</span><span class="unit">日</span>
+          <span class="num">17</span><span class="unit">日</span>
           <span class="label">07.25（土）</span>
         </div>
         <div class="next-title">LUMIÈRE LIVE TOUR 2026<br>「Prism of Night」</div>
@@ -400,17 +541,18 @@
           <span>会場 <b>横浜アリーナ</b></span>
           <span>開演 <b>17:00</b></span>
         </div>
-        <span class="meigi-chip"><span class="dot"></span>紫の名義（自名義）で入場</span>
+        <span class="meigi-chip"><span class="dot" style="--oshi:#8957A1"></span>紫の名義（自名義）で入場</span>
       </div>
 
-      <!-- v1.2: 公演日を過ぎた予定（status=planned）の参戦確認。自動attendedにはしない -->
-      <div class="sec-label">参戦した？</div>
-      <div class="confirm-card" style="--oshi:#00A960">
-        <div class="confirm-q">8PEACE「BLUE HOUR」東京</div>
-        <div class="confirm-sub">2026.07.05（土）・味の素スタジアム／緑の名義。予定日が過ぎています。</div>
+      <!-- 公演日を過ぎた予定の「参戦した？」確認（v1.2追加） -->
+      <div class="sec-label">確認が必要</div>
+      <div class="confirm-card">
+        <div class="confirm-lead">この公演、参戦した？</div>
+        <div class="confirm-title">8PEACE「BLUE HOUR」追加公演 名古屋</div>
+        <div class="confirm-sub">2026.07.05（土）・母名義で当選</div>
         <div class="confirm-actions">
-          <button class="yes">参戦した（記録する）</button>
-          <button>行かなかった（スキップ）</button>
+          <button class="btn-attended">参戦した</button>
+          <button class="btn-skipped">行けなかった</button>
         </div>
       </div>
 
@@ -424,7 +566,7 @@
       <div class="sec-label">直近の記録</div>
       <div class="rec">
         <div class="rec-head">
-          <span class="dot" style="--oshi:#7B5CC6"></span>
+          <span class="dot" style="--oshi:#8957A1"></span>
           <div class="rec-title">LUMIÈRE ARENA TOUR「Aurora」大阪 2日目</div>
           <div class="rec-date">06.14</div>
         </div>
@@ -443,9 +585,9 @@
         <span class="chip">すべて</span>
       </div>
 
-      <div class="rec">
+      <div class="rec tappable-rec" data-detail="scr-att-detail" style="cursor:pointer">
         <div class="rec-head">
-          <span class="dot" style="--oshi:#7B5CC6"></span>
+          <span class="dot" style="--oshi:#8957A1"></span>
           <div class="rec-title">LUMIÈRE ARENA TOUR「Aurora」大阪 2日目</div>
           <div class="rec-date">2026.06.14</div>
         </div>
@@ -460,7 +602,7 @@
 
       <div class="rec">
         <div class="rec-head">
-          <span class="dot" style="--oshi:#3D77C9"></span>
+          <span class="dot" style="--oshi:#1D6EC9"></span>
           <div class="rec-title">8PEACE STADIUM「BLUE HOUR」東京</div>
           <div class="rec-date">2026.05.05</div>
         </div>
@@ -474,27 +616,31 @@
 
       <div class="rec">
         <div class="rec-head">
-          <span class="dot" style="--oshi:#7B5CC6"></span>
+          <span class="dot" style="--oshi:#8957A1"></span>
           <div class="rec-title">LUMIÈRE ARENA TOUR「Aurora」横浜 初日</div>
           <div class="rec-date">2026.04.11</div>
         </div>
         <div class="rec-meta">
-          <span>会場 <b data-venue-link>横浜アリーナ</b></span>
+          <span>会場 <b>横浜アリーナ</b></span>
           <span>座席 <b>センター C2ブロック</b></span>
           <span>名義 <b>紫の名義</b></span>
         </div>
       </div>
     </section>
 
-    <!-- ================= 名義 ================= -->
+    <!-- ================= 名義（FCタブ束ね） ================= -->
     <section class="screen" id="scr-meigi">
-      <div class="sec-label">名義台帳</div>
+      <div class="fc-tabs">
+        <span class="fc-tab on">LUMIÈRE FC</span>
+        <span class="fc-tab">8PEACE FC</span>
+        <span class="fc-tab add">＋ FC追加</span>
+      </div>
 
-      <div class="m-card" style="--oshi:#7B5CC6">
-        <span class="swatch"></span>
-        <div class="m-club">LUMIÈRE FAMILY CLUB</div>
-        <div class="m-kind">MEMBERSHIP</div>
-        <div class="m-name">片倉 菖<small>自名義</small></div>
+      <div class="m-card tappable" style="--oshi:#8957A1" data-detail="scr-meigi-detail">
+        <div class="m-cardhead">
+          <span class="m-swatch"></span>
+          <div class="m-name">片倉 菖<small>自名義</small></div>
+        </div>
         <div class="m-no">No. 0482 1957 33</div>
         <div class="m-foot">
           <span>入会 <b>2019.03</b>（8年目）</span>
@@ -502,23 +648,11 @@
         </div>
       </div>
 
-      <div class="m-card" style="--oshi:#3D77C9">
-        <span class="swatch"></span>
-        <div class="m-club">8PEACE OFFICIAL FC</div>
-        <div class="m-kind">MEMBERSHIP</div>
-        <div class="m-name">片倉 洋子<small>母名義</small></div>
-        <div class="m-no">No. 1120 8834 07</div>
-        <div class="m-foot">
-          <span>入会 <b>2022.11</b>（4年目）</span>
-          <span class="badge ok">更新済</span>
+      <div class="m-card tappable" style="--oshi:#D8A03C" data-detail="scr-meigi-detail">
+        <div class="m-cardhead">
+          <span class="m-swatch"></span>
+          <div class="m-name">佐藤 由紀<small>ゆきちゃん共同</small></div>
         </div>
-      </div>
-
-      <div class="m-card" style="--oshi:#D8A03C">
-        <span class="swatch"></span>
-        <div class="m-club">LUMIÈRE FAMILY CLUB</div>
-        <div class="m-kind">MEMBERSHIP</div>
-        <div class="m-name">佐藤 由紀<small>ゆきちゃん共同</small></div>
         <div class="m-no">No. 0771 2245 90</div>
         <div class="m-foot">
           <span>入会 <b>2021.06</b>（6年目）</span>
@@ -526,17 +660,11 @@
         </div>
       </div>
 
-      <p class="privacy-note">名義情報はこの端末の中にだけ保存されます。外部への送信は行いません。</p>
+      <button class="m-add">＋ この FC に名義を追加</button>
     </section>
 
-    <!-- ================= 当落 ================= -->
+    <!-- ================= 当落（セレクト化） ================= -->
     <section class="screen" id="scr-lot">
-      <!-- v1.2: 申込登録（/lots/create）・公演共有マスタへの導線。一括インポートは公演側へ移設 -->
-      <div class="lot-actions">
-        <a class="primary">＋ 申込を登録</a>
-        <a class="secondary" onclick="showScreen('scr-events')">公演一覧</a>
-      </div>
-
       <div class="sec-label">当落待ち</div>
 
       <div class="lot">
@@ -548,12 +676,20 @@
         </div>
         <div class="lot-rows">
           <div class="lot-row">
-            <span class="who"><span class="dot" style="--oshi:#7B5CC6"></span>自名義・1枚</span>
-            <span class="st wait">未発表</span>
+            <span class="who"><span class="dot" style="--oshi:#8957A1"></span>自名義・1枚</span>
+            <select class="lot-select" data-v="pending">
+              <option value="pending" selected>未発表</option>
+              <option value="won">当選</option>
+              <option value="lost">落選</option>
+            </select>
           </div>
           <div class="lot-row">
             <span class="who"><span class="dot" style="--oshi:#D8A03C"></span>ゆきちゃん共同・2枚</span>
-            <span class="st wait">未発表</span>
+            <select class="lot-select" data-v="pending">
+              <option value="pending" selected>未発表</option>
+              <option value="won">当選</option>
+              <option value="lost">落選</option>
+            </select>
           </div>
         </div>
       </div>
@@ -569,12 +705,20 @@
         </div>
         <div class="lot-rows">
           <div class="lot-row">
-            <span class="who"><span class="dot" style="--oshi:#7B5CC6"></span>自名義・1枚</span>
-            <span class="st win">当選</span>
+            <span class="who"><span class="dot" style="--oshi:#8957A1"></span>自名義・1枚</span>
+            <select class="lot-select" data-v="won">
+              <option value="pending">未発表</option>
+              <option value="won" selected>当選</option>
+              <option value="lost">落選</option>
+            </select>
           </div>
           <div class="lot-row">
             <span class="who"><span class="dot" style="--oshi:#D8A03C"></span>ゆきちゃん共同・2枚</span>
-            <span class="st lose">落選</span>
+            <select class="lot-select" data-v="lost">
+              <option value="pending">未発表</option>
+              <option value="won">当選</option>
+              <option value="lost" selected>落選</option>
+            </select>
           </div>
         </div>
       </div>
@@ -588,341 +732,441 @@
         </div>
         <div class="lot-rows">
           <div class="lot-row">
-            <span class="who"><span class="dot" style="--oshi:#3D77C9"></span>母名義・2枚</span>
-            <span class="st lose">落選</span>
-          </div>
-        </div>
-      </div>
-    </section>
-    <!-- ================= v1.1: 会場詳細（見え方マッピング） ================= -->
-    <section class="screen" id="scr-venue">
-      <div class="sec-label">横浜アリーナ</div>
-      <div class="rec">
-        <div class="rec-meta" style="margin:0">
-          <span>住所 <b>神奈川県横浜市港北区新横浜3-10</b></span>
-          <span>最寄 <b>新横浜駅</b></span>
-          <span>キャパ <b>17,000</b></span>
-        </div>
-      </div>
-
-      <div class="sec-label">見え方マッピング</div>
-      <div class="photo-grid">
-        <div class="photo-tile">
-          <div class="ph">PHOTO</div>
-          <div class="meta">
-            <div>座席 <b>センター C2 4列</b></div>
-            <div>2026.04.11・片倉 菖</div>
-          </div>
-        </div>
-        <div class="photo-tile">
-          <div class="ph">PHOTO</div>
-          <div class="meta">
-            <div>座席 <b>スタンド上手 12列</b></div>
-            <div>2026.06.14・ゆき</div>
-          </div>
-        </div>
-        <div class="photo-tile">
-          <div class="ph">PHOTO</div>
-          <div class="meta">
-            <div>座席 <b>アリーナ B4 22列</b></div>
-            <div>2025.12.24・まお</div>
+            <span class="who"><span class="dot" style="--oshi:#1D6EC9"></span>母名義・2枚</span>
+            <select class="lot-select" data-v="won">
+              <option value="pending">未発表</option>
+              <option value="won" selected>当選</option>
+              <option value="lost">落選</option>
+            </select>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ================= v1.2: 参戦登録（公演セレクト→自動表示・手入力は座席と写真のみ） ================= -->
-    <section class="screen" id="scr-create">
-      <div class="sec-label">参戦を記録</div>
-
-      <!-- v1.2: 公演は検索付きセレクト（events共有マスタ・インクリメンタル絞り込み） -->
-      <label class="form-label">公演</label>
-      <div class="combo">
-        <input class="form-input" type="text" id="ev-search" placeholder="公演名で検索（例: Prism）" autocomplete="off">
-        <div class="combo-list" id="ev-list"></div>
+    <!-- ================= 公演（共有マスタ・v1.2追加タブ） ================= -->
+    <section class="screen" id="scr-event">
+      <div class="ev-lead">
+        公演情報はメンバー全員で持ち寄る共有台帳です。参戦・申込のときはここから公演を選ぶだけで日付・会場が入ります。
+      </div>
+      <div class="ev-actions">
+        <button class="ev-new">＋ 公演を追加</button>
+        <button class="ev-import">一覧を貼って一括登録</button>
       </div>
 
-      <!-- 公演を選ぶと日付・会場・アクセスが自動表示（読取専用・参戦テーブルには持たない） -->
-      <div class="ev-auto" id="ev-auto" style="display:none">
-        <span class="tag">選択中の公演（自動表示・読取）</span>
-        <div>日付 <b id="ev-date">—</b></div>
-        <div>会場 <b id="ev-venue">—</b></div>
-        <div>アクセス <b id="ev-access">—</b></div>
-      </div>
-      <p class="combo-empty" style="padding-left:0" id="ev-nohit" hidden>
-        該当する公演がありません。<a onclick="showScreen('scr-event-create')">＋ 公演を新規登録</a>
-      </p>
+      <div class="sec-label">今後の公演</div>
 
-      <!-- 手入力は座席3フィールドと写真のみ。seat_rawは自動合成＋編集可 -->
-      <label class="form-label">座席</label>
-      <div class="seat-fields">
-        <input class="form-input" type="text" placeholder="ブロック">
-        <input class="form-input" type="text" placeholder="列">
-        <input class="form-input" type="text" placeholder="番">
+      <div class="ev">
+        <div class="ev-date">07.25<br>（土）</div>
+        <div class="ev-body">
+          <div class="ev-name">LUMIÈRE「Prism of Night」</div>
+          <div class="ev-venue">横浜アリーナ <span class="ev-time">開演 17:00</span></div>
+        </div>
+        <div class="ev-count">参戦 2</div>
       </div>
 
-      <label class="form-label">座席表記（自動合成・編集可）</label>
-      <input class="form-input" type="text" placeholder="アリーナ B4 3列 15番">
-
-      <label class="form-label">名義（複数選択可）</label>
-      <div class="swatch-picker" style="gap:8px">
-        <span class="meigi-chip"><span class="dot" style="--oshi:#8957A1"></span>紫の名義</span>
-        <span class="meigi-chip"><span class="dot" style="--oshi:#1D6EC9"></span>母名義</span>
-        <span class="meigi-chip"><span class="dot" style="--oshi:#00A960"></span>ゆきちゃん共同</span>
+      <!-- 同日昼夜は start_time で別レコード（v1.3：公演名に「昼/夜」を書かず開演で区別） -->
+      <div class="ev">
+        <div class="ev-date">08.09<br>（土）</div>
+        <div class="ev-body">
+          <div class="ev-name">LUMIÈRE「Prism of Night」東京ドーム</div>
+          <div class="ev-venue">東京ドーム <span class="ev-time">開演 14:00</span></div>
+        </div>
+        <div class="ev-count">参戦 1</div>
       </div>
 
-      <label class="form-label">写真（5枚まで・メンバー間で共有）</label>
-      <input class="form-input" type="file" multiple>
+      <div class="ev">
+        <div class="ev-date">08.09<br>（土）</div>
+        <div class="ev-body">
+          <div class="ev-name">LUMIÈRE「Prism of Night」東京ドーム</div>
+          <div class="ev-venue">東京ドーム <span class="ev-time">開演 18:30</span></div>
+        </div>
+        <div class="ev-count">参戦 0</div>
+      </div>
 
-      <button class="btn-primary">この参戦を記録する</button>
+      <div class="sec-label">過去の公演</div>
+
+      <div class="ev">
+        <div class="ev-date">06.14<br>（土）</div>
+        <div class="ev-body">
+          <div class="ev-name">LUMIÈRE ARENA TOUR「Aurora」大阪 2日目</div>
+          <div class="ev-venue">大阪城ホール <span class="ev-time">開演 17:00</span></div>
+        </div>
+        <div class="ev-count">参戦 3</div>
+      </div>
     </section>
 
-    <!-- ================= v1.2: 名義詳細（FC情報・伏字＋コピー・email追加） ================= -->
+    <!-- ================= 参戦詳細 ================= -->
+    <section class="screen" id="scr-att-detail">
+      <button class="detail-back" data-back="scr-rec">‹ 参戦記録へ戻る</button>
+
+      <div class="att-hero" style="--oshi:#8957A1">
+        <div class="att-date">2026.06.14（土）</div>
+        <div class="att-title">LUMIÈRE ARENA TOUR「Aurora」大阪 2日目</div>
+        <span class="att-meigi"><span class="dot" style="--oshi:#8957A1"></span>紫の名義（自名義）</span>
+      </div>
+
+      <div class="d-block">
+        <div class="d-h">公演情報（共有マスタ）</div>
+        <div class="d-row"><span class="k">会場</span><span class="v">大阪城ホール</span></div>
+        <div class="d-row"><span class="k">最寄</span><span class="v">大阪環状線 大阪城公園駅</span></div>
+        <div class="d-row"><span class="k">開演</span><span class="v mono">17:00</span></div>
+      </div>
+
+      <div class="d-block">
+        <div class="d-h">座席・記録</div>
+        <div class="d-row"><span class="k">座席</span><span class="v">スタンド上手 12列 41番</span></div>
+        <div class="d-row"><span class="k">同行</span><span class="v">ゆきちゃん</span></div>
+      </div>
+
+      <div class="d-block">
+        <div class="d-h">メモ</div>
+        <p style="font-size:12.5px;line-height:1.8;color:var(--ink)">アンコールで銀テ2本確保。MCの新曲裏話は今回だけ？帰りに崎陽軒。</p>
+      </div>
+
+      <div class="d-block">
+        <div class="d-h">この日の写真（3）</div>
+        <div class="thumb-grid">
+          <div class="thumb">📷</div>
+          <div class="thumb">📷</div>
+          <div class="thumb">＋</div>
+        </div>
+      </div>
+
+      <button class="venue-view-btn" data-detail="scr-venue-detail">
+        <span>この会場のビューを見る</span>
+        <small>大阪城ホール ・ 見え方マッピング</small>
+      </button>
+    </section>
+
+    <!-- ================= 名義詳細 ================= -->
     <section class="screen" id="scr-meigi-detail">
-      <span class="back-link" onclick="showScreen('scr-meigi')">← 名義台帳へ</span>
-      <div class="m-card" style="--oshi:#8957A1;margin-top:4px">
-        <span class="swatch"></span>
-        <div class="m-club">LUMIÈRE FAMILY CLUB</div>
-        <div class="m-kind">MEMBERSHIP</div>
-        <div class="m-name">片倉 菖<small>自名義</small></div>
+      <div class="detail-topbar">
+        <button class="detail-back" data-back="scr-meigi">‹ 名義へ戻る</button>
+        <button class="detail-edit" data-detail="scr-meigi-edit">編集</button>
+      </div>
+
+      <div class="m-card" style="--oshi:#8957A1;margin-bottom:16px">
+        <div class="m-cardhead">
+          <span class="m-swatch"></span>
+          <div class="m-name">片倉 菖<small>自名義</small></div>
+        </div>
         <div class="m-no">No. 0482 1957 33</div>
         <div class="m-foot">
-          <span>有効期限 <b>2027.02.28</b></span>
+          <span>LUMIÈRE FC ・ 入会 <b>2019.03</b>（8年目）</span>
           <span class="badge">更新受付中</span>
         </div>
       </div>
 
-      <div class="sec-label">FC情報（コピー）</div>
-      <div class="copy-list">
-        <div class="copy-row">
-          <span class="lbl">会員番号</span>
-          <span class="val">0482 1957 33</span>
+      <div class="d-block">
+        <div class="d-h">ログイン情報（コピー専用・平文は表示しない）</div>
+        <div class="copy-field">
+          <span class="cf-k">会員番号</span>
+          <span class="cf-v">0482 1957 33</span>
           <button class="copy-btn">コピー</button>
         </div>
-        <div class="copy-row">
-          <span class="lbl">ログインID</span>
-          <span class="val mask">••••••••••</span>
+        <div class="copy-field">
+          <span class="cf-k">パスワード</span>
+          <span class="cf-v">••••••••</span>
           <button class="copy-btn">コピー</button>
         </div>
-        <div class="copy-row">
-          <span class="lbl">email</span>
-          <span class="val mask">••••••••••••</span>
-          <button class="copy-btn">コピー</button>
-        </div>
-        <div class="copy-row">
-          <span class="lbl">パスワード</span>
-          <span class="val mask">••••••••</span>
+        <div class="copy-field">
+          <span class="cf-k">ID <small style="color:var(--ink-sub);font-weight:400">（任意）</small></span>
+          <span class="cf-v">shou_katakura</span>
           <button class="copy-btn">コピー</button>
         </div>
       </div>
-      <p class="privacy-note">値は伏字表示。コピー時のみ復号した平文をクリップボードへ渡し、画面には出しません。</p>
 
-      <button class="btn-primary" onclick="showScreen('scr-meigi-edit')" style="background:var(--paper);color:var(--ink);border:1px solid var(--keisen-strong)">この名義を編集</button>
+      <div class="d-block">
+        <div class="d-h">個人情報（名義人）</div>
+        <div class="copy-field">
+          <span class="cf-k">住所</span>
+          <span class="cf-v">••••••••••••</span>
+          <button class="copy-btn">コピー</button>
+        </div>
+        <div class="copy-field">
+          <span class="cf-k">電話番号</span>
+          <span class="cf-v">••••••••••</span>
+          <button class="copy-btn">コピー</button>
+        </div>
+        <div class="copy-field">
+          <span class="cf-k">メールアドレス</span>
+          <span class="cf-v">••••••••••••</span>
+          <button class="copy-btn">コピー</button>
+        </div>
+        <div class="d-row" style="border-bottom:none">
+          <span class="k">誕生日</span>
+          <span class="v mono">1998.05.12 <span style="color:var(--ink-sub);font-weight:400">（28歳）</span></span>
+        </div>
+      </div>
+
+      <div class="d-block">
+        <div class="d-h">会員期限</div>
+        <div class="d-row"><span class="k">有効期限</span><span class="v mono">2026.10.31</span></div>
+        <div class="d-row"><span class="k">更新受付</span><span class="v mono">2026.09.02 – 10.31</span></div>
+      </div>
+
+      <div class="d-block">
+        <div class="d-h">この名義の申込・当落</div>
+        <div class="apply-row">
+          <div class="ar-body">
+            <div class="ar-name">LUMIÈRE「Prism of Night」東京ドーム</div>
+            <div class="ar-date">2026.08.09</div>
+          </div>
+          <span class="ar-st pending">未発表</span>
+        </div>
+        <div class="apply-row">
+          <div class="ar-body">
+            <div class="ar-name">LUMIÈRE「Prism of Night」横浜アリーナ</div>
+            <div class="ar-date">2026.07.25</div>
+          </div>
+          <span class="ar-st won">当選</span>
+        </div>
+        <div class="apply-row">
+          <div class="ar-body">
+            <div class="ar-name">LUMIÈRE ARENA TOUR「Aurora」大阪</div>
+            <div class="ar-date">2026.06.14</div>
+          </div>
+          <span class="ar-st won">当選</span>
+        </div>
+        <div class="apply-row">
+          <div class="ar-body">
+            <div class="ar-name">LUMIÈRE ARENA TOUR「Aurora」名古屋</div>
+            <div class="ar-date">2026.05.30</div>
+          </div>
+          <span class="ar-st lost">落選</span>
+        </div>
+      </div>
     </section>
 
-    <!-- ================= v1.2: 名義編集（担当色プリセット11色セレクト） ================= -->
-    <section class="screen" id="scr-meigi-edit">
-      <span class="back-link" onclick="showScreen('scr-meigi-detail')">← 名義詳細へ</span>
-      <div class="sec-label">名義を編集</div>
+    <!-- ================= 会場詳細（見え方マッピング） ================= -->
+    <section class="screen" id="scr-venue-detail">
+      <button class="detail-back" data-back="scr-att-detail">‹ 参戦記録へ戻る</button>
 
-      <label class="form-label">アーティスト名</label>
-      <input class="form-input" type="text" value="LUMIÈRE">
+      <div class="venue-hero">
+        <div class="vh-name">大阪城ホール</div>
+        <div class="vh-sub">大阪環状線 大阪城公園駅 ・ キャパ約16,000</div>
+      </div>
 
-      <label class="form-label">FC登録メール（email・暗号化保存）</label>
-      <input class="form-input" type="email" placeholder="fc-login@example.com">
+      <!-- 360°ビュー導線：arena_view_key 非NULLの会場のみ表示（v1.3追加） -->
+      <button class="arena-view-btn" data-scr="scr-arena-view">
+        <span class="av-icon">◎</span>
+        <span class="av-body">
+          <span class="av-title">360°で会場を見る</span>
+          <span class="av-sub">あなたの席（スタンド上手 12列 41番）から見回す</span>
+        </span>
+        <span class="av-arrow">›</span>
+      </button>
 
-      <!-- v1.2: ネイティブcolor入力を廃止し、プリセット11色から選択 -->
-      <label class="form-label">担当色（プリセット11色から選択）</label>
-      <div class="swatch-picker" id="oshi-picker"></div>
+      <div class="d-block">
+        <div class="d-h">自分のメモ</div>
+        <div class="d-row"><span class="k">定宿</span><span class="v">ホテル◯◯（京橋）</span></div>
+        <div class="d-row"><span class="k">交通費</span><span class="v mono">往復 ¥29,800</span></div>
+      </div>
 
-      <button class="btn-primary">更新する</button>
+      <div class="sec-label">見え方マッピング（メンバー全員の記録）</div>
+
+      <div class="view-tile">
+        <div class="view-photo">📷 スタンド上手からの眺め</div>
+        <div class="view-cap">
+          <span class="view-seat">スタンド上手 12列 41番</span>
+          <span class="view-by">by 菖（自名義）</span>
+        </div>
+      </div>
+
+      <div class="view-tile">
+        <div class="view-photo">📷 アリーナ中央からの眺め</div>
+        <div class="view-cap">
+          <span class="view-seat">アリーナ C3ブロック</span>
+          <span class="view-by">by ゆきちゃん</span>
+        </div>
+      </div>
+
+      <div class="view-tile">
+        <div class="view-photo">📷 スタンド下手からの眺め</div>
+        <div class="view-cap">
+          <span class="view-seat">スタンド下手 8列</span>
+          <span class="view-by">by たけ</span>
+        </div>
+      </div>
     </section>
 
-    <!-- ================= v1.2: 公演一覧（共有マスタ・全ユーザー可） ================= -->
-    <section class="screen" id="scr-events">
-      <div class="sec-label">公演（共有マスタ）</div>
-      <div class="link-row">
-        <a class="primary" onclick="showScreen('scr-event-create')">＋ 公演を登録</a>
-        <a onclick="showScreen('scr-event-import')">一括インポート</a>
-      </div>
-
-      <div class="ev-card">
-        <span class="d">07.25</span>
-        <div class="t">LUMIÈRE LIVE TOUR 2026「Prism of Night」<div class="v">横浜アリーナ</div></div>
-        <span class="shared">共有</span>
-      </div>
-      <div class="ev-card">
-        <span class="d">07.05</span>
-        <div class="t">8PEACE「BLUE HOUR」東京<div class="v">味の素スタジアム</div></div>
-        <span class="shared">共有</span>
-      </div>
-      <div class="ev-card">
-        <span class="d">06.14</span>
-        <div class="t">LUMIÈRE ARENA TOUR「Aurora」大阪 2日目<div class="v">大阪城ホール</div></div>
-        <span class="shared">共有</span>
+    <!-- ================= 360°ビュー（別画面・フルスクリーン・v1.3追加） ================= -->
+    <section class="screen" id="scr-arena-view" style="padding:0">
+      <div class="av-stage">
+        <button class="av-close" data-back="scr-venue-detail">‹ 会場詳細へ戻る</button>
+        <div class="av-canvas">
+          <div class="av-canvas-note">
+            <div class="av-canvas-icon">◎</div>
+            <div class="av-canvas-title">360° 会場ビュー</div>
+            <div class="av-canvas-desc">大阪城ホール（円形ドーム型）<br>実装では Three.js の会場ジオメトリを<br>ここにフルスクリーン描画</div>
+          </div>
+          <!-- 自席ピック（①完全一致：block+row+number が引けた場合） -->
+          <div class="av-pin">
+            <div class="av-pin-dot"></div>
+            <div class="av-pin-label"><small>あなたの席</small><br>スタンド上手 12列 41番</div>
+          </div>
+        </div>
+        <div class="av-hud">
+          <div class="av-hud-seat">◎ スタンド上手 12列 41番からの視点</div>
+          <div class="av-hud-hint">ドラッグで見回す ・ ピンチでズーム</div>
+        </div>
       </div>
     </section>
 
-    <!-- ================= v1.2: 公演登録（会場は検索付きセレクト・重複警告） ================= -->
-    <section class="screen" id="scr-event-create">
-      <span class="back-link" onclick="showScreen('scr-events')">← 公演一覧へ</span>
-      <div class="sec-label">公演を登録</div>
+    <!-- ================= 名義編集 ================= -->
+    <section class="screen" id="scr-meigi-edit" style="padding-bottom:96px">
+      <button class="detail-back" data-back="scr-meigi-detail">‹ 編集をやめる</button>
 
-      <label class="form-label">公演名</label>
-      <input class="form-input" type="text" placeholder="例: LUMIÈRE「Prism of Night」">
-
-      <label class="form-label">公演日</label>
-      <input class="form-input" type="date" value="2026-07-25">
-
-      <label class="form-label">会場（検索付きセレクト・無ければ新規＝Places自動入力）</label>
-      <div class="combo">
-        <input class="form-input" type="text" placeholder="会場名で検索" value="横浜アリーナ">
+      <div class="d-block">
+        <div class="d-h">名義の基本</div>
+        <div class="f-field">
+          <label>FC（グループ）</label>
+          <select class="f-input">
+            <option>LUMIÈRE FC</option>
+            <option>8PEACE FC</option>
+          </select>
+        </div>
+        <div class="f-field">
+          <label>担当アーティスト名</label>
+          <input class="f-input" type="text" value="LUMIÈRE" placeholder="担当を入力">
+        </div>
+        <div class="f-field">
+          <label>名義の呼び名 <span class="opt">（任意）</span></label>
+          <input class="f-input" type="text" value="自名義" placeholder="例：母名義・ゆきちゃん共同">
+        </div>
+        <div class="f-field">
+          <label>担当色</label>
+          <div class="swatch-picker">
+            <span class="swatch-opt" style="background:#E60033"></span>
+            <span class="swatch-opt" style="background:#F6851F"></span>
+            <span class="swatch-opt" style="background:#F2C500"></span>
+            <span class="swatch-opt" style="background:#8FC31F"></span>
+            <span class="swatch-opt" style="background:#00A960"></span>
+            <span class="swatch-opt" style="background:#00AFEC"></span>
+            <span class="swatch-opt" style="background:#1D6EC9"></span>
+            <span class="swatch-opt sel" style="background:#8957A1"></span>
+            <span class="swatch-opt" style="background:#EE87B4"></span>
+            <span class="swatch-opt" style="background:#FFFFFF"></span>
+            <span class="swatch-opt" style="background:#2B2B2B"></span>
+          </div>
+        </div>
       </div>
 
-      <!-- 同一会場×同一日付の重複はブロックせず警告（昼夜2公演があるため） -->
-      <div class="warn">同じ会場・同じ日付の公演が既にあります（昼夜2公演なら続行OK）。重複でなければ日付か公演名を確認してください。</div>
-
-      <button class="btn-primary">共有マスタに登録する</button>
-    </section>
-
-    <!-- ================= v1.2: 一括インポート（/events/import・全ユーザー可・名義選択なし） ================= -->
-    <section class="screen" id="scr-event-import">
-      <span class="back-link" onclick="showScreen('scr-events')">← 公演一覧へ</span>
-      <div class="sec-label">公演を一括インポート</div>
-
-      <label class="form-label">公演一覧を貼り付け</label>
-      <textarea class="form-input" rows="4" placeholder="7/25 横浜アリーナ Prism of Night&#10;7/26 横浜アリーナ Prism of Night"></textarea>
-
-      <div class="sec-label">解析結果（確認・修正）</div>
-      <div class="imp-head"><span>日付</span><span>公演名 / 会場</span><span></span></div>
-      <div class="imp-row">
-        <input class="form-input" type="date" value="2026-07-25">
-        <input class="form-input" type="text" value="Prism of Night ／ 横浜アリーナ">
-        <button class="rm">×</button>
-      </div>
-      <div class="imp-row">
-        <input class="form-input" type="date" value="2026-07-26">
-        <input class="form-input" type="text" value="Prism of Night ／ 横浜アリーナ">
-        <button class="rm">×</button>
-      </div>
-      <div class="imp-row">
-        <input class="form-input" type="date" value="">
-        <input class="form-input" type="text" placeholder="（解析不能・空欄のまま。手で補完 or 除外）">
-        <button class="rm">×</button>
+      <div class="d-block">
+        <div class="d-h">ログイン情報</div>
+        <div class="f-field">
+          <label>会員番号</label>
+          <input class="f-input" type="text" value="0482 1957 33" placeholder="会員番号">
+        </div>
+        <div class="f-field">
+          <label>パスワード</label>
+          <input class="f-input" type="password" value="dummy1234" placeholder="変更する場合のみ入力">
+          <div class="f-hint">保存された値は表示されません。変更したいときだけ入力してください。</div>
+        </div>
+        <div class="f-field">
+          <label>ID <span class="opt">（任意・メアドとは別）</span></label>
+          <input class="f-input" type="text" value="shou_katakura" placeholder="ログインIDがあれば入力">
+        </div>
       </div>
 
-      <p class="combo-empty" style="padding-left:0">名義選択はありません。共有マスタ（events）へ入るだけです。</p>
-      <button class="btn-primary">共有マスタへ一括登録する</button>
+      <div class="d-block">
+        <div class="d-h">個人情報（名義人）</div>
+        <div class="f-field">
+          <label>住所</label>
+          <input class="f-input" type="text" placeholder="保存済み（変更する場合のみ入力）">
+        </div>
+        <div class="f-field">
+          <label>電話番号</label>
+          <input class="f-input" type="tel" placeholder="保存済み（変更する場合のみ入力）">
+        </div>
+        <div class="f-field">
+          <label>メールアドレス</label>
+          <input class="f-input" type="email" placeholder="保存済み（変更する場合のみ入力）">
+        </div>
+        <div class="f-field" style="margin-bottom:0">
+          <label>誕生日</label>
+          <input class="f-input" type="date" value="1998-05-12">
+          <div class="f-hint">年齢は誕生日から自動計算されます。</div>
+        </div>
+      </div>
+
+      <div class="d-block">
+        <div class="d-h">入会日</div>
+        <div class="f-field" style="margin-bottom:0">
+          <label>入会年月</label>
+          <input class="f-input" type="month" value="2019-03">
+          <div class="f-hint">有効期限・更新受付期間はこの日付から自動計算されます。</div>
+        </div>
+      </div>
+
+      <button class="f-danger" data-back="scr-meigi">この名義を削除する</button>
     </section>
   </main>
 
-  <button class="fab" id="fab">＋ 参戦を記録</button>
+  <div class="form-bar" id="formBar" style="display:none">
+    <button class="fb-cancel" data-back="scr-meigi-detail">キャンセル</button>
+    <button class="fb-save" data-back="scr-meigi-detail">保存する</button>
+  </div>
 
-  <nav aria-label="メインナビゲーション">
-    <button class="on" data-scr="scr-home"><span class="bar"></span>ホーム</button>
-    <button data-scr="scr-rec"><span class="bar"></span>参戦記録</button>
-    <button data-scr="scr-meigi"><span class="bar"></span>名義</button>
-    <button data-scr="scr-lot"><span class="bar"></span>当落</button>
-  </nav>
+  <button class="fab" id="fab">＋ 参戦を記録</button>
 </div>
 
 <script>
   const navBtns = document.querySelectorAll('nav button');
   const screens = document.querySelectorAll('.screen');
   const fab = document.getElementById('fab');
+  const main = document.querySelector('main');
+  // FAB非表示にする画面（機微情報・共有マスタ・詳細・編集・360°には記録動線を混ぜない）
+  const noFab = ['scr-meigi','scr-event','scr-att-detail','scr-meigi-detail','scr-venue-detail','scr-meigi-edit','scr-arena-view'];
+  const formBar = document.getElementById('formBar');
 
-  function showScreen(id){
+  function show(id){
     screens.forEach(s=>s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    document.querySelector('main').scrollTo(0,0);
+    const isEdit = (id === 'scr-meigi-edit');
+    fab.style.display = (noFab.includes(id) || isEdit) ? 'none' : 'block';
+    formBar.style.display = isEdit ? 'flex' : 'none';
+    main.scrollTo(0,0);
   }
 
+  // 上部ナビ
   navBtns.forEach(btn=>{
     btn.addEventListener('click',()=>{
       navBtns.forEach(b=>b.classList.remove('on'));
       btn.classList.add('on');
-      showScreen(btn.dataset.scr);
-      // 記帳ボタンは名義画面では非表示（機微情報画面に記録動線を混ぜない）
-      fab.style.display = btn.dataset.scr === 'scr-meigi' ? 'none' : 'block';
+      show(btn.dataset.scr);
     });
   });
 
-  // v1.1: FAB → 参戦登録フォーム / 会場名クリック → 会場詳細（デモ遷移）
-  fab.addEventListener('click',()=>showScreen('scr-create'));
-  document.querySelectorAll('[data-venue-link]').forEach(el=>{
-    el.style.textDecoration='underline';
-    el.style.cursor='pointer';
-    el.addEventListener('click',()=>showScreen('scr-venue'));
+  // カード → 詳細へ（ナビの選択状態は変えない）
+  document.querySelectorAll('[data-detail]').forEach(el=>{
+    el.addEventListener('click',()=> show(el.dataset.detail));
   });
 
-  // v1.2: 名義カード → 名義詳細（デモ遷移）
-  document.querySelectorAll('#scr-meigi .m-card').forEach(el=>{
-    el.style.cursor='pointer';
-    el.addEventListener('click',()=>showScreen('scr-meigi-detail'));
+  // 360°ビュー導線（会場詳細内・別画面へ・ナビの選択状態は変えない）
+  document.querySelectorAll('.arena-view-btn[data-scr]').forEach(el=>{
+    el.addEventListener('click',()=> show(el.dataset.scr));
   });
 
-  // v1.2: 担当色プリセット（コード上の設定配列・増減は配列編集のみ／金は不採用）
-  const OSHI_PRESETS = [
-    {name:'赤',    hex:'#E60033'},
-    {name:'オレンジ',hex:'#F6851F'},
-    {name:'黄',    hex:'#F2C500'},
-    {name:'黄緑',  hex:'#8FC31F'},
-    {name:'緑',    hex:'#00A960'},
-    {name:'水色',  hex:'#00AFEC'},
-    {name:'青',    hex:'#1D6EC9'},
-    {name:'紫',    hex:'#8957A1'},
-    {name:'ピンク', hex:'#EE87B4'},
-    {name:'白',    hex:'#FFFFFF'},
-    {name:'黒',    hex:'#2B2B2B'},
-  ];
-  const picker = document.getElementById('oshi-picker');
-  if (picker){
-    OSHI_PRESETS.forEach((c,i)=>{
-      const b = document.createElement('div');
-      b.className = 'swatch-opt' + (i===7 ? ' sel' : ''); // 初期選択=紫（デモ）
-      b.style.background = c.hex;
-      b.title = c.name;
-      if (c.hex === '#FFFFFF') b.style.borderColor = 'var(--keisen-strong)'; // 白は枠線必須
-      b.addEventListener('click',()=>{
-        picker.querySelectorAll('.swatch-opt').forEach(x=>x.classList.remove('sel'));
-        b.classList.add('sel');
+  // 詳細の「戻る」
+  document.querySelectorAll('[data-back]').forEach(el=>{
+    el.addEventListener('click',()=> show(el.dataset.back));
+  });
+
+  // 担当色スウォッチ：単一選択
+  document.querySelectorAll('.swatch-picker').forEach(picker=>{
+    picker.querySelectorAll('.swatch-opt').forEach(opt=>{
+      opt.addEventListener('click',()=>{
+        picker.querySelectorAll('.swatch-opt').forEach(o=>o.classList.remove('sel'));
+        opt.classList.add('sel');
       });
-      picker.appendChild(b);
     });
-  }
+  });
 
-  // v1.2: 参戦登録の公演検索付きセレクト（events共有マスタ・インクリメンタル絞り込み）
-  const EVENTS = [
-    {name:'LUMIÈRE「Prism of Night」東京ドーム', date:'2026.07.30（木）', venue:'東京ドーム',   access:'水道橋駅 徒歩3分'},
-    {name:'LUMIÈRE LIVE TOUR「Prism of Night」横浜アリーナ', date:'2026.07.25（土）', venue:'横浜アリーナ', access:'新横浜駅 徒歩5分'},
-    {name:'8PEACE「BLUE HOUR」東京', date:'2026.07.05（土）', venue:'味の素スタジアム', access:'飛田給駅 徒歩5分'},
-  ];
-  const evSearch = document.getElementById('ev-search');
-  const evList   = document.getElementById('ev-list');
-  const evAuto   = document.getElementById('ev-auto');
-  const evNohit  = document.getElementById('ev-nohit');
-  function renderEvList(q){
-    if (!evList) return;
-    const hits = EVENTS.filter(e=>e.name.toLowerCase().includes(q.toLowerCase()));
-    evList.innerHTML = '';
-    evNohit.hidden = !(q && hits.length === 0);
-    if (!q){ return; }
-    hits.forEach(e=>{
-      const b = document.createElement('button');
-      b.innerHTML = e.name + '<div class="sub">'+e.date+'・'+e.venue+'</div>';
-      b.addEventListener('click',()=>{
-        evSearch.value = e.name;
-        evList.innerHTML = '';
-        evNohit.hidden = true;
-        document.getElementById('ev-date').textContent   = e.date;
-        document.getElementById('ev-venue').textContent  = e.venue;
-        document.getElementById('ev-access').textContent = e.access;
-        evAuto.style.display = 'block';
-      });
-      evList.appendChild(b);
-    });
-  }
-  if (evSearch){ evSearch.addEventListener('input',e=>renderEvList(e.target.value)); }
+  // 当落セレクト：選択に応じて見た目を切り替え
+  document.querySelectorAll('.lot-select').forEach(sel=>{
+    sel.addEventListener('change',e=>{ e.target.dataset.v = e.target.value; });
+  });
 </script>
 </body>
 </html>

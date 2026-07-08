@@ -23,6 +23,12 @@
                value="{{ old('event_date') }}" required>
         @error('event_date')<div class="form-error">{{ $message }}</div>@enderror
 
+        {{-- ★v1.3：開演時間（任意）。同日昼夜は開演を変えて別公演として登録する（§4 events start_time）。 --}}
+        <label class="form-label" for="start_time">開演時間（任意）</label>
+        <input class="form-input @error('start_time') is-invalid @enderror" type="time" id="start_time" name="start_time"
+               value="{{ old('start_time') }}">
+        @error('start_time')<div class="form-error">{{ $message }}</div>@enderror
+
         @include('partials.venue-select')
 
         {{-- 重複警告後の続行フラグ（同一会場×同一日付でも昼夜2公演なら続行OK） --}}

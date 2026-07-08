@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Services\EventImportParser;
 use App\Services\EventService;
-use App\Services\LotImportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -16,7 +16,7 @@ class EventController extends Controller
 {
     public function __construct(
         private EventService $service,
-        private LotImportService $importService,
+        private EventImportParser $parser,
     ) {
     }
 
@@ -39,6 +39,7 @@ class EventController extends Controller
         $validated = $request->validate([
             'event_name' => ['required', 'string', 'max:255'],
             'event_date' => ['required', 'date'],
+            'start_time' => ['nullable', 'date_format:H:i'],
             'venue_id' => ['nullable', 'exists:venues,id'],
             'venue_name' => ['nullable', 'string', 'max:255'],
             'venue_address' => ['nullable', 'string', 'max:255'],
@@ -46,20 +47,22 @@ class EventController extends Controller
         ], [
             'event_name.required' => '公演名を入力してください',
             'event_date.required' => '日付を入力してください',
+            'start_time.date_format' => '開演時間は HH:MM 形式で入力してください',
         ]);
 
         $venueId = $this->service->resolveVenueId($validated);
+        $startTime = $validated['start_time'] ?? null;
 
-        // 同一会場×同一日付は警告（ブロックしない・昼夜2公演があるため）。
+        // ★v1.3：重複判定は 会場×日×開演。start_time が違えば昼夜として通す（ブロックしない）。
         // 未確認なら確認画面へ戻す。confirm_duplicate=1 で続行。
-        $dups = $this->service->findDuplicates($venueId, $validated['event_date']);
+        $dups = $this->service->findDuplicates($venueId, $validated['event_date'], $startTime);
         if ($dups->isNotEmpty() && empty($validated['confirm_duplicate'])) {
             return back()
                 ->withInput()
-                ->with('duplicate_warning', '同じ会場・同じ日付の公演が既にあります（昼夜2公演なら続行OK）。重複でなければ日付か公演名を確認してください。');
+                ->with('duplicate_warning', '同じ会場・同じ日付・同じ開演の公演が既にあります（昼夜2公演なら開演時間を変えて続行）。重複でなければ日付か公演名を確認してください。');
         }
 
-        $this->service->create($validated['event_name'], $validated['event_date'], $venueId);
+        $this->service->create($validated['event_name'], $validated['event_date'], $startTime, $venueId);
 
         return redirect()->route('events.index')
             ->with('success', '公演を共有マスタに登録しました');
@@ -116,9 +119,15 @@ class EventController extends Controller
             'text.required' => 'テキストを貼り付けてください',
         ]);
 
-        $rows = $this->importService->parse($validated['text']);
+        // ★v1.3：EventImportParser（jsx parse() の移植）で show 行を抽出。
+        // ツアー名は全行へ適用、未解析行は捨てず確認画面に出す。
+        $result = $this->parser->extractEvents($validated['text']);
 
-        return view('events.import-confirm', compact('rows'));
+        return view('events.import-confirm', [
+            'rows' => $result['events'],
+            'unknown' => $result['unknown'],
+            'tour' => $result['tour'],
+        ]);
     }
 
     public function importStore(Request $request)
@@ -128,6 +137,7 @@ class EventController extends Controller
             'rows.*.include' => ['nullable', 'boolean'],
             'rows.*.event_name' => ['nullable', 'string', 'max:255'],
             'rows.*.event_date' => ['nullable', 'date'],
+            'rows.*.start_time' => ['nullable', 'date_format:H:i'],
             'rows.*.venue_name' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -150,7 +160,10 @@ class EventController extends Controller
                     'venue_name' => $row['venue_name'] ?? null,
                 ]);
 
-                $this->service->create($row['event_name'], $row['event_date'], $venueId);
+                // start_time は空なら NULL。昼夜は別 start_time の別行として個別に登録される。
+                $startTime = ! empty($row['start_time']) ? $row['start_time'] : null;
+
+                $this->service->create($row['event_name'], $row['event_date'], $startTime, $venueId);
                 $imported++;
             }
         });

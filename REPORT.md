@@ -101,6 +101,22 @@ mockup.html は色プリセット・公演セレクト・参戦確認・email欄
 |---|---|---|
 | QV12-1 | heic受付は libheif 未導入のため保留（安全側=拒否で仮置き） | 保留（infra導入で解除） |
 
+## mockup.html と実装CSSの差分（2026-07-08 洗い出し）
+
+ビルドは最新（`public/build` に v1.2 クラス含む・ビルド起因ではない）。マークアップとCSSの構造的不一致を重要度順に記録。
+
+| # | 重要度 | 差分 | 該当 | 状態 |
+|---|---|---|---|---|
+| D1 | 🔴 最重要 | 登録/編集フォームの縦間隔が密着。v1.2で `.form-group` を廃し素の `.form-label` を並べたが、`app.css` の `.form-label` に上マージンが無い（mockup `margin:14px 0 6px` ↔ app `margin-bottom:6px` のみ）＋`.form-input`に下マージン無し→入力欄と次ラベルが0pxで密着 | attendances/create・edit, events/create・import, lots/create, partials(event-select/venue-select/oshi-picker)。identities/create・edit・auth は `.form-group` 併用で崩れず→画面間で間隔がバラつく | **未修正** |
+| D2 | 🟠 中 | `.seat-fields{display:flex;gap:8px}` が app.css 未定義。ビュー側インラインstyleで代替（描画は出るがクラス空振り） | attendances/create・edit | **未修正** |
+| D3 | 🟠 中 | 名義詳細のFC情報コピーがmockupの `.copy-list/.copy-row`（会員証様式）でなく旧 `.detail-section` 縦積み。CSSは用意済みだが未使用 | identities/show | **未修正** |
+| D4 | 🟡 小 | `.copy-btn` 見た目差（mockup=ピル型/押下反転、app=角丸6px小箱）。動作差なし | app.css:321 | 許容 |
+| D5 | 🟡 小 | トークン変数の二重管理（mockup `--oshi` ↔ app `--color-*`＋インライン `--oshi-color`）。実害なし | 全体 | 許容 |
+| — | ⚪ 設計差 | body flex中央寄せ↔`.phone margin:0 auto`（等価）/ mockupは`.screen`JS切替↔実装はサーバールーティング`.screen-content`。崩れではない | — | 仕様差 |
+
+**推奨修正**: D1（`.form-label` を `margin:14px 0 6px` に）だけで見た目の崩れはほぼ解消。D2は `.seat-fields` を app.css 追加＋インライン除去。D3はmockup忠実化（見た目変更を伴うため要判断）。
+**現状**: 差分の洗い出しのみ完了。修正は未着手（人間の適用可否待ち）。
+
 ---
 
 # （過去）現場手帖 v1.1 改修レポート（2026-07-08）

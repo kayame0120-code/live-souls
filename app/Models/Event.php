@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * 公演情報の共有マスタ（spec §4）。
@@ -15,6 +17,7 @@ class Event extends Model
     protected $fillable = [
         'event_name',
         'event_date',
+        'start_time',
         'venue_id',
     ];
 
@@ -23,6 +26,21 @@ class Event extends Model
         return [
             'event_date' => 'date',
         ];
+    }
+
+    /**
+     * 開演時間（QV13-5）。列型は time。
+     * 指示書の `datetime:H:i` キャストは保存時に `Y-m-d H:i:s` を time 列へ入れてしまい
+     * SQLiteの whereTime 突合ズレ・PostgreSQLの INSERT 失敗を招くため、
+     * 「保存は H:i:s のクリーンな時刻文字列／取得は Carbon」で往復するアクセサに差し替える。
+     * これにより表示側の ->format('H:i') はそのまま使え、time 列にも安全に収まる。
+     */
+    protected function startTime(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value === null || $value === '' ? null : Carbon::parse($value),
+            set: fn ($value) => $value === null || $value === '' ? null : Carbon::parse($value)->format('H:i:s'),
+        );
     }
 
     public function venue(): BelongsTo

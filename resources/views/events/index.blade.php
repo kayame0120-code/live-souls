@@ -13,7 +13,10 @@
 
     @forelse($events as $event)
     <div class="ev-card">
-        <span class="d">{{ $event->event_date->format('m.d') }}</span>
+        <span class="d">
+            {{ $event->event_date->format('m.d') }}
+            @if($event->start_time)<small class="ev-time">開演 {{ $event->start_time->format('H:i') }}</small>@endif
+        </span>
         <div class="t">
             {{ $event->event_name }}
             <div class="vn">{{ $event->venue?->name ?? '会場未設定' }}</div>

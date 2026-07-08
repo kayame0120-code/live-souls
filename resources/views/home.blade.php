@@ -15,8 +15,9 @@
                 @if($nextAttendance->venue)
                 <span>会場 <b>{{ $nextAttendance->venue->name }}</b></span>
                 @endif
-                @if($nextAttendance->start_time)
-                <span>開演 <b>{{ \Carbon\Carbon::parse($nextAttendance->start_time)->format('H:i') }}</b></span>
+                {{-- ★v1.3（QV13-1）：開演は公演(event)の属性を参照 --}}
+                @if($nextAttendance->event?->start_time)
+                <span>開演 <b>{{ $nextAttendance->event->start_time->format('H:i') }}</b></span>
                 @endif
             </div>
             @if($nextAttendance->fcMemberships->isNotEmpty())
@@ -32,6 +33,13 @@
             予定なし
         </div>
     @endif
+
+    {{-- 公演共有マスタへのグローバル導線（spec §3の4タブは増やさず・当落タブ以外の入口を補う） --}}
+    <div class="sec-label">公演マスタ</div>
+    <div class="link-row">
+        <a href="{{ route('events.index') }}" class="primary">公演一覧</a>
+        <a href="{{ route('events.import') }}">貼り付けインポート</a>
+    </div>
 
     {{-- 公演日を過ぎた予定（planned）の「参戦した？」確認（spec §5・自動遷移はしない） --}}
     @if($pendingConfirmations->isNotEmpty())
