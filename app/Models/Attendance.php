@@ -46,10 +46,13 @@ class Attendance extends Model
         return $this->event?->venue;
     }
 
-    /** 公演名（event 経由・ビュー互換アクセサ） */
+    /**
+     * 公演見出し（v1.4: tours.name + event_label を event 経由で解決）。
+     * spec §5「公演名表示は tours 経由の参照のみ」。自由記述コピーは持たない。
+     */
     public function getEventNameAttribute(): ?string
     {
-        return $this->event?->event_name;
+        return $this->event?->displayName();
     }
 
     /** 公演日（event 経由・ビュー互換アクセサ） */

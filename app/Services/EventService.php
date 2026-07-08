@@ -41,14 +41,40 @@ class EventService
         return null;
     }
 
-    public function create(string $eventName, string $eventDate, ?string $startTime, ?int $venueId): Event
+    /**
+     * 公演（日程）を作成（v1.4: tour_id 必須・event_label は任意ラベル）。
+     */
+    public function create(int $tourId, ?string $eventLabel, string $eventDate, ?string $startTime, ?int $venueId): Event
     {
         return Event::create([
-            'event_name' => $eventName,
+            'tour_id' => $tourId,
+            'event_label' => $eventLabel,
             'event_date' => $eventDate,
             'start_time' => $startTime,
             'venue_id' => $venueId,
         ]);
+    }
+
+    /**
+     * ツアー名を解決する（venue 名寄せと同じパターン・spec §5「ツアーの共有マスタ管理」）。
+     * tour_id 指定があれば優先、なければ名前で既存検索、無ければ新規作成。
+     */
+    public function resolveTourId(array $data): ?int
+    {
+        if (! empty($data['tour_id'])) {
+            return (int) $data['tour_id'];
+        }
+
+        if (! empty($data['tour_name'])) {
+            $existing = \App\Models\Tour::where('name', $data['tour_name'])->first();
+            if ($existing) {
+                return $existing->id;
+            }
+
+            return \App\Models\Tour::create(['name' => $data['tour_name']])->id;
+        }
+
+        return null;
     }
 
     /**

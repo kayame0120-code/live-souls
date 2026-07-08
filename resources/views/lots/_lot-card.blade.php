@@ -2,12 +2,15 @@
 <div class="lot">
     <div class="lot-head">
         <div>
+            {{-- ツアー詳細内なので日程（会場＋ラベル）を見出しにする。ツアー名はヒーロー側 --}}
             <a href="{{ route('attendances.show', $attendance) }}" style="color:inherit; text-decoration:none;">
-                <div class="lot-title">{{ $attendance->event_name }}</div>
+                <div class="lot-title">
+                    {{ $attendance->venue?->name ?? '会場未設定' }}@if($attendance->event?->event_label) {{ $attendance->event->event_label }}@endif
+                </div>
             </a>
             <div class="lot-sub">
-                {{ $attendance->event_date->format('m.d') }}（{{ $attendance->event_date->translatedFormat('D') }}）
-                @if($attendance->venue)・{{ $attendance->venue->name }}@endif
+                {{ optional($attendance->event_date)->format('m.d') }}（{{ optional($attendance->event_date)->translatedFormat('D') }}）
+                @if($attendance->event?->start_time)・開演 {{ $attendance->event->start_time->format('H:i') }}@endif
             </div>
         </div>
     </div>

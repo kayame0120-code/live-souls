@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Tour;
 use App\Services\EventImportParser;
 use App\Services\EventService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
- * 公演共有マスタ（events）。全ユーザー読取／追加／編集可・user_idスコープなし（規約0-6の例外②）。
- * 削除は紐づく attendances 0件時のみ。
+ * 公演（日程）の共有マスタ（events）と公演一覧（ツアーカード）。
+ * 全ユーザー読取／追加／編集可・user_idスコープなし（規約0-6の例外②）。
+ * v1.4: events は必ずツアー（tours）配下。一覧はツアーカードで表示する。
  */
 class EventController extends Controller
 {
@@ -20,32 +23,37 @@ class EventController extends Controller
     ) {
     }
 
+    /** 公演一覧＝ツアーカード一覧（spec §3・mockup #scr-event） */
     public function index()
     {
-        // 「参戦 N」は共有マスタとして全メンバー分を数える（削除ガードと同じ withoutGlobalScopes）
-        $events = Event::with('venue')
-            ->withCount(['attendances' => fn ($q) => $q->withoutGlobalScopes()])
-            ->orderBy('event_date')
-            ->get();
+        $today = Carbon::today();
 
-        $today = \Illuminate\Support\Carbon::today();
+        $tours = Tour::withCount('events')
+            ->with(['events' => fn ($q) => $q->orderBy('event_date')])
+            ->get()
+            ->map(function ($tour) use ($today) {
+                // 開催状況: 未来の日程が残っていれば「開催中」、無ければ「終了」
+                $hasUpcoming = $tour->events->contains(fn ($e) => $e->event_date->gte($today));
+                $tour->status_label = $tour->events_count === 0 ? '日程未登録' : ($hasUpcoming ? '開催中' : '終了');
+                return $tour;
+            })
+            ->sortByDesc(fn ($t) => optional($t->events->max('event_date'))->timestamp)
+            ->values();
 
-        // 今後（本日以降）は近い順、過去は新しい順（mockup: 今後の公演 → 過去の公演）
-        $upcoming = $events->filter(fn ($e) => $e->event_date->gte($today))->values();
-        $past = $events->filter(fn ($e) => $e->event_date->lt($today))->sortByDesc('event_date')->values();
-
-        return view('events.index', compact('upcoming', 'past'));
+        return view('events.index', compact('tours'));
     }
 
-    public function create()
+    /** 日程（event）登録フォーム（ツアー配下・旧 /events/create を置換） */
+    public function create(Tour $tour)
     {
-        return view('events.create');
+        return view('events.create', compact('tour'));
     }
 
-    public function store(Request $request)
+    /** 日程（event）を対象ツアー配下に登録 */
+    public function store(Request $request, Tour $tour)
     {
         $validated = $request->validate([
-            'event_name' => ['required', 'string', 'max:255'],
+            'event_label' => ['nullable', 'string', 'max:255'],
             'event_date' => ['required', 'date'],
             'start_time' => ['nullable', 'date_format:H:i'],
             'venue_id' => ['nullable', 'exists:venues,id'],
@@ -53,7 +61,6 @@ class EventController extends Controller
             'venue_address' => ['nullable', 'string', 'max:255'],
             'confirm_duplicate' => ['nullable', 'boolean'],
         ], [
-            'event_name.required' => '公演名を入力してください',
             'event_date.required' => '日付を入力してください',
             'start_time.date_format' => '開演時間は HH:MM 形式で入力してください',
         ]);
@@ -61,55 +68,74 @@ class EventController extends Controller
         $venueId = $this->service->resolveVenueId($validated);
         $startTime = $validated['start_time'] ?? null;
 
-        // ★v1.3：重複判定は 会場×日×開演。start_time が違えば昼夜として通す（ブロックしない）。
-        // 未確認なら確認画面へ戻す。confirm_duplicate=1 で続行。
+        // 重複判定は 会場×日×開演（ツアーをまたいでも対象・spec §5）。ブロックはしない
         $dups = $this->service->findDuplicates($venueId, $validated['event_date'], $startTime);
         if ($dups->isNotEmpty() && empty($validated['confirm_duplicate'])) {
             return back()
                 ->withInput()
-                ->with('duplicate_warning', '同じ会場・同じ日付・同じ開演の公演が既にあります（昼夜2公演なら開演時間を変えて続行）。重複でなければ日付か公演名を確認してください。');
+                ->with('duplicate_warning', '同じ会場・同じ日付・同じ開演の日程が既にあります（昼夜2公演なら開演時間を変えて続行）。');
         }
 
-        $this->service->create($validated['event_name'], $validated['event_date'], $startTime, $venueId);
+        $this->service->create($tour->id, $validated['event_label'] ?? null, $validated['event_date'], $startTime, $venueId);
 
-        return redirect()->route('events.index')
-            ->with('success', '公演を共有マスタに登録しました');
+        return redirect()->route('tours.show', $tour)
+            ->with('success', '日程を登録しました');
     }
 
     public function destroy(Event $event)
     {
-        // 紐づく参戦がある公演は削除不可（venues/グループ削除と同型・spec §5）
+        // 紐づく参戦がある日程は削除不可（venues/グループ削除と同型・spec §5）
         if (! $event->canBeDeleted()) {
-            return back()->with('error', 'この公演には参戦記録が紐づいているため削除できません');
+            return back()->with('error', 'この日程には参戦記録が紐づいているため削除できません');
         }
 
+        $tour = $event->tour;
         $event->delete();
 
-        return redirect()->route('events.index')
-            ->with('success', '公演を削除しました');
+        return redirect()->route('tours.show', $tour)
+            ->with('success', '日程を削除しました');
     }
 
-    /** 検索付きセレクト用の events サジェスト（全ユーザー・読取のみ・規約0-6④） */
-    public function suggest(Request $request)
+    /**
+     * カスケード選択②用: 指定ツアー配下の日程を返す（v1.5・全ユーザー読取のみ）。
+     * ラベルは「日付（曜）会場 開演（event_label）」で組み立てる。
+     */
+    public function eventsByTour(Tour $tour)
+    {
+        $events = $tour->events()
+            ->with('venue')
+            ->orderBy('event_date')
+            ->orderBy('start_time')
+            ->get()
+            ->map(function ($e) {
+                $parts = [$e->event_date->format('Y.m.d') . '（' . $e->event_date->translatedFormat('D') . '）'];
+                if ($e->venue) {
+                    $parts[] = $e->venue->name;
+                }
+                if ($e->start_time) {
+                    $parts[] = $e->start_time->format('H:i');
+                }
+                $label = implode(' ', $parts);
+                if ($e->event_label) {
+                    $label .= '（' . $e->event_label . '）';
+                }
+                return ['id' => $e->id, 'label' => $label];
+            });
+
+        return response()->json($events);
+    }
+
+    /** ツアー名の検索付きセレクト用サジェスト（一括インポートのツアー解決・全ユーザー読取のみ） */
+    public function toursSuggest(Request $request)
     {
         $q = $request->get('q', '');
         if (mb_strlen($q) < 1) {
             return response()->json([]);
         }
 
-        $events = Event::with('venue')
-            ->where('event_name', 'like', "%{$q}%")
-            ->orderByDesc('event_date')
-            ->limit(15)
-            ->get()
-            ->map(fn ($e) => [
-                'id' => $e->id,
-                'event_name' => $e->event_name,
-                'event_date' => $e->event_date->format('Y-m-d'),
-                'venue_name' => $e->venue?->name,
-            ]);
-
-        return response()->json($events);
+        return response()->json(
+            Tour::where('name', 'like', "%{$q}%")->orderBy('name')->limit(15)->get(['id', 'name'])
+        );
     }
 
     // ---- 一括インポート（/events/import・全ユーザー可・名義選択なし） ----
@@ -127,8 +153,7 @@ class EventController extends Controller
             'text.required' => 'テキストを貼り付けてください',
         ]);
 
-        // ★v1.3：EventImportParser（jsx parse() の移植）で show 行を抽出。
-        // ツアー名は全行へ適用、未解析行は捨てず確認画面に出す。
+        // parse() は不変（jsx 1:1移植）。tour は全行共通、未解析行は捨てず確認画面に出す
         $result = $this->parser->extractEvents($validated['text']);
 
         return view('events.import-confirm', [
@@ -138,15 +163,22 @@ class EventController extends Controller
         ]);
     }
 
+    /**
+     * 確認テーブルの内容で一括登録（v1.4: ツアー名を解決してから events を INSERT）。
+     * ツアー名は1回の貼り付けで1つ（全行共通）。既存tour照合／無ければ新規作成。
+     */
     public function importStore(Request $request)
     {
         $validator = validator($request->all(), [
+            'tour_name' => ['required', 'string', 'max:255'],
             'rows' => ['required', 'array', 'min:1'],
             'rows.*.include' => ['nullable', 'boolean'],
-            'rows.*.event_name' => ['nullable', 'string', 'max:255'],
+            'rows.*.event_label' => ['nullable', 'string', 'max:255'],
             'rows.*.event_date' => ['nullable', 'date'],
             'rows.*.start_time' => ['nullable', 'date_format:H:i'],
             'rows.*.venue_name' => ['nullable', 'string', 'max:255'],
+        ], [
+            'tour_name.required' => 'ツアー名を入力してください',
         ]);
 
         if ($validator->fails()) {
@@ -158,9 +190,12 @@ class EventController extends Controller
         $imported = 0;
 
         DB::transaction(function () use ($validated, &$imported) {
+            // ツアー名解決（既存照合／無ければ新規作成・venue名寄せと同型）
+            $tourId = $this->service->resolveTourId(['tour_name' => $validated['tour_name']]);
+
             foreach ($validated['rows'] as $row) {
-                // 必須未充足（event_name/event_date）・除外行は取込対象外
-                if (empty($row['include']) || empty($row['event_name']) || empty($row['event_date'])) {
+                // 必須未充足（event_date）・除外行は取込対象外
+                if (empty($row['include']) || empty($row['event_date'])) {
                     continue;
                 }
 
@@ -168,10 +203,10 @@ class EventController extends Controller
                     'venue_name' => $row['venue_name'] ?? null,
                 ]);
 
-                // start_time は空なら NULL。昼夜は別 start_time の別行として個別に登録される。
                 $startTime = ! empty($row['start_time']) ? $row['start_time'] : null;
+                $eventLabel = ! empty($row['event_label']) ? $row['event_label'] : null;
 
-                $this->service->create($row['event_name'], $row['event_date'], $startTime, $venueId);
+                $this->service->create($tourId, $eventLabel, $row['event_date'], $startTime, $venueId);
                 $imported++;
             }
         });
@@ -181,6 +216,6 @@ class EventController extends Controller
         }
 
         return redirect()->route('events.index')
-            ->with('success', "{$imported}件の公演を共有マスタに登録しました");
+            ->with('success', "{$imported}件の日程を共有マスタに登録しました");
     }
 }

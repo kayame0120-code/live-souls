@@ -13,7 +13,7 @@ class HomeService
     public function getNextAttendance(): ?Attendance
     {
         // applied は当落待ちであり確定した現場ではない（spec §5-7）。日付・会場は event 経由
-        return Attendance::with(['event.venue', 'fcMemberships.person'])
+        return Attendance::with(['event.tour', 'event.venue', 'fcMemberships.person'])
             ->whereIn('status', ['planned', 'attended'])
             ->eventDateFrom(Carbon::today())
             ->orderByEventDateDesc() // 直近未来を先頭にするため後で反転
@@ -47,7 +47,7 @@ class HomeService
 
     public function getRecentAttendances(int $limit = 3)
     {
-        return Attendance::with(['event.venue', 'fcMemberships.person'])
+        return Attendance::with(['event.tour', 'event.venue', 'fcMemberships.person'])
             ->whereNotIn('status', ['skipped', 'applied'])
             ->eventDateUntil(Carbon::today())
             ->orderByEventDateDesc()
@@ -61,7 +61,7 @@ class HomeService
      */
     public function getPendingConfirmations()
     {
-        return Attendance::with(['event.venue', 'fcMemberships.person'])
+        return Attendance::with(['event.tour', 'event.venue', 'fcMemberships.person'])
             ->where('status', 'planned')
             ->whereHas('event', fn ($e) => $e->whereDate('event_date', '<', Carbon::today()))
             ->orderByEventDateDesc()

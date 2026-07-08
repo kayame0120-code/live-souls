@@ -9,6 +9,7 @@ use App\Http\Controllers\IdentityGroupController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\LotController;
 use App\Http\Controllers\PhotoController;
+use App\Http\Controllers\TourController;
 use App\Http\Controllers\VenueController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,15 +42,23 @@ Route::middleware('auth')->group(function () {
     Route::resource('identity-groups', IdentityGroupController::class)->except(['show']);
     Route::post('/identity-groups/reorder', [IdentityGroupController::class, 'reorder'])->name('identity-groups.reorder');
 
-    // 当落・申込登録（S9）
+    // 当落（S9・v1.4: ツアーカード一覧→当落詳細）。create は tour より前に定義
     Route::get('/lots', [LotController::class, 'index'])->name('lots.index');
     Route::get('/lots/create', [LotController::class, 'create'])->name('lots.create');
     Route::post('/lots', [LotController::class, 'store'])->name('lots.store');
+    Route::get('/lots/tours/{tour}', [LotController::class, 'showByTour'])->name('lots.tour');
 
-    // 公演共有マスタ（events・全ユーザー可・user_idスコープなし）＋一括インポート（S11）
+    // ツアー共有マスタ（v1.4・全ユーザー可）。create は {tour} より前に定義
+    Route::get('/tours/create', [TourController::class, 'create'])->name('tours.create');
+    Route::post('/tours', [TourController::class, 'store'])->name('tours.store');
+    Route::get('/tours/{tour}', [TourController::class, 'show'])->name('tours.show');
+    Route::delete('/tours/{tour}', [TourController::class, 'destroy'])->name('tours.destroy');
+    // 日程（event）はツアー配下で作成（旧 /events/create を置換）
+    Route::get('/tours/{tour}/events/create', [EventController::class, 'create'])->name('events.create');
+    Route::post('/tours/{tour}/events', [EventController::class, 'store'])->name('events.store');
+
+    // 公演一覧（ツアーカード）＋一括インポート（S11）
     Route::get('/events', [EventController::class, 'index'])->name('events.index');
-    Route::get('/events/create', [EventController::class, 'create'])->name('events.create');
-    Route::post('/events', [EventController::class, 'store'])->name('events.store');
     Route::get('/events/import', [EventController::class, 'importForm'])->name('events.import');
     Route::post('/events/import/parse', [EventController::class, 'importParse'])->name('events.import.parse');
     Route::post('/events/import', [EventController::class, 'importStore'])->name('events.import.store');
@@ -66,8 +75,10 @@ Route::middleware('auth')->group(function () {
 
     // 会場サジェストAPI
     Route::get('/api/venues/suggest', [VenueController::class, 'suggest'])->name('api.venues.suggest');
-    // 公演サジェスト（events共有マスタ・全ユーザー・読み取りのみ / 規約0-6④）
-    Route::get('/api/events/suggest', [EventController::class, 'suggest'])->name('api.events.suggest');
+    // カスケード選択②：指定ツアー配下の日程（v1.5・全ユーザー読取のみ）
+    Route::get('/api/tours/{tour}/events', [EventController::class, 'eventsByTour'])->name('api.tours.events');
+    // 一括インポートのツアー名解決サジェスト（全ユーザー読取のみ）
+    Route::get('/api/tours/suggest', [EventController::class, 'toursSuggest'])->name('api.tours.suggest');
     // Places API 会場オートフィル（失敗時フォールバック / spec §5-11）
     Route::get('/api/venues/place-lookup', [VenueController::class, 'placeLookup'])->name('api.venues.place-lookup');
 });

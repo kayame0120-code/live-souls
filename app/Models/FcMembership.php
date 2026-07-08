@@ -65,7 +65,7 @@ class FcMembership extends Model
     public function applications()
     {
         return $this->attendances()
-            ->with('event')
+            ->with('event.tour')
             ->orderByEventDateDesc()
             ->get();
     }

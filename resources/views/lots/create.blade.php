@@ -10,7 +10,7 @@
         @csrf
 
         {{-- 公演は events 共有マスタから検索付きセレクトで選択 --}}
-        @include('partials.event-select', ['selectedEvent' => null])
+        @include('partials.event-cascade', ['selectedEvent' => null])
 
         {{-- 申込名義（1つ以上必須 / spec §5-7） --}}
         <label class="form-label">申込名義（複数選択可）</label>

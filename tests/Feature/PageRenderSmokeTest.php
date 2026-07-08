@@ -38,8 +38,8 @@ class PageRenderSmokeTest extends TestCase
             '当落' => ['lots.index'],
             '申込登録' => ['lots.create'],
             '公演一覧' => ['events.index'],
-            '公演登録' => ['events.create'],
             '一括インポート' => ['events.import'],
+            'ツアー作成' => ['tours.create'],
             '招待管理' => ['invitations.index'],
         ];
     }
@@ -58,6 +58,14 @@ class PageRenderSmokeTest extends TestCase
         $this->get(route('identities.edit', $membership))->assertOk();
         $this->get(route('identities.show', $membership))->assertOk();
         $this->get(route('venues.show', $venue))->assertOk();
+    }
+
+    public function test_ツアー詳細と日程登録も200(): void
+    {
+        // v1.4: ツアー配下の画面（tour param 必須）
+        $tour = \App\Models\Event::first()->tour;
+        $this->get(route('tours.show', $tour))->assertOk();
+        $this->get(route('events.create', $tour))->assertOk();
     }
 
     public function test_参戦詳細_参戦編集_当落カードが200(): void

@@ -10,7 +10,7 @@
         @csrf @method('PUT')
 
         {{-- 公演は検索付きセレクト（現在の公演を初期選択） --}}
-        @include('partials.event-select', ['selectedEvent' => $attendance->event])
+        @include('partials.event-cascade', ['selectedEvent' => $attendance->event])
 
         {{-- 座席: 構造化3フィールドが主入力（spec §5-8） --}}
         <label class="form-label">座席</label>

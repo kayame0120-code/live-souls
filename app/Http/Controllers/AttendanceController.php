@@ -25,7 +25,7 @@ class AttendanceController extends Controller
         $year = $request->get('year');
 
         // タイムラインは applied を表示しない（spec §5-7-4）。日付・会場は event 経由
-        $query = Attendance::with(['event.venue', 'fcMemberships.person'])
+        $query = Attendance::with(['event.tour', 'event.venue', 'fcMemberships.person'])
             ->where('status', '!=', 'applied')
             ->orderByEventDateDesc();
 
@@ -37,7 +37,7 @@ class AttendanceController extends Controller
 
         // 年フィルタの選択肢は events から取得
         $years = Attendance::where('status', '!=', 'applied')
-            ->with('event')
+            ->with('event.tour')
             ->get()
             ->map(fn ($a) => optional($a->event?->event_date)->format('Y'))
             ->filter()
@@ -56,7 +56,8 @@ class AttendanceController extends Controller
     public function create()
     {
         $memberships = FcMembership::with('person')->get();
-        return view('attendances.create', compact('memberships'));
+        $tours = \App\Models\Tour::orderByDesc('id')->get(['id', 'name']);
+        return view('attendances.create', compact('memberships', 'tours'));
     }
 
     public function store(Request $request)
@@ -74,15 +75,16 @@ class AttendanceController extends Controller
 
     public function show(Attendance $attendance)
     {
-        $attendance->load(['event.venue', 'fcMemberships.person', 'photos.user']);
+        $attendance->load(['event.tour', 'event.venue', 'fcMemberships.person', 'photos.user']);
         return view('attendances.show', compact('attendance'));
     }
 
     public function edit(Attendance $attendance)
     {
-        $attendance->load(['event.venue', 'fcMemberships', 'photos']);
+        $attendance->load(['event.tour', 'event.venue', 'fcMemberships', 'photos']);
         $memberships = FcMembership::with('person')->get();
-        return view('attendances.edit', compact('attendance', 'memberships'));
+        $tours = \App\Models\Tour::orderByDesc('id')->get(['id', 'name']);
+        return view('attendances.edit', compact('attendance', 'memberships', 'tours'));
     }
 
     public function update(Request $request, Attendance $attendance)

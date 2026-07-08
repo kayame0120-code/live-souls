@@ -15,7 +15,8 @@ use Illuminate\Support\Carbon;
 class Event extends Model
 {
     protected $fillable = [
-        'event_name',
+        'tour_id',
+        'event_label',
         'event_date',
         'start_time',
         'venue_id',
@@ -26,6 +27,24 @@ class Event extends Model
         return [
             'event_date' => 'date',
         ];
+    }
+
+    public function tour(): BelongsTo
+    {
+        return $this->belongsTo(Tour::class);
+    }
+
+    /**
+     * 公演見出し（spec §4「表示の組み立て」・v1.5「tours経由参照のみ」）。
+     * tours.name（＋event_label があれば結合）。公演名の自由記述コピーは持たない。
+     */
+    public function displayName(): string
+    {
+        $name = $this->tour?->name ?? '';
+        if ($this->event_label) {
+            return trim($name . ' ' . $this->event_label);
+        }
+        return $name;
     }
 
     /**

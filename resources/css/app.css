@@ -714,3 +714,34 @@ form > .form-label:first-child { margin-top: 0; }
 .view-cap { padding: 10px 14px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .view-seat { font-size: 12px; font-weight: 700; }
 .view-by { font-size: 10.5px; color: var(--color-ink-sub); white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+
+/* ================= v1.4 ツアー階層 ================= */
+/* ツアーカード（公演一覧・当落一覧） */
+.tour-card {
+    background: var(--color-card); border: 1px solid var(--color-keisen); border-radius: var(--radius-card);
+    padding: 16px 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px;
+    text-decoration: none; color: inherit;
+}
+.tour-card .tc-body { min-width: 0; flex: 1; }
+.tour-card .tc-name { font-size: 15px; font-weight: 700; line-height: 1.5; }
+.tour-card .tc-sub { font-size: 11px; color: var(--color-ink-sub); margin-top: 4px; letter-spacing: .04em; }
+.tour-card .tc-arrow { font-size: 18px; color: var(--color-ink-sub); flex: none; }
+
+/* ツアー詳細：日程行 */
+.sched-row {
+    background: var(--color-card); border: 1px solid var(--color-keisen); border-radius: var(--radius-card);
+    padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px;
+}
+.sched-date {
+    font-size: 11px; font-weight: 700; color: var(--color-oshi); white-space: nowrap;
+    font-feature-settings: "tnum"; letter-spacing: .04em; flex: none; min-width: 44px; text-align: center; line-height: 1.4;
+}
+.sched-body { flex: 1; min-width: 0; }
+.sched-venue { font-size: 13px; font-weight: 700; line-height: 1.5; }
+.sched-time { font-size: 11px; color: var(--color-ink-sub); margin-top: 2px; font-feature-settings: "tnum"; }
+.sched-tag {
+    font-size: 10px; font-weight: 700; letter-spacing: .08em; flex: none;
+    padding: 3px 10px; border-radius: 999px; border: 1px solid var(--color-keisen-strong); color: var(--color-ink-sub);
+}
+.sched-tag.past { background: var(--color-keisen); border-color: var(--color-keisen); }
+.sched-del { font-size: 10px; color: var(--color-oshi); background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; flex: none; }

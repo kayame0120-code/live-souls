@@ -10,7 +10,7 @@
         @csrf
 
         {{-- 公演を検索付きセレクトで選択（events共有マスタ）→ 日付・会場は自動表示 --}}
-        @include('partials.event-select', ['selectedEvent' => null])
+        @include('partials.event-cascade', ['selectedEvent' => null])
 
         {{-- 座席: 構造化3フィールドが主入力（spec §5-8） --}}
         <label class="form-label">座席</label>

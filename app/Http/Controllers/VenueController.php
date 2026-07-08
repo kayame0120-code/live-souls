@@ -18,7 +18,7 @@ class VenueController extends Controller
         $note = $venue->noteForUser(Auth::id());
 
         // 会場は event 経由で解決する（v1.2: attendances に venue_id なし）。自分の参戦のみ
-        $attendances = Attendance::with(['event.venue', 'fcMemberships.person'])
+        $attendances = Attendance::with(['event.tour', 'event.venue', 'fcMemberships.person'])
             ->whereHas('event', fn ($e) => $e->where('venue_id', $venue->id))
             ->orderByEventDateDesc()
             ->get();
@@ -34,7 +34,7 @@ class VenueController extends Controller
                 $photo->setRelation(
                     'attendance',
                     Attendance::withoutGlobalScope(UserScope::class)
-                        ->with('event')
+                        ->with('event.tour')
                         ->find($photo->attendance_id),
                 );
             });

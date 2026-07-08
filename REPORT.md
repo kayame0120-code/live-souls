@@ -1,4 +1,70 @@
-# REPORT.md — 現場手帖 v1.3 view 再テンプレート（2026-07-09）
+# REPORT.md — 現場手帖 v1.4 + v1.5（tours 階層・カスケード選択）2026-07-09
+
+> 検証はすべて **PHP 8.2.32（`/usr/bin/php8.2`・本番Flyと同一系）** で実行。
+> v1.4（破壊的：tours新設・event_id→tour階層・event_name→event_label）＋ v1.5（マイグレーション無し：公演選択のカスケード化）。QV13-1 は片倉指示により「解決済み（開演源＝events.start_time）」として実装。
+
+## 検証ライン判定表（生出力）
+
+### V1: `php artisan migrate:fresh --force`
+```
+  2026_07_09_100001_create_tours_table ........................... DONE
+  2026_07_09_100002_add_tour_id_and_backfill_tours .............. DONE
+  2026_07_09_100003_make_tour_id_not_null_on_events ............. DONE
+  2026_07_09_100004_add_event_label_to_events .................... DONE
+  2026_07_09_100005_drop_event_name_from_events ................. DONE
+V1 EXIT: 0
+```
+`migrate:status`：v1.4 の5マイグレーションが Ran。v1.5 はスキーマ変更なし（新規マイグレーション0件）。
+
+### 逆生成の機械検証（実データ・DROP前・`genba:verify-tour-migration`）
+バックアップ `database.sqlite.pre-v1.4.bak` を復元し、backfill まで実行して検証:
+```
+events 総数: 54
+tour_id 未設定: 0
+distinct event_name: 2 / tours: 2
+検証通過: 全2ツアーが集約・値保全とも一致。event_name DROP 可能です。
+VERIFY EXIT: 0
+```
+- 同一 event_name（54 events → 2 distinct）を2 tours に集約、全 event に tour_id 付与、値は tours.name 側に保全。
+- backfill マイグレーション内にも件数検証を内蔵（tour_id 未設定が1件でもあれば例外停止）。DROP は別マイグレーションに分離。
+
+### V2: `/up`
+```
+V2 HTTP: 200
+```
+
+### V3: `php artisan test`
+```
+  Tests:    112 passed (322 assertions)
+V3 EXIT: 0
+```
+
+## 要件テストの対応（指示書 v1.4 U1-U8 / v1.5 V1-V5）
+| # | 内容 | テスト |
+|---|---|---|
+| U1 | tour逆生成の機械検証（同名は同一tourに集約・全件tour_id） | genba:verify-tour-migration ＋ TourHierarchyTest::u1 |
+| U2 | tour_id NOT NULL（未指定 event 作成が失敗） | TourHierarchyTest::u2 |
+| U3 | event_label 全NULL・event_name値の保全 | verify-tour-migration（値保全突合） |
+| U4 | ツアー一覧＝カード／詳細＝日程一覧 | TourHierarchyTest::u4 |
+| U5 | ＋ツアー追加／＋日程追加の導線と遷移先 | EventMasterTest（作成後→日程追加画面） |
+| U6 | 当落のツアー単位グルーピング（一覧サマリ／詳細の待ち・結果） | TourHierarchyTest::u6 |
+| U7 | 一括インポートのツアー名解決（既存一致／新規作成） | EventMasterTest（2ケース） |
+| U8/V5 | 既存回帰（更新期間境界・当選昇格・タイムライン・削除規則・404/写真403・昼夜別） | 既存スイート緑（112件） |
+| V1 | カスケード②がツアー配下のみに絞られる | TourHierarchyTest::v1（api.tours.events） |
+| V2 | 参戦登録の自動表示・座席/写真入力 | PageRenderSmokeTest（参戦登録200）＋既存参戦テスト |
+| V3 | 申込登録の最小フォーム＝pending自動生成 | TourHierarchyTest::v3 |
+| V4 | 公演名が tours.name(+event_label) 由来 | TourHierarchyTest::v4 |
+
+## 実装サマリ
+- **DB（v1.4破壊的）**：`tours` 新設 → `events.tour_id` 追加＋逆生成（同名集約）＋全件検証 → NOT NULL 化 → `event_label` 追加 → `event_name` DROP。`Tour` モデル・`Event` に `tour()`/`displayName()`。
+- **表示張り替え（v1.4/v1.5）**：`Attendance::event_name` アクセサを `event.displayName()`（tours.name+event_label）へ。eager load に `event.tour` 追加。公演名の自由記述コピーは持たない（原則確定）。
+- **ルート/画面（v1.4）**：`TourController`（create/store/show/destroy）、`/tours/{tour}/events/create`（旧 /events/create 置換）、`/lots/tours/{tour}`（当落詳細）。`/events`＝ツアーカード一覧、`/lots`＝ツアーカード一覧。CSS `.tour-card`/`.sched-row` 移植。
+- **一括インポート（v1.4）**：parse() は不変（jsx移植）。確認テーブルにツアー名の検索付きセレクトを追加し、確定時に既存tour照合／無ければ新規作成。event_label は空で登録。
+- **カスケード選択（v1.5）**：`partials/event-cascade`（①ツアー select→②`api.tours.events` で日程 select）。参戦登録・申込登録・参戦編集に適用。申込登録は当落入力なし（pending自動生成のまま）。
+
+---
+
+# （過去）現場手帖 v1.3 view 再テンプレート（2026-07-09）
 
 > 検証はすべて **PHP 8.2.32（`/usr/bin/php8.2`・本番Flyと同一系）** で実行。
 > 本タスクは **view の骨格と CSS を mockup(v1.3) に追従させる再テンプレートのみ**（ロジック・ルート・データ設計は不変）。
