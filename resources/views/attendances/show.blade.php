@@ -18,7 +18,7 @@
         <div style="display:flex; gap:24px;">
             <div>
                 <div class="detail-label">日付</div>
-                <div class="detail-value">{{ $attendance->event_date->format('Y.m.d') }}（{{ $attendance->event_date->translatedFormat('D') }}）</div>
+                <div class="detail-value">{{ optional($attendance->event_date)->format('Y.m.d') }}（{{ optional($attendance->event_date)->translatedFormat('D') }}）</div>
             </div>
             <div>
                 <div class="detail-label">ステータス</div>

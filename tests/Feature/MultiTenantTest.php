@@ -8,13 +8,14 @@ use App\Models\IdentityGroup;
 use App\Models\Person;
 use App\Models\User;
 use App\Models\VenueNote;
-use App\Models\Venue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\MakesDomainData;
 use Tests\TestCase;
 
 class MultiTenantTest extends TestCase
 {
     use RefreshDatabase;
+    use MakesDomainData;
 
     private User $user;
     private User $other;
@@ -28,11 +29,7 @@ class MultiTenantTest extends TestCase
 
     public function test_他ユーザーの参戦記録にアクセスすると404(): void
     {
-        $attendance = Attendance::create([
-            'user_id' => $this->other->id,
-            'event_name' => '他人の公演',
-            'event_date' => '2026-07-01',
-        ]);
+        $attendance = $this->makeAttendance($this->other);
 
         $this->actingAs($this->user)
             ->get(route('attendances.show', $attendance))
@@ -41,16 +38,12 @@ class MultiTenantTest extends TestCase
 
     public function test_他ユーザーの参戦記録を更新できない(): void
     {
-        $attendance = Attendance::create([
-            'user_id' => $this->other->id,
-            'event_name' => '他人の公演',
-            'event_date' => '2026-07-01',
-        ]);
+        $attendance = $this->makeAttendance($this->other);
+        $event = $this->makeEvent('自分の公演', '2026-07-01');
 
         $this->actingAs($this->user)
             ->put(route('attendances.update', $attendance), [
-                'event_name' => '上書き',
-                'event_date' => '2026-07-01',
+                'event_id' => $event->id,
                 'status' => 'attended',
             ])
             ->assertStatus(404);
@@ -58,11 +51,7 @@ class MultiTenantTest extends TestCase
 
     public function test_他ユーザーの参戦記録を削除できない(): void
     {
-        $attendance = Attendance::create([
-            'user_id' => $this->other->id,
-            'event_name' => '他人の公演',
-            'event_date' => '2026-07-01',
-        ]);
+        $attendance = $this->makeAttendance($this->other);
 
         $this->actingAs($this->user)
             ->delete(route('attendances.destroy', $attendance))
@@ -71,7 +60,7 @@ class MultiTenantTest extends TestCase
 
     public function test_他ユーザーの会場メモは参照されない(): void
     {
-        $venue = Venue::create(['name' => 'テスト会場']);
+        $venue = $this->makeVenue();
 
         VenueNote::create([
             'user_id' => $this->other->id,
@@ -87,7 +76,7 @@ class MultiTenantTest extends TestCase
 
     public function test_他ユーザーの名義にアクセスすると404(): void
     {
-        $membership = $this->createMembershipFor($this->other);
+        $membership = $this->makeMembership($this->other);
 
         $this->actingAs($this->user)
             ->get(route('identities.show', $membership))
@@ -96,12 +85,12 @@ class MultiTenantTest extends TestCase
 
     public function test_他ユーザーの名義IDでは参戦登録できない(): void
     {
-        $membership = $this->createMembershipFor($this->other);
+        $membership = $this->makeMembership($this->other);
+        $event = $this->makeEvent();
 
         $this->actingAs($this->user)
             ->post(route('attendances.store'), [
-                'event_name' => 'テスト公演',
-                'event_date' => '2026-07-01',
+                'event_id' => $event->id,
                 'status' => 'attended',
                 'identity_ids' => [$membership->id],
             ])
@@ -126,39 +115,13 @@ class MultiTenantTest extends TestCase
 
     public function test_他ユーザーの当落結果は更新できない(): void
     {
-        $membership = $this->createMembershipFor($this->other);
-
-        $attendance = Attendance::withoutGlobalScopes()->create([
-            'user_id' => $this->other->id,
-            'event_name' => '他人の公演',
-            'event_date' => '2026-07-01',
-        ]);
+        $membership = $this->makeMembership($this->other);
+        $attendance = $this->makeAttendance($this->other, null, 'applied');
         $attendance->fcMemberships()->attach($membership->id, ['result' => 'pending']);
         $pivotId = $attendance->fcMemberships()->withoutGlobalScopes()->first()->pivot->id;
 
         $this->actingAs($this->user)
             ->patch(route('attendance-identities.update-result', $pivotId), ['result' => 'won'])
             ->assertStatus(404);
-    }
-
-    /** 指定ユーザーの名義（グループ・名義人込み）を作成するヘルパー */
-    private function createMembershipFor(User $owner): FcMembership
-    {
-        $group = IdentityGroup::withoutGlobalScopes()->create([
-            'user_id' => $owner->id,
-            'name' => 'グループ',
-        ]);
-
-        $person = Person::withoutGlobalScopes()->create([
-            'user_id' => $owner->id,
-            'name' => '名義人',
-        ]);
-
-        return FcMembership::withoutGlobalScopes()->create([
-            'user_id' => $owner->id,
-            'person_id' => $person->id,
-            'group_id' => $group->id,
-            'artist_name' => 'テスト',
-        ]);
     }
 }

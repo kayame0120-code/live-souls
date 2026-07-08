@@ -4,15 +4,15 @@ namespace Tests\Feature;
 
 use App\Models\Attendance;
 use App\Models\FcMembership;
-use App\Models\IdentityGroup;
-use App\Models\Person;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\MakesDomainData;
 use Tests\TestCase;
 
 class LotResultTest extends TestCase
 {
     use RefreshDatabase;
+    use MakesDomainData;
 
     private User $user;
     private FcMembership $membership;
@@ -25,20 +25,8 @@ class LotResultTest extends TestCase
         $this->user = User::factory()->create();
         $this->actingAs($this->user);
 
-        $group = IdentityGroup::create(['user_id' => $this->user->id, 'name' => 'G']);
-        $person = Person::create(['user_id' => $this->user->id, 'name' => '太郎']);
-        $this->membership = FcMembership::create([
-            'user_id' => $this->user->id,
-            'person_id' => $person->id,
-            'group_id' => $group->id,
-            'artist_name' => 'A',
-        ]);
-
-        $this->attendance = Attendance::create([
-            'user_id' => $this->user->id,
-            'event_name' => '公演',
-            'event_date' => '2026-08-01',
-        ]);
+        $this->membership = $this->makeMembership($this->user);
+        $this->attendance = $this->makeAttendance($this->user, $this->makeEvent('公演', '2026-08-01'), 'applied');
         $this->attendance->fcMemberships()->attach($this->membership->id, ['result' => 'pending']);
     }
 

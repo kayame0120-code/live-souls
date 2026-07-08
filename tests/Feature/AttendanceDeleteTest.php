@@ -3,15 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\Attendance;
-use App\Models\AttendancePhoto;
 use App\Models\FcMembership;
-use App\Models\IdentityGroup;
-use App\Models\Person;
 use App\Models\User;
 use App\Services\PhotoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Tests\Concerns\MakesDomainData;
 use Tests\TestCase;
 
 /**
@@ -22,6 +20,7 @@ use Tests\TestCase;
 class AttendanceDeleteTest extends TestCase
 {
     use RefreshDatabase;
+    use MakesDomainData;
 
     private User $user;
     private FcMembership $membership;
@@ -34,24 +33,12 @@ class AttendanceDeleteTest extends TestCase
         $this->user = User::factory()->create();
         $this->actingAs($this->user);
 
-        $group = IdentityGroup::create(['user_id' => $this->user->id, 'name' => 'FC']);
-        $person = Person::create(['user_id' => $this->user->id, 'name' => '太郎']);
-        $this->membership = FcMembership::create([
-            'user_id' => $this->user->id,
-            'person_id' => $person->id,
-            'group_id' => $group->id,
-            'artist_name' => 'A',
-        ]);
+        $this->membership = $this->makeMembership($this->user);
     }
 
-    private function makeAttendance(string $status, ?string $result = null): Attendance
+    private function makeAttendanceWithResult(string $status, ?string $result = null): Attendance
     {
-        $attendance = Attendance::create([
-            'user_id' => $this->user->id,
-            'event_name' => '公演',
-            'event_date' => '2026-06-01',
-            'status' => $status,
-        ]);
+        $attendance = $this->makeAttendance($this->user, $this->makeEvent('公演', '2026-06-01'), $status);
         if ($result !== null) {
             $attendance->fcMemberships()->attach($this->membership->id, ['result' => $result]);
         }
@@ -60,20 +47,19 @@ class AttendanceDeleteTest extends TestCase
 
     public function test_applied申込は削除できる(): void
     {
-        $attendance = $this->makeAttendance('applied', 'pending');
+        $attendance = $this->makeAttendanceWithResult('applied', 'pending');
 
         $this->delete(route('attendances.destroy', $attendance))
             ->assertRedirect(route('attendances.index'))
             ->assertSessionHas('success');
 
         $this->assertDatabaseMissing('attendances', ['id' => $attendance->id]);
-        // pivotもcascadeで消える
         $this->assertDatabaseMissing('attendance_identity', ['attendance_id' => $attendance->id]);
     }
 
     public function test_全lostの参戦は削除できる(): void
     {
-        $attendance = $this->makeAttendance('applied', 'lost');
+        $attendance = $this->makeAttendanceWithResult('applied', 'lost');
 
         $this->delete(route('attendances.destroy', $attendance))
             ->assertRedirect(route('attendances.index'));
@@ -83,7 +69,7 @@ class AttendanceDeleteTest extends TestCase
 
     public function test_pivot無しの一般参戦は削除できる(): void
     {
-        $attendance = $this->makeAttendance('attended');
+        $attendance = $this->makeAttendanceWithResult('attended');
 
         $this->delete(route('attendances.destroy', $attendance))
             ->assertRedirect(route('attendances.index'));
@@ -93,7 +79,7 @@ class AttendanceDeleteTest extends TestCase
 
     public function test_won付き参戦は削除できない(): void
     {
-        $attendance = $this->makeAttendance('planned', 'won');
+        $attendance = $this->makeAttendanceWithResult('planned', 'won');
 
         $this->delete(route('attendances.destroy', $attendance))
             ->assertSessionHas('error');
@@ -107,7 +93,7 @@ class AttendanceDeleteTest extends TestCase
 
     public function test_削除時にストレージの写真実体も削除される(): void
     {
-        $attendance = $this->makeAttendance('attended');
+        $attendance = $this->makeAttendanceWithResult('attended');
 
         $photo = app(PhotoService::class)->store(
             $attendance,

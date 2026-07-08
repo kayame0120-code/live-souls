@@ -1,45 +1,28 @@
 # PLAN.md — 現場手帖
 
-## v1.1 改修（2026-07-08）— 完了
+## v1.2 改修（2026-07-08）— 完了
 
-### Phase A: PHP 8.2 依存ツリー修正 ✅
-- config.platform.php=8.2.32 固定 / fortify ~1.36.2（passkeys非内包）
-- config/fortify.php から passkeys・2FA limiter 除去
-- V1〜V3 を PHP 8.2.32 で通過（commit 5cf7270）
+破壊的変更（attendances の event_id 化）を含む改修。migration-first で実施。
 
-### Phase B: DB移行 ✅
-- バックアップ database.sqlite.v1.0.bak（md5一致確認）
-- joined_on 変換マイグレーション（PHP側変換・形式不一致で停止する安全弁）
-- genba:verify-joined-on で機械検証（1件一致）
-- club_name / joined_month / renewal_cycle を DROP
-- attendance_photos 作成（グローバルuser_idスコープなし）
+- **T1-T2 events新設 + event_id移行** ✅
+  events共有マスタ（user_idなし）/ add event_id → backfill（逆生成・機械検証内蔵）→ 旧3カラムDROP /
+  `genba:verify-event-migration` / Attendance に event() + venue/event_name/event_date アクセサ + 日付スコープ
+- **T3 email** ✅ encrypted カラム・伏字コピー
+- **T4 担当色プリセット11色** ✅ `config/oshi_colors.php` + `Rule::in` + 丸スウォッチ選択
+- **T5 events CRUD・検索付きセレクト・重複警告** ✅ EventController/EventService（confirm_duplicateで続行）
+- **T6 一括インポート→events移設** ✅ `/events/import`（名義選択なし・全ユーザー可）
+- **T7 参戦登録の作り替え** ✅ 公演セレクト→日付会場自動表示・手入力は座席と写真
+- **T8 参戦した？確認** ✅ ホーム確認UI + confirmAttendance（自動遷移なし）
+- **T9 当選率撤去** ✅ winRate系削除・WinRateTest削除・当落一覧に置換
+- **T10 heic** ⏸ libheif未導入のため拒否のまま仮置き（QUESTIONS.md QV12-1）
 
-### Phase C: 機能改修11工程 ✅
-1. 廃止カラム参照除去 / 2. グループ削除ガード / 3. 更新期間アクセサ+バッジ /
-4. 申込登録+当選昇格+applied除外 / 5. 座席3フィールド+seat_raw合成 /
-6. 公演名サジェスト / 7. 写真添付+EXIF除去 / 8. 見え方マッピング /
-9. 一括インポート / 10. 同意文言 / 11. Places APIオートフィル
-
-### Phase D: mockup.html 改訂 ✅
-- 丸スウォッチ / 当落導線 / 会場詳細タイル画面 / 参戦登録座席3フィールド画面
-
-### Phase E: テスト ✅ 61件通過
-- 更新期間境界（1月/2月年跨ぎ/境界日/うるう年）/ グループ削除ガード /
-  applied除外 / 当選昇格・非降格 / 写真403・枚数・サイズ・EXIF / 変換突合
-
-### Phase F: 検証+成果物 ✅
-- V1〜V3 を PHP 8.2.32 で全通過（生出力を REPORT.md に貼付）
+### 検証・成果物 ✅
+- V1 migrate:fresh / V2 /up 200 / V3 test 81件（PHP 8.2.32・生出力 REPORT.md）
+- event移行の突合を genba:verify-event-migration とテストで機械担保
 - REPORT.md / QUESTIONS.md / deploy_runbook.md 更新
 
-### Phase G: Q3/Q5 確定反映（v1.1.1）✅
-- Q3 削除規則: `Attendance::canBeDeleted()`（won無しは削除可/won付き不可）+ 写真実体削除 + AttendanceDeleteTest（5件）
-- Q5 HEIC拒否: jpeg/png/webpのみ + PhotoTest heicテスト
-- spec.md §4/§6/§7・変更履歴を確定内容へ転記（実ファイル未反映だったため）
-- QUESTIONS.md 全件クローズ・空。テスト67件通過
+## 残件（人間 infra タスク）
+- QV12-1: heic受付（imagick+libheif 導入で解除・deploy_runbook 1-3 に手順）
 
-## 残件
-**なし。** 未決ゼロ・QUESTIONS.md 空。
-
-## v1.0（初版）— 完了
-Fortify招待制 / 全テーブル / 全画面 / マルチテナント / セキュリティ修正
-（commit 1be8709 / cc2b737 / d99305a）
+## 過去
+- v1.1.1 / v1.1 / v1.0 は git 履歴参照（47be217 / c3dbd4f / 1be8709 等）

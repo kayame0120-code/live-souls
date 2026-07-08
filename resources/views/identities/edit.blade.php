@@ -36,23 +36,25 @@
         </div>
 
         <div class="form-group">
+            <label class="form-label" for="email">FC登録メール（email・暗号化保存）</label>
+            <input class="form-input @error('email') is-invalid @enderror" type="email" id="email" name="email" value="{{ old('email', $fcMembership->email) }}" placeholder="fc-login@example.com">
+            @error('email')<div class="form-error">{{ $message }}</div>@enderror
+        </div>
+
+        <div class="form-group">
             <label class="form-label" for="fc_password">パスワード</label>
             {{-- 復号済みパスワードをHTMLに出力しない。空のままなら既存値を維持 --}}
             <input class="form-input" type="password" id="fc_password" name="fc_password" value="" placeholder="変更する場合のみ入力（空欄なら現在のまま）">
         </div>
 
-        <div style="display:flex; gap:12px;">
-            <div class="form-group" style="flex:1">
-                <label class="form-label" for="joined_month_input">入会年月</label>
-                <input class="form-input @error('joined_month_input') is-invalid @enderror" type="month" id="joined_month_input" name="joined_month_input"
-                       value="{{ old('joined_month_input', optional($fcMembership->joined_on)->format('Y-m')) }}">
-                @error('joined_month_input')<div class="form-error">{{ $message }}</div>@enderror
-            </div>
-            <div class="form-group" style="flex:1">
-                <label class="form-label" for="oshi_color">担当色</label>
-                <input class="form-input" type="color" id="oshi_color" name="oshi_color" value="{{ old('oshi_color', $fcMembership->oshi_color ?? '#C7414F') }}" style="height:42px; padding:4px;">
-            </div>
+        <div class="form-group">
+            <label class="form-label" for="joined_month_input">入会年月</label>
+            <input class="form-input @error('joined_month_input') is-invalid @enderror" type="month" id="joined_month_input" name="joined_month_input"
+                   value="{{ old('joined_month_input', optional($fcMembership->joined_on)->format('Y-m')) }}">
+            @error('joined_month_input')<div class="form-error">{{ $message }}</div>@enderror
         </div>
+
+        @include('partials.oshi-picker', ['selectedColor' => old('oshi_color', $fcMembership->oshi_color)])
 
         <div class="sec-label">名義人情報</div>
 

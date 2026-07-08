@@ -420,3 +420,87 @@ a.rec:hover { border-color: var(--color-keisen-strong); }
     .screen-content { animation: fade .18s ease; }
     @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 }
+
+/* ================= v1.2 追加 ================= */
+/* 参戦した？確認カード */
+.confirm-card {
+    background: var(--color-card); border: 1px solid var(--color-keisen);
+    border-radius: var(--radius-card); padding: 16px 18px; margin-bottom: 12px;
+    position: relative; overflow: hidden;
+}
+.confirm-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--oshi-color, var(--color-oshi)); }
+.confirm-q { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+.confirm-sub { font-size: 11px; color: var(--color-ink-sub); margin-bottom: 12px; line-height: 1.6; }
+.confirm-actions { display: flex; gap: 8px; }
+.confirm-actions button {
+    font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: .06em;
+    padding: 10px 0; border-radius: 999px; cursor: pointer; border: 1px solid var(--color-keisen-strong);
+    background: var(--color-paper); color: var(--color-ink);
+}
+.confirm-actions button.yes { background: var(--color-ink); color: #fff; border-color: var(--color-ink); }
+
+/* 検索付きセレクト（combo） */
+.combo { position: relative; }
+.combo-list {
+    margin-top: 6px; border: 1px solid var(--color-keisen); border-radius: 10px;
+    background: var(--color-card); overflow: hidden;
+}
+.combo-list button {
+    display: block; width: 100%; text-align: left; background: none; border: none;
+    font-family: inherit; font-size: 13px; color: var(--color-ink); cursor: pointer;
+    padding: 10px 14px; border-bottom: 1px solid var(--color-keisen);
+}
+.combo-list button:last-child { border-bottom: none; }
+.combo-list button:hover, .combo-list button.on { background: var(--color-paper); }
+.combo-list .sub { font-size: 11px; color: var(--color-ink-sub); margin-top: 2px; }
+.combo-empty { padding: 10px 0; font-size: 12px; color: var(--color-ink-sub); }
+.combo-empty a { color: var(--color-ink); font-weight: 700; }
+
+/* 公演セレクト後の自動表示（読取専用） */
+.ev-auto {
+    margin: 12px 0 4px; padding: 12px 14px; border-radius: 10px;
+    background: var(--color-paper); border: 1px dashed var(--color-keisen-strong);
+    font-size: 12px; color: var(--color-ink-sub); line-height: 1.9;
+}
+.ev-auto b { color: var(--color-ink); font-weight: 500; }
+.ev-auto .tag { font-size: 9px; letter-spacing: .2em; color: var(--color-ink-sub); display: block; margin-bottom: 4px; }
+
+/* コピー行（伏字＋コピー） */
+.copy-list { margin-top: 6px; border: 1px solid var(--color-keisen); border-radius: 12px; overflow: hidden; background: var(--color-card); }
+.copy-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--color-keisen); }
+.copy-row:last-child { border-bottom: none; }
+.copy-row .lbl { font-size: 10px; font-weight: 700; letter-spacing: .14em; color: var(--color-ink-sub); width: 78px; flex: none; }
+.copy-row .val { flex: 1; font-size: 13px; color: var(--color-ink); letter-spacing: .06em; word-break: break-all; }
+.copy-row .val.mask { letter-spacing: .18em; }
+
+/* 色プリセット選択（丸スウォッチ） */
+.swatch-picker { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+.swatch-opt { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 1px solid var(--color-keisen-strong); position: relative; display: inline-block; }
+.swatch-opt.sel { box-shadow: 0 0 0 2px var(--color-paper), 0 0 0 4px var(--color-ink); }
+.swatch-opt.sel::after { content: "✓"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; text-shadow: 0 0 2px rgba(0,0,0,.5); }
+
+/* 公演一覧カード */
+.ev-card {
+    background: var(--color-card); border: 1px solid var(--color-keisen);
+    border-radius: var(--radius-card); padding: 14px 16px; margin-bottom: 12px;
+    display: flex; align-items: flex-start; gap: 12px;
+}
+.ev-card .d { font-size: 11px; color: var(--color-ink-sub); white-space: nowrap; padding-top: 2px; }
+.ev-card .t { font-size: 13px; font-weight: 700; line-height: 1.5; flex: 1; }
+.ev-card .vn { font-size: 11px; color: var(--color-ink-sub); margin-top: 3px; }
+.ev-card .shared { font-size: 9px; letter-spacing: .14em; color: var(--color-ink-sub); border: 1px solid var(--color-keisen-strong); border-radius: 999px; padding: 2px 8px; flex: none; }
+
+/* 重複警告 */
+.warn { font-size: 11.5px; color: #8A5A00; background: #FBF3E2; border: 1px solid #EBD9A8; border-radius: 10px; padding: 10px 12px; margin: 10px 0; line-height: 1.6; }
+
+/* 一括インポート確認テーブル */
+.imp-head { font-size: 10px; font-weight: 700; letter-spacing: .12em; color: var(--color-ink-sub); display: grid; grid-template-columns: 120px 1fr 30px; gap: 8px; padding-bottom: 4px; }
+.imp-row { display: grid; grid-template-columns: 120px 1fr 30px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-keisen); }
+.imp-row .form-input { font-size: 12px; padding: 7px 9px; }
+.imp-row-invalid { background: #FFF6F0; }
+
+/* 導線行・戻る */
+.link-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.link-row a { flex: 1; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: .06em; padding: 11px 0; border-radius: 999px; text-decoration: none; cursor: pointer; border: 1px solid var(--color-keisen-strong); color: var(--color-ink); }
+.link-row a.primary { background: var(--color-ink); color: #fff; border-color: var(--color-ink); }
+.back-link { font-size: 12px; color: var(--color-ink-sub); cursor: pointer; display: inline-block; margin-bottom: 8px; text-decoration: none; }

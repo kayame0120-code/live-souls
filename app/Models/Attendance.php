@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Scopes\UserScope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -14,9 +15,7 @@ class Attendance extends Model
 {
     protected $fillable = [
         'user_id',
-        'venue_id',
-        'event_name',
-        'event_date',
+        'event_id',
         'open_time',
         'start_time',
         'seat_raw',
@@ -28,21 +27,67 @@ class Attendance extends Model
         'memo',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'event_date' => 'date',
-        ];
-    }
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function venue(): BelongsTo
+    public function event(): BelongsTo
     {
-        return $this->belongsTo(Venue::class);
+        return $this->belongsTo(Event::class);
+    }
+
+    /**
+     * 会場は event 経由で解決する（v1.2: attendances は venue_id を持たない）。
+     * ビュー互換のためアクセサで露出。
+     */
+    public function getVenueAttribute(): ?Venue
+    {
+        return $this->event?->venue;
+    }
+
+    /** 公演名（event 経由・ビュー互換アクセサ） */
+    public function getEventNameAttribute(): ?string
+    {
+        return $this->event?->event_name;
+    }
+
+    /** 公演日（event 経由・ビュー互換アクセサ） */
+    public function getEventDateAttribute(): ?\Illuminate\Support\Carbon
+    {
+        return $this->event?->event_date;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 公演日は events 側にあるため、日付での並び替え・絞り込みは event 経由で行う
+    |--------------------------------------------------------------------------
+    */
+
+    /** 公演日の降順（events.event_date 相関サブクエリ・DB方言に依存しない） */
+    public function scopeOrderByEventDateDesc(Builder $query): Builder
+    {
+        return $query->orderByDesc(
+            Event::select('event_date')->whereColumn('events.id', 'attendances.event_id')
+        );
+    }
+
+    /** 指定年の公演のみ（events.event_date） */
+    public function scopeForEventYear(Builder $query, string $year): Builder
+    {
+        return $query->whereHas('event', fn (Builder $e) => $e->whereYear('event_date', $year));
+    }
+
+    /** 公演日が指定日以降（今日含む・カラム比較はevents側） */
+    public function scopeEventDateFrom(Builder $query, $date): Builder
+    {
+        return $query->whereHas('event', fn (Builder $e) => $e->whereDate('event_date', '>=', $date));
+    }
+
+    /** 公演日が指定日以前（今日含む） */
+    public function scopeEventDateUntil(Builder $query, $date): Builder
+    {
+        return $query->whereHas('event', fn (Builder $e) => $e->whereDate('event_date', '<=', $date));
     }
 
     public function fcMemberships(): BelongsToMany

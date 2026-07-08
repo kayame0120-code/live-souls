@@ -24,20 +24,23 @@ class AttendanceController extends Controller
     {
         $year = $request->get('year');
 
-        // タイムラインは applied を表示しない（spec §5-7-4）
-        $query = Attendance::with(['venue', 'fcMemberships.person'])
+        // タイムラインは applied を表示しない（spec §5-7-4）。日付・会場は event 経由
+        $query = Attendance::with(['event.venue', 'fcMemberships.person'])
             ->where('status', '!=', 'applied')
-            ->orderByDesc('event_date');
+            ->orderByEventDateDesc();
 
         if ($year && $year !== 'all') {
-            $query->whereYear('event_date', $year);
+            $query->forEventYear($year);
         }
 
         $attendances = $query->get();
 
+        // 年フィルタの選択肢は events から取得
         $years = Attendance::where('status', '!=', 'applied')
-            ->pluck('event_date')
-            ->map(fn ($d) => $d->format('Y'))
+            ->with('event')
+            ->get()
+            ->map(fn ($a) => optional($a->event?->event_date)->format('Y'))
+            ->filter()
             ->unique()
             ->sortDesc()
             ->values()
@@ -71,13 +74,13 @@ class AttendanceController extends Controller
 
     public function show(Attendance $attendance)
     {
-        $attendance->load(['venue', 'fcMemberships.person', 'photos.user']);
+        $attendance->load(['event.venue', 'fcMemberships.person', 'photos.user']);
         return view('attendances.show', compact('attendance'));
     }
 
     public function edit(Attendance $attendance)
     {
-        $attendance->load(['fcMemberships', 'photos']);
+        $attendance->load(['event.venue', 'fcMemberships', 'photos']);
         $memberships = FcMembership::with('person')->get();
         return view('attendances.edit', compact('attendance', 'memberships'));
     }
@@ -149,11 +152,8 @@ class AttendanceController extends Controller
         $maxNewPhotos = max(0, PhotoService::MAX_PHOTOS_PER_ATTENDANCE - $existingPhotoCount);
 
         return $request->validate([
-            'event_name' => ['required', 'string', 'max:255'],
-            'event_date' => ['required', 'date'],
-            'venue_id' => ['nullable', 'exists:venues,id'],
-            'venue_name' => ['nullable', 'string', 'max:255'],
-            'venue_address' => ['nullable', 'string', 'max:255'],
+            // v1.2: 公演は events 共有マスタから選択（event_id）
+            'event_id' => ['required', 'exists:events,id'],
             'open_time' => ['nullable', 'date_format:H:i'],
             'start_time' => ['nullable', 'date_format:H:i'],
             'seat_raw' => ['nullable', 'string', 'max:255'],
@@ -165,13 +165,11 @@ class AttendanceController extends Controller
             'memo' => ['nullable', 'string'],
             'identity_ids' => ['nullable', 'array'],
             'identity_ids.*' => [Rule::exists('fc_memberships', 'id')->where('user_id', Auth::id())],
-            // 写真: 1参戦5枚まで・1枚10MBまで・jpeg/png/webp（heicはQUESTIONS.md Q5参照）
+            // 写真: 1参戦5枚まで・1枚10MBまで・jpeg/png/webp（heicはQUESTIONS.md 参照）
             'photos' => ['nullable', 'array', "max:{$maxNewPhotos}"],
             'photos.*' => ['file', 'mimes:jpeg,jpg,png,webp', 'max:10240'],
         ], [
-            // spec §6 指定のエラーメッセージ
-            'event_name.required' => '公演名を入力してください',
-            'event_date.required' => '日付を入力してください',
+            'event_id.required' => '公演を選択してください',
             'photos.max' => "写真は1参戦につき" . PhotoService::MAX_PHOTOS_PER_ATTENDANCE . "枚までです",
         ]);
     }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\InvitedRegisterController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\IdentityController;
 use App\Http\Controllers\IdentityGroupController;
@@ -20,6 +21,9 @@ Route::middleware('throttle:10,1')->group(function () {
 // 認証必須
 Route::middleware('auth')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
+    // 公演日経過の「参戦した？」確認への応答（T8・自動遷移はしない）
+    Route::patch('/attendances/{attendance}/confirm', [HomeController::class, 'confirmAttendance'])
+        ->name('attendances.confirm');
 
     Route::resource('attendances', AttendanceController::class);
     // 当落結果の更新（S5/S6 の入力動線・参戦詳細から）
@@ -37,13 +41,19 @@ Route::middleware('auth')->group(function () {
     Route::resource('identity-groups', IdentityGroupController::class)->except(['show']);
     Route::post('/identity-groups/reorder', [IdentityGroupController::class, 'reorder'])->name('identity-groups.reorder');
 
-    // 当落・申込登録・一括インポート（S9/S11）
+    // 当落・申込登録（S9）
     Route::get('/lots', [LotController::class, 'index'])->name('lots.index');
     Route::get('/lots/create', [LotController::class, 'create'])->name('lots.create');
     Route::post('/lots', [LotController::class, 'store'])->name('lots.store');
-    Route::get('/lots/import', [LotController::class, 'importForm'])->name('lots.import');
-    Route::post('/lots/import/parse', [LotController::class, 'importParse'])->name('lots.import.parse');
-    Route::post('/lots/import', [LotController::class, 'importStore'])->name('lots.import.store');
+
+    // 公演共有マスタ（events・全ユーザー可・user_idスコープなし）＋一括インポート（S11）
+    Route::get('/events', [EventController::class, 'index'])->name('events.index');
+    Route::get('/events/create', [EventController::class, 'create'])->name('events.create');
+    Route::post('/events', [EventController::class, 'store'])->name('events.store');
+    Route::get('/events/import', [EventController::class, 'importForm'])->name('events.import');
+    Route::post('/events/import/parse', [EventController::class, 'importParse'])->name('events.import.parse');
+    Route::post('/events/import', [EventController::class, 'importStore'])->name('events.import.store');
+    Route::delete('/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
 
     // 参戦写真（閲覧=全メンバー / 削除=投稿者のみ）
     Route::get('/photos/{photo}', [PhotoController::class, 'show'])->name('photos.show');
@@ -56,8 +66,8 @@ Route::middleware('auth')->group(function () {
 
     // 会場サジェストAPI
     Route::get('/api/venues/suggest', [VenueController::class, 'suggest'])->name('api.venues.suggest');
-    // 公演名サジェスト（メンバー横断・読み取りのみ / 規約0-6③）
-    Route::get('/api/events/suggest', [VenueController::class, 'eventSuggest'])->name('api.events.suggest');
+    // 公演サジェスト（events共有マスタ・全ユーザー・読み取りのみ / 規約0-6④）
+    Route::get('/api/events/suggest', [EventController::class, 'suggest'])->name('api.events.suggest');
     // Places API 会場オートフィル（失敗時フォールバック / spec §5-11）
     Route::get('/api/venues/place-lookup', [VenueController::class, 'placeLookup'])->name('api.venues.place-lookup');
 });

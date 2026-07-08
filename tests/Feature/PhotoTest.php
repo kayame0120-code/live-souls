@@ -4,24 +4,28 @@ namespace Tests\Feature;
 
 use App\Models\Attendance;
 use App\Models\AttendancePhoto;
+use App\Models\Event;
 use App\Models\User;
 use App\Services\PhotoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Testing\FileFactory;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Tests\Concerns\MakesDomainData;
 use Tests\TestCase;
 
 /**
  * 参戦写真（spec §4・§7 テスト化必須）:
- * 他ユーザーは閲覧可・削除403 / 6枚目拒否 / 10MB超拒否 / EXIF除去。
+ * 他ユーザーは閲覧可・削除403 / 6枚目拒否 / 10MB超拒否 / EXIF除去 / heic拒否。
  */
 class PhotoTest extends TestCase
 {
     use RefreshDatabase;
+    use MakesDomainData;
 
     private User $user;
     private User $other;
+    private Event $event;
     private Attendance $attendance;
 
     protected function setUp(): void
@@ -32,11 +36,8 @@ class PhotoTest extends TestCase
         $this->user = User::factory()->create();
         $this->other = User::factory()->create();
 
-        $this->attendance = Attendance::create([
-            'user_id' => $this->user->id,
-            'event_name' => '公演',
-            'event_date' => '2026-06-01',
-        ]);
+        $this->event = $this->makeEvent('公演', '2026-06-01');
+        $this->attendance = $this->makeAttendance($this->user, $this->event, 'attended');
     }
 
     private function uploadPhoto(): AttendancePhoto
@@ -85,8 +86,7 @@ class PhotoTest extends TestCase
         }
 
         $response = $this->put(route('attendances.update', $this->attendance), [
-            'event_name' => '公演',
-            'event_date' => '2026-06-01',
+            'event_id' => $this->event->id,
             'status' => 'attended',
             'photos' => [UploadedFile::fake()->image('sixth.jpg')],
         ]);
@@ -102,8 +102,7 @@ class PhotoTest extends TestCase
         $tooLarge = (new FileFactory())->create('big.jpg', 10241, 'image/jpeg'); // 10MB + 1KB
 
         $response = $this->put(route('attendances.update', $this->attendance), [
-            'event_name' => '公演',
-            'event_date' => '2026-06-01',
+            'event_id' => $this->event->id,
             'status' => 'attended',
             'photos' => [$tooLarge],
         ]);
@@ -120,8 +119,7 @@ class PhotoTest extends TestCase
         $heic = (new FileFactory())->create('photo.heic', 500, 'image/heic');
 
         $response = $this->put(route('attendances.update', $this->attendance), [
-            'event_name' => '公演',
-            'event_date' => '2026-06-01',
+            'event_id' => $this->event->id,
             'status' => 'attended',
             'photos' => [$heic],
         ]);

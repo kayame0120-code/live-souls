@@ -94,9 +94,11 @@ class IdentityController extends Controller
             'artist_name' => ['required', 'string', 'max:255'],
             'member_no' => ['nullable', 'string', 'max:255'],
             'login_id' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
             'fc_password' => ['nullable', 'string', 'max:255'],
             'joined_month_input' => ['nullable', 'regex:' . JoinedMonthConverter::FORMAT_PATTERN],
-            'oshi_color' => ['nullable', 'string', 'max:7'],
+            // 担当色はプリセット11色（config/oshi_colors.php）のみ許可（spec §3）
+            'oshi_color' => ['nullable', Rule::in(array_values(config('oshi_colors')))],
         ]);
 
         $personData = [
@@ -112,6 +114,7 @@ class IdentityController extends Controller
             'artist_name' => $validated['artist_name'],
             'member_no' => $validated['member_no'] ?? null,
             'login_id' => $validated['login_id'] ?? null,
+            'email' => $validated['email'] ?? null,
             'password' => $validated['fc_password'] ?? null,
             'joined_on' => isset($validated['joined_month_input'])
                 ? JoinedMonthConverter::toDate($validated['joined_month_input'])

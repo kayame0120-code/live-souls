@@ -1,8 +1,8 @@
 <x-app-layout>
-    {{-- 申込登録・一括インポートへの導線（spec v1.1 §3） --}}
-    <div style="display:flex; gap:8px; margin-bottom:16px;">
-        <a href="{{ route('lots.create') }}" class="btn btn-primary" style="flex:1; width:auto;">＋ 申込を登録</a>
-        <a href="{{ route('lots.import') }}" class="btn btn-secondary" style="flex:1;">一括インポート</a>
+    {{-- 申込登録・公演一覧への導線（v1.2: 一括インポートは公演側へ移設） --}}
+    <div class="link-row">
+        <a href="{{ route('lots.create') }}" class="primary">＋ 申込を登録</a>
+        <a href="{{ route('events.index') }}">公演一覧</a>
     </div>
 
     @if($pending->isEmpty() && $decided->isEmpty())

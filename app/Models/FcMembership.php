@@ -20,6 +20,7 @@ class FcMembership extends Model
         'artist_name',
         'member_no',
         'login_id',
+        'email',
         'password',
         'joined_on',
         'oshi_color',
@@ -29,6 +30,7 @@ class FcMembership extends Model
     {
         return [
             'login_id' => 'encrypted',
+            'email' => 'encrypted',
             'password' => 'encrypted',
             'joined_on' => 'date',
         ];
@@ -56,23 +58,16 @@ class FcMembership extends Model
             ->withTimestamps();
     }
 
-    public function applicationCount(): int
+    /**
+     * この名義の各申込を当落ステータスつきで取得する（spec §5・当落一覧）。
+     * v1.2で当選率などの割合計算は廃止。当落が分かる一覧のみ提供する。
+     */
+    public function applications()
     {
-        return $this->attendances()->count();
-    }
-
-    public function winCount(): int
-    {
-        return $this->attendances()->wherePivot('result', 'won')->count();
-    }
-
-    public function winRate(): ?float
-    {
-        $total = $this->applicationCount();
-        if ($total === 0) {
-            return null;
-        }
-        return $this->winCount() / $total;
+        return $this->attendances()
+            ->with('event')
+            ->orderByEventDateDesc()
+            ->get();
     }
 
     public function displayName(): string

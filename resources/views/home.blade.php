@@ -1,6 +1,6 @@
 <x-app-layout>
     <div class="sec-label">次の現場</div>
-    @if($nextAttendance)
+    @if($nextAttendance && $nextAttendance->event_date)
         @php
             $days = now()->startOfDay()->diffInDays($nextAttendance->event_date, false);
             $oshiColor = optional($nextAttendance->fcMemberships->first())->oshi_color ?? '#C7414F';
@@ -33,6 +33,34 @@
         </div>
     @endif
 
+    {{-- 公演日を過ぎた予定（planned）の「参戦した？」確認（spec §5・自動遷移はしない） --}}
+    @if($pendingConfirmations->isNotEmpty())
+    <div class="sec-label">参戦した？</div>
+    @foreach($pendingConfirmations as $attendance)
+        @php $oshi = optional($attendance->fcMemberships->first())->oshi_color ?? '#C7414F'; @endphp
+        <div class="confirm-card" style="--oshi-color: {{ $oshi }}">
+            <div class="confirm-q">{{ $attendance->event_name }}</div>
+            <div class="confirm-sub">
+                {{ optional($attendance->event_date)->format('Y.m.d') }}（{{ optional($attendance->event_date)->translatedFormat('D') }}）
+                @if($attendance->venue)・{{ $attendance->venue->name }}@endif
+                。予定日が過ぎています。
+            </div>
+            <div class="confirm-actions">
+                <form method="POST" action="{{ route('attendances.confirm', $attendance) }}" style="flex:1;">
+                    @csrf @method('PATCH')
+                    <input type="hidden" name="decision" value="attended">
+                    <button type="submit" class="yes" style="width:100%;">参戦した（記録する）</button>
+                </form>
+                <form method="POST" action="{{ route('attendances.confirm', $attendance) }}" style="flex:1;">
+                    @csrf @method('PATCH')
+                    <input type="hidden" name="decision" value="skipped">
+                    <button type="submit" style="width:100%;">行かなかった（スキップ）</button>
+                </form>
+            </div>
+        </div>
+    @endforeach
+    @endif
+
     <div class="sec-label">積み上げ</div>
     <div class="ledger">
         <div><div class="v">{{ $stats['attended_count'] }}</div><div class="k">今年の参戦</div></div>
@@ -47,7 +75,7 @@
             <div class="rec-head">
                 <span class="dot" style="--oshi-color: {{ $oshi }}"></span>
                 <div class="rec-title">{{ $attendance->event_name }}</div>
-                <div class="rec-date">{{ $attendance->event_date->format('m.d') }}</div>
+                <div class="rec-date">{{ optional($attendance->event_date)->format('m.d') }}</div>
             </div>
             <div class="rec-meta">
                 @if($attendance->seat_raw)

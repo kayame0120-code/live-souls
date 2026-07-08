@@ -1,8 +1,113 @@
-# REPORT.md — 現場手帖 v1.1 改修レポート（2026-07-08）
+# REPORT.md — 現場手帖 v1.2 改修レポート（2026-07-08）
 
-> v1.0 のレポートは末尾に残置。本節が最新。
+> 検証はすべて **PHP 8.2.32（`/usr/bin/php8.2`・本番Flyと同一系）** で実行。
+> v1.1 以前のレポートは本節の後ろに残置。
+
+## v1.2 検証ライン判定表（生出力）
+
+### V1: `php8.2 artisan migrate:fresh --force`
+```
+V1 EXIT: 0
+```
+（events作成→event_id backfill→旧3カラムDROP→email追加まで全migration DONE）
+
+### V2: `/up` ヘルスチェック
+```
+V2 HTTP: 200
+```
+
+### V3: `php8.2 artisan test`
+```
+  Tests:    81 passed (215 assertions)
+  Duration: 0.76s
+V3 EXIT: 0
+```
+
+## event_id 移行の機械検証（生出力・DROP前・実データ1件）
+
+`genba:verify-event-migration`（バックアップ復元→backfillまで実行→DROP前で検証）:
+```
+参戦総数: 1
+event_id 未設定: 0
+id=1  name[OK]  date[2026-08-15→2026-08-15]  venue[1→1]  OK
+events 生成数: 1
+検証通過: 1件すべて一致。旧3カラムのDROP可能です。
+VERIFY EXIT: 0
+```
+- バックアップ: `database/database.sqlite.v1.1-pre-v1.2.bak`（md5一致確認済み）。
+- 変換は生SQL不使用（クエリビルダ＋PHP）。backfillマイグレーション内にも件数・値の検証を内蔵し、不一致なら例外で停止（本番安全弁）。
+- DROP は検証を挟むため別マイグレーションに分離（`genba:verify-event-migration` は runbook で backfill と DROP の間に実行）。
+
+## v1.2 実装サマリ（指示書 T1〜T10）
+
+| T | 内容 | 実装 |
+|---|---|---|
+| T1 | events 共有マスタ新設（user_idなし・削除ガード） | `Event` model / migration / `Event::canBeDeleted()` |
+| T2 | attendances の event_id 化（破壊的） | 3migration（add+backfill+検証内蔵 / drop）＋ `genba:verify-event-migration` ＋ Attendance にevent()・venue/event_name/event_dateアクセサ・日付スコープ |
+| T3 | fc_memberships.email（encrypted） | migration / `email`=encryptedキャスト / フォーム・詳細に伏字コピー |
+| T4 | 担当色プリセット11色 | `config/oshi_colors.php` / `Rule::in` 検証 / 丸スウォッチ選択partial（type=color廃止） |
+| T5 | events CRUD・検索付きセレクト・重複警告 | `EventController`/`EventService`（同一会場×同一日付は警告のみ・confirm_duplicateで続行） |
+| T6 | 一括インポートを events へ移設 | `/events/import`（名義選択なし・全ユーザー可）。旧 `/lots/import` 廃止 |
+| T7 | 参戦登録の作り替え | 公演セレクト（event_id）→日付・会場自動表示・手入力は座席と写真のみ |
+| T8 | 公演日経過→「参戦した？」確認 | ホーム確認UI ＋ `HomeController::confirmAttendance`（自動遷移なし・確定でattended/skipped） |
+| T9 | 当選率の撤去 | `winRate/winCount/applicationCount` 削除・`WinRateTest` 削除・名義詳細を当落一覧に |
+| T10 | heic 受付（安全弁つき） | **libheif未導入のため heic拒否のまま仮置き（QUESTIONS.md QV12-1）** |
+
+mockup.html は色プリセット・公演セレクト・参戦確認・email欄・見え方タイル等をユーザーが改訂済み（本改修と整合）。
+
+## マルチテナント（指示書§1・退行なし）
+- 他人データは **404**（UserScope で不可視・ルートモデルバインディングが404）。写真の削除/編集のみ **403**（Policy）。
+- events は user_id を持たない共有マスタ（例外②）。写真閲覧（例外③）・events参照（例外④）は読取のみ。
+- テスト: `MultiTenantTest`（8件・404）/ `PhotoTest`（削除403）/ `EventMasterTest`（別ユーザー追加可）/ `AttendanceConfirmTest`（他人の確認404）。
+
+## テスト構成（81件・§9 テスト化必須の対応）
+| 必須項目 | テスト |
+|---|---|
+| event_id移行の突合（公演名・日付・会場一致・event共有） | EventMigrationTest（3）＋ genba:verify-event-migration |
+| events削除ガード（参戦0件のみ削除） | EventMasterTest |
+| 公演重複警告（出るがブロックしない） | EventMasterTest |
+| 参戦登録で event_id 保存 / 手入力は座席・写真のみ | LotFlowTest / PageRenderSmokeTest |
+| 参戦確認（planned経過→確定でattended・自動遷移しない） | AttendanceConfirmTest（5） |
+| email（encrypted保存・伏字・コピー） | IdentityV12Test |
+| oshi_color（プリセット外を弾く・hex保存） | IdentityV12Test |
+| 当選率非表示・当落一覧は残す | IdentityV12Test |
+| 他人データ404 / 写真削除403 | MultiTenantTest / PhotoTest |
+| 削除規則（applied・全lost可 / won不可・写真実体削除） | AttendanceDeleteTest（5） |
+| 当選昇格 / applied除外 / 非降格 | LotFlowTest（6） |
+| 更新期間の境界（1月/2月年跨ぎ/うるう年/受付境界日） | RenewalWindowTest（7・退行なし） |
+| 招待二度使えない / うるう年年齢 / EXIF除去 / heic拒否 | InvitationTest / PersonAgeTest / PhotoTest |
+| 全画面が200描画 | PageRenderSmokeTest（12） |
+
+## 実装手段の主要決定
+| 決定 | 理由 |
+|---|---|
+| Attendance に venue/event_name/event_date の**読取アクセサ**＋日付**スコープ**を追加 | event_id 化後もビュー・クエリを最小改修で維持（日付並び替えは events 相関サブクエリでDB方言非依存） |
+| events の重複は `confirm_duplicate` フラグで2段階（警告→続行） | 昼夜2公演を許容しつつ誤登録を抑止（ブロックしない） |
+| 参戦の会場履歴は event 経由の whereHas で解決 | attendances が venue_id を持たなくなったため |
+| heic 拒否を維持 | **QUESTIONS.md QV12-1**（libheif未導入でEXIF除去を保証できない・安全側・指示書T10準拠） |
+
+## 動作確認コマンド
+```bash
+/usr/bin/php8.2 artisan migrate:fresh --force   # V1
+/usr/bin/php8.2 artisan test                    # V3（81件）
+/usr/bin/php8.2 artisan serve                   # → /login（seederで k.ayame0120@gmail.com / kjna0809）
+
+# 本番移行時の検証（backfill と DROP の間で実行）
+/usr/bin/php8.2 artisan genba:verify-event-migration
+```
+
+## QUESTIONS.md 残件
+| No | 内容 | ステータス |
+|---|---|---|
+| QV12-1 | heic受付は libheif 未導入のため保留（安全側=拒否で仮置き） | 保留（infra導入で解除） |
+
+---
+
+# （過去）現場手帖 v1.1 改修レポート（2026-07-08）
+
+> v1.0 のレポートは末尾に残置。
 > **検証はすべて PHP 8.2.32（`/usr/bin/php8.2`・本番Flyと同一系）で実行**。
-> v1.1.1（Q3/Q5 確定反映）まで含む。**QUESTIONS.md は空（未解決ゼロ）**。
+> v1.1.1（Q3/Q5 確定反映）まで含む。
 
 ## 検証ライン判定表（生出力）
 

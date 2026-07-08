@@ -3,22 +3,21 @@
 namespace App\Services;
 
 use App\Models\Attendance;
-use App\Models\Venue;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AttendanceService
 {
+    /**
+     * 参戦を作成（v1.2: event_id で公演を参照。日付・会場・公演名は events 側）。
+     * 手入力は座席3フィールドと写真のみ。名義選択分だけ pivot を生成する。
+     */
     public function create(array $data, array $identityIds = []): Attendance
     {
         return DB::transaction(function () use ($data, $identityIds) {
-            $venueId = $this->resolveVenueId($data);
-
             $attendance = Attendance::create([
                 'user_id' => Auth::id(),
-                'venue_id' => $venueId,
-                'event_name' => $data['event_name'],
-                'event_date' => $data['event_date'],
+                'event_id' => $data['event_id'],
                 'open_time' => $data['open_time'] ?? null,
                 'start_time' => $data['start_time'] ?? null,
                 'seat_raw' => $this->resolveSeatRaw($data),
@@ -41,12 +40,8 @@ class AttendanceService
     public function update(Attendance $attendance, array $data, array $identityIds = []): Attendance
     {
         return DB::transaction(function () use ($attendance, $data, $identityIds) {
-            $venueId = $this->resolveVenueId($data);
-
             $attendance->update([
-                'venue_id' => $venueId,
-                'event_name' => $data['event_name'],
-                'event_date' => $data['event_date'],
+                'event_id' => $data['event_id'],
                 'open_time' => $data['open_time'] ?? null,
                 'start_time' => $data['start_time'] ?? null,
                 'seat_raw' => $this->resolveSeatRaw($data),
@@ -71,31 +66,6 @@ class AttendanceService
 
             return $attendance->fresh();
         });
-    }
-
-    private function resolveVenueId(array $data): ?int
-    {
-        if (! empty($data['venue_id'])) {
-            return (int) $data['venue_id'];
-        }
-
-        if (! empty($data['venue_name'])) {
-            // 名前完全一致の既存会場があれば再利用（spec §5-10-3）。なければ新規作成
-            $existing = Venue::where('name', $data['venue_name'])->first();
-            if ($existing) {
-                return $existing->id;
-            }
-
-            // 住所はユーザーが確認・確定した入力値のみ保存（規約0-7）
-            $venue = Venue::create([
-                'name' => $data['venue_name'],
-                'address' => $data['venue_address'] ?? null,
-                'created_by' => Auth::id(),
-            ]);
-            return $venue->id;
-        }
-
-        return null;
     }
 
     /**

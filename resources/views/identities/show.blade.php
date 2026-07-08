@@ -47,6 +47,17 @@
     </div>
     @endif
 
+    {{-- email（v1.2追加・伏字＋コピー・平文はDOMに出さない） --}}
+    @if($fcMembership->email)
+    <div class="detail-section">
+        <div class="detail-label">email</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <div class="detail-value">••••••••••</div>
+            <button class="copy-btn" data-copy="{{ $fcMembership->email }}" type="button">コピー</button>
+        </div>
+    </div>
+    @endif
+
     @if($fcMembership->password)
     <div class="detail-section">
         <div class="detail-label">パスワード</div>
@@ -93,19 +104,23 @@
     </div>
     @endif
 
-    {{-- 当選率集計 --}}
+    {{-- 申込の当落ステータス一覧（v1.2: 当選率などの割合計算は廃止・当落が分かればよい） --}}
     <div class="detail-section">
-        <div class="detail-label">申込・当選実績</div>
-        @php
-            $appCount = $fcMembership->applicationCount();
-            $winCount = $fcMembership->winCount();
-            $winRate = $fcMembership->winRate();
-        @endphp
-        <div class="ledger" style="margin-top:8px;">
-            <div><div class="v">{{ $appCount }}</div><div class="k">申込数</div></div>
-            <div><div class="v">{{ $winCount }}</div><div class="k">当選数</div></div>
-            <div><div class="v">{{ $winRate !== null ? round($winRate * 100) . '%' : '—' }}</div><div class="k">当選率</div></div>
+        <div class="detail-label">申込の当落</div>
+        @php $applications = $fcMembership->applications(); @endphp
+        @forelse($applications as $app)
+        <div class="lot-row" style="border-bottom:1px solid var(--color-keisen);">
+            <span class="who" style="flex:1;">
+                {{ $app->event_name }}
+                <span style="color:var(--color-ink-sub); font-size:11px; margin-left:6px;">{{ optional($app->event_date)->format('Y.m.d') }}</span>
+            </span>
+            <span class="st {{ ['won'=>'win','lost'=>'lose','pending'=>'wait'][$app->pivot->result] }}">
+                {{ ['won'=>'当選','lost'=>'落選','pending'=>'未発表'][$app->pivot->result] }}
+            </span>
         </div>
+        @empty
+        <div style="font-size:12px; color:var(--color-ink-sub); padding:8px 0;">申込はまだありません</div>
+        @endforelse
     </div>
 
     <div style="margin-top:24px;">

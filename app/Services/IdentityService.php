@@ -28,6 +28,7 @@ class IdentityService
                 'artist_name' => $membershipData['artist_name'],
                 'member_no' => $membershipData['member_no'] ?? null,
                 'login_id' => $membershipData['login_id'] ?? null,
+                'email' => $membershipData['email'] ?? null,
                 'password' => $membershipData['password'] ?? null,
                 'joined_on' => $membershipData['joined_on'] ?? null,
                 'oshi_color' => $membershipData['oshi_color'] ?? null,
@@ -51,6 +52,7 @@ class IdentityService
                 'artist_name' => $membershipData['artist_name'],
                 'member_no' => $membershipData['member_no'] ?? null,
                 'login_id' => $membershipData['login_id'] ?? null,
+                'email' => $membershipData['email'] ?? null,
                 'joined_on' => $membershipData['joined_on'] ?? null,
                 'oshi_color' => $membershipData['oshi_color'] ?? null,
             ];

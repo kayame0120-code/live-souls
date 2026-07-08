@@ -254,6 +254,129 @@
     .screen.active{animation:fade .18s ease}
     @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
   }
+
+  /* ================= v1.2 追加 ================= */
+  /* --- 汎用セレクト・検索付きセレクト --- */
+  .form-select{
+    width:100%;padding:10px 14px;font-size:14px;font-family:inherit;
+    border:1px solid var(--keisen-strong);border-radius:10px;
+    background:var(--paper);color:var(--ink);appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,var(--ink-sub) 50%),linear-gradient(135deg,var(--ink-sub) 50%,transparent 50%);
+    background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;
+    background-size:5px 5px,5px 5px;background-repeat:no-repeat;
+  }
+  .combo{position:relative}
+  .combo .form-input{margin:0}
+  .combo-list{
+    margin-top:6px;border:1px solid var(--keisen);border-radius:10px;
+    background:var(--card);overflow:hidden;
+  }
+  .combo-list button{
+    display:block;width:100%;text-align:left;background:none;border:none;
+    font-family:inherit;font-size:13px;color:var(--ink);cursor:pointer;
+    padding:10px 14px;border-bottom:1px solid var(--keisen);
+  }
+  .combo-list button:last-child{border-bottom:none}
+  .combo-list button:hover,.combo-list button.on{background:var(--paper)}
+  .combo-list .sub{font-size:11px;color:var(--ink-sub);margin-top:2px}
+  .combo-empty{padding:10px 14px;font-size:12px;color:var(--ink-sub)}
+  .combo-empty a{color:var(--ink);font-weight:700}
+
+  /* --- 公演セレクト後の自動表示（読取専用） --- */
+  .ev-auto{
+    margin:12px 0 4px;padding:12px 14px;border-radius:10px;
+    background:var(--paper);border:1px dashed var(--keisen-strong);
+    font-size:12px;color:var(--ink-sub);line-height:1.9;
+  }
+  .ev-auto b{color:var(--ink);font-weight:500}
+  .ev-auto .tag{font-size:9px;letter-spacing:.2em;color:var(--ink-sub);display:block;margin-bottom:4px}
+
+  /* --- コピー行（伏字＋コピー：login_id / email / password） --- */
+  .copy-list{margin-top:6px;border:1px solid var(--keisen);border-radius:12px;overflow:hidden;background:var(--card)}
+  .copy-row{
+    display:flex;align-items:center;gap:10px;
+    padding:12px 14px;border-bottom:1px solid var(--keisen);
+  }
+  .copy-row:last-child{border-bottom:none}
+  .copy-row .lbl{font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--ink-sub);width:78px;flex:none}
+  .copy-row .val{flex:1;font-size:13px;color:var(--ink);font-feature-settings:"tnum";letter-spacing:.06em}
+  .copy-row .val.mask{letter-spacing:.18em}
+  .copy-btn{
+    font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.08em;
+    border:1px solid var(--keisen-strong);background:var(--paper);color:var(--ink);
+    padding:6px 12px;border-radius:999px;cursor:pointer;flex:none;
+  }
+  .copy-btn:active{background:var(--ink);color:#fff}
+
+  /* --- 色プリセット・セレクト（丸スウォッチ選択） --- */
+  .swatch-picker{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+  .swatch-opt{
+    width:30px;height:30px;border-radius:50%;cursor:pointer;
+    border:1px solid var(--keisen-strong);position:relative;
+  }
+  .swatch-opt.sel{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--ink)}
+  .swatch-opt.sel::after{
+    content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:700;color:#fff;text-shadow:0 0 2px rgba(0,0,0,.5);
+  }
+
+  /* --- 公演一覧カード（共有マスタ） --- */
+  .ev-card{
+    background:var(--card);border:1px solid var(--keisen);
+    border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;
+    display:flex;align-items:flex-start;gap:12px;
+  }
+  .ev-card .d{font-size:11px;color:var(--ink-sub);font-feature-settings:"tnum";white-space:nowrap;padding-top:2px}
+  .ev-card .t{font-size:13px;font-weight:700;line-height:1.5;flex:1}
+  .ev-card .v{font-size:11px;color:var(--ink-sub);margin-top:3px}
+  .ev-card .shared{font-size:9px;letter-spacing:.14em;color:var(--ink-sub);border:1px solid var(--keisen-strong);border-radius:999px;padding:2px 8px;flex:none}
+
+  /* --- 重複警告 --- */
+  .warn{
+    font-size:11.5px;color:#8A5A00;background:#FBF3E2;border:1px solid #EBD9A8;
+    border-radius:10px;padding:10px 12px;margin:10px 0;line-height:1.6;
+  }
+
+  /* --- 一括インポート確認テーブル --- */
+  .imp-row{
+    display:grid;grid-template-columns:96px 1fr 30px;gap:8px;align-items:center;
+    padding:8px 0;border-bottom:1px solid var(--keisen);
+  }
+  .imp-row input{font-size:12px;padding:7px 9px}
+  .imp-row .rm{font-size:16px;color:var(--ink-sub);text-align:center;cursor:pointer;background:none;border:none}
+  .imp-head{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--ink-sub);
+    display:grid;grid-template-columns:96px 1fr 30px;gap:8px;padding-bottom:4px}
+
+  /* --- ホーム：参戦した？確認カード --- */
+  .confirm-card{
+    background:var(--card);border:1px solid var(--keisen);border-radius:var(--radius);
+    padding:16px 18px;margin-bottom:12px;position:relative;overflow:hidden;
+  }
+  .confirm-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--oshi)}
+  .confirm-q{font-size:13px;font-weight:700;margin-bottom:2px}
+  .confirm-sub{font-size:11px;color:var(--ink-sub);margin-bottom:12px}
+  .confirm-actions{display:flex;gap:8px}
+  .confirm-actions button{
+    flex:1;font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.06em;
+    padding:10px 0;border-radius:999px;cursor:pointer;border:1px solid var(--keisen-strong);
+    background:var(--paper);color:var(--ink);
+  }
+  .confirm-actions button.yes{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* --- 汎用ボタン・戻る導線 --- */
+  .btn-primary{
+    width:100%;font-family:inherit;font-size:13px;font-weight:700;letter-spacing:.08em;
+    padding:13px 0;border-radius:999px;border:none;background:var(--ink);color:#fff;
+    cursor:pointer;margin-top:18px;
+  }
+  .link-row{display:flex;gap:8px;margin-bottom:14px}
+  .link-row a{
+    flex:1;text-align:center;font-size:12px;font-weight:700;letter-spacing:.06em;
+    padding:11px 0;border-radius:999px;text-decoration:none;cursor:pointer;
+    border:1px solid var(--keisen-strong);color:var(--ink);
+  }
+  .link-row a.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .back-link{font-size:12px;color:var(--ink-sub);cursor:pointer;display:inline-block;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -278,6 +401,17 @@
           <span>開演 <b>17:00</b></span>
         </div>
         <span class="meigi-chip"><span class="dot"></span>紫の名義（自名義）で入場</span>
+      </div>
+
+      <!-- v1.2: 公演日を過ぎた予定（status=planned）の参戦確認。自動attendedにはしない -->
+      <div class="sec-label">参戦した？</div>
+      <div class="confirm-card" style="--oshi:#00A960">
+        <div class="confirm-q">8PEACE「BLUE HOUR」東京</div>
+        <div class="confirm-sub">2026.07.05（土）・味の素スタジアム／緑の名義。予定日が過ぎています。</div>
+        <div class="confirm-actions">
+          <button class="yes">参戦した（記録する）</button>
+          <button>行かなかった（スキップ）</button>
+        </div>
       </div>
 
       <div class="sec-label">積み上げ</div>
@@ -397,10 +531,10 @@
 
     <!-- ================= 当落 ================= -->
     <section class="screen" id="scr-lot">
-      <!-- v1.1: 申込登録・一括インポートへの導線 -->
+      <!-- v1.2: 申込登録（/lots/create）・公演共有マスタへの導線。一括インポートは公演側へ移設 -->
       <div class="lot-actions">
         <a class="primary">＋ 申込を登録</a>
-        <a class="secondary">一括インポート</a>
+        <a class="secondary" onclick="showScreen('scr-events')">公演一覧</a>
       </div>
 
       <div class="sec-label">当落待ち</div>
@@ -497,20 +631,29 @@
       </div>
     </section>
 
-    <!-- ================= v1.1: 参戦登録（座席3フィールド） ================= -->
+    <!-- ================= v1.2: 参戦登録（公演セレクト→自動表示・手入力は座席と写真のみ） ================= -->
     <section class="screen" id="scr-create">
       <div class="sec-label">参戦を記録</div>
 
-      <label class="form-label">日付</label>
-      <input class="form-input" type="date" value="2026-07-08">
+      <!-- v1.2: 公演は検索付きセレクト（events共有マスタ・インクリメンタル絞り込み） -->
+      <label class="form-label">公演</label>
+      <div class="combo">
+        <input class="form-input" type="text" id="ev-search" placeholder="公演名で検索（例: Prism）" autocomplete="off">
+        <div class="combo-list" id="ev-list"></div>
+      </div>
 
-      <label class="form-label">公演名</label>
-      <input class="form-input" type="text" placeholder="過去の入力からサジェスト">
+      <!-- 公演を選ぶと日付・会場・アクセスが自動表示（読取専用・参戦テーブルには持たない） -->
+      <div class="ev-auto" id="ev-auto" style="display:none">
+        <span class="tag">選択中の公演（自動表示・読取）</span>
+        <div>日付 <b id="ev-date">—</b></div>
+        <div>会場 <b id="ev-venue">—</b></div>
+        <div>アクセス <b id="ev-access">—</b></div>
+      </div>
+      <p class="combo-empty" style="padding-left:0" id="ev-nohit" hidden>
+        該当する公演がありません。<a onclick="showScreen('scr-event-create')">＋ 公演を新規登録</a>
+      </p>
 
-      <label class="form-label">会場</label>
-      <input class="form-input" type="text" placeholder="会場名（既存会場をサジェスト）">
-
-      <!-- v1.1: 座席は構造化3フィールドが主入力。seat_rawは自動合成＋編集可 -->
+      <!-- 手入力は座席3フィールドと写真のみ。seat_rawは自動合成＋編集可 -->
       <label class="form-label">座席</label>
       <div class="seat-fields">
         <input class="form-input" type="text" placeholder="ブロック">
@@ -521,8 +664,155 @@
       <label class="form-label">座席表記（自動合成・編集可）</label>
       <input class="form-input" type="text" placeholder="アリーナ B4 3列 15番">
 
+      <label class="form-label">名義（複数選択可）</label>
+      <div class="swatch-picker" style="gap:8px">
+        <span class="meigi-chip"><span class="dot" style="--oshi:#8957A1"></span>紫の名義</span>
+        <span class="meigi-chip"><span class="dot" style="--oshi:#1D6EC9"></span>母名義</span>
+        <span class="meigi-chip"><span class="dot" style="--oshi:#00A960"></span>ゆきちゃん共同</span>
+      </div>
+
       <label class="form-label">写真（5枚まで・メンバー間で共有）</label>
       <input class="form-input" type="file" multiple>
+
+      <button class="btn-primary">この参戦を記録する</button>
+    </section>
+
+    <!-- ================= v1.2: 名義詳細（FC情報・伏字＋コピー・email追加） ================= -->
+    <section class="screen" id="scr-meigi-detail">
+      <span class="back-link" onclick="showScreen('scr-meigi')">← 名義台帳へ</span>
+      <div class="m-card" style="--oshi:#8957A1;margin-top:4px">
+        <span class="swatch"></span>
+        <div class="m-club">LUMIÈRE FAMILY CLUB</div>
+        <div class="m-kind">MEMBERSHIP</div>
+        <div class="m-name">片倉 菖<small>自名義</small></div>
+        <div class="m-no">No. 0482 1957 33</div>
+        <div class="m-foot">
+          <span>有効期限 <b>2027.02.28</b></span>
+          <span class="badge">更新受付中</span>
+        </div>
+      </div>
+
+      <div class="sec-label">FC情報（コピー）</div>
+      <div class="copy-list">
+        <div class="copy-row">
+          <span class="lbl">会員番号</span>
+          <span class="val">0482 1957 33</span>
+          <button class="copy-btn">コピー</button>
+        </div>
+        <div class="copy-row">
+          <span class="lbl">ログインID</span>
+          <span class="val mask">••••••••••</span>
+          <button class="copy-btn">コピー</button>
+        </div>
+        <div class="copy-row">
+          <span class="lbl">email</span>
+          <span class="val mask">••••••••••••</span>
+          <button class="copy-btn">コピー</button>
+        </div>
+        <div class="copy-row">
+          <span class="lbl">パスワード</span>
+          <span class="val mask">••••••••</span>
+          <button class="copy-btn">コピー</button>
+        </div>
+      </div>
+      <p class="privacy-note">値は伏字表示。コピー時のみ復号した平文をクリップボードへ渡し、画面には出しません。</p>
+
+      <button class="btn-primary" onclick="showScreen('scr-meigi-edit')" style="background:var(--paper);color:var(--ink);border:1px solid var(--keisen-strong)">この名義を編集</button>
+    </section>
+
+    <!-- ================= v1.2: 名義編集（担当色プリセット11色セレクト） ================= -->
+    <section class="screen" id="scr-meigi-edit">
+      <span class="back-link" onclick="showScreen('scr-meigi-detail')">← 名義詳細へ</span>
+      <div class="sec-label">名義を編集</div>
+
+      <label class="form-label">アーティスト名</label>
+      <input class="form-input" type="text" value="LUMIÈRE">
+
+      <label class="form-label">FC登録メール（email・暗号化保存）</label>
+      <input class="form-input" type="email" placeholder="fc-login@example.com">
+
+      <!-- v1.2: ネイティブcolor入力を廃止し、プリセット11色から選択 -->
+      <label class="form-label">担当色（プリセット11色から選択）</label>
+      <div class="swatch-picker" id="oshi-picker"></div>
+
+      <button class="btn-primary">更新する</button>
+    </section>
+
+    <!-- ================= v1.2: 公演一覧（共有マスタ・全ユーザー可） ================= -->
+    <section class="screen" id="scr-events">
+      <div class="sec-label">公演（共有マスタ）</div>
+      <div class="link-row">
+        <a class="primary" onclick="showScreen('scr-event-create')">＋ 公演を登録</a>
+        <a onclick="showScreen('scr-event-import')">一括インポート</a>
+      </div>
+
+      <div class="ev-card">
+        <span class="d">07.25</span>
+        <div class="t">LUMIÈRE LIVE TOUR 2026「Prism of Night」<div class="v">横浜アリーナ</div></div>
+        <span class="shared">共有</span>
+      </div>
+      <div class="ev-card">
+        <span class="d">07.05</span>
+        <div class="t">8PEACE「BLUE HOUR」東京<div class="v">味の素スタジアム</div></div>
+        <span class="shared">共有</span>
+      </div>
+      <div class="ev-card">
+        <span class="d">06.14</span>
+        <div class="t">LUMIÈRE ARENA TOUR「Aurora」大阪 2日目<div class="v">大阪城ホール</div></div>
+        <span class="shared">共有</span>
+      </div>
+    </section>
+
+    <!-- ================= v1.2: 公演登録（会場は検索付きセレクト・重複警告） ================= -->
+    <section class="screen" id="scr-event-create">
+      <span class="back-link" onclick="showScreen('scr-events')">← 公演一覧へ</span>
+      <div class="sec-label">公演を登録</div>
+
+      <label class="form-label">公演名</label>
+      <input class="form-input" type="text" placeholder="例: LUMIÈRE「Prism of Night」">
+
+      <label class="form-label">公演日</label>
+      <input class="form-input" type="date" value="2026-07-25">
+
+      <label class="form-label">会場（検索付きセレクト・無ければ新規＝Places自動入力）</label>
+      <div class="combo">
+        <input class="form-input" type="text" placeholder="会場名で検索" value="横浜アリーナ">
+      </div>
+
+      <!-- 同一会場×同一日付の重複はブロックせず警告（昼夜2公演があるため） -->
+      <div class="warn">同じ会場・同じ日付の公演が既にあります（昼夜2公演なら続行OK）。重複でなければ日付か公演名を確認してください。</div>
+
+      <button class="btn-primary">共有マスタに登録する</button>
+    </section>
+
+    <!-- ================= v1.2: 一括インポート（/events/import・全ユーザー可・名義選択なし） ================= -->
+    <section class="screen" id="scr-event-import">
+      <span class="back-link" onclick="showScreen('scr-events')">← 公演一覧へ</span>
+      <div class="sec-label">公演を一括インポート</div>
+
+      <label class="form-label">公演一覧を貼り付け</label>
+      <textarea class="form-input" rows="4" placeholder="7/25 横浜アリーナ Prism of Night&#10;7/26 横浜アリーナ Prism of Night"></textarea>
+
+      <div class="sec-label">解析結果（確認・修正）</div>
+      <div class="imp-head"><span>日付</span><span>公演名 / 会場</span><span></span></div>
+      <div class="imp-row">
+        <input class="form-input" type="date" value="2026-07-25">
+        <input class="form-input" type="text" value="Prism of Night ／ 横浜アリーナ">
+        <button class="rm">×</button>
+      </div>
+      <div class="imp-row">
+        <input class="form-input" type="date" value="2026-07-26">
+        <input class="form-input" type="text" value="Prism of Night ／ 横浜アリーナ">
+        <button class="rm">×</button>
+      </div>
+      <div class="imp-row">
+        <input class="form-input" type="date" value="">
+        <input class="form-input" type="text" placeholder="（解析不能・空欄のまま。手で補完 or 除外）">
+        <button class="rm">×</button>
+      </div>
+
+      <p class="combo-empty" style="padding-left:0">名義選択はありません。共有マスタ（events）へ入るだけです。</p>
+      <button class="btn-primary">共有マスタへ一括登録する</button>
     </section>
   </main>
 
@@ -564,6 +854,75 @@
     el.style.cursor='pointer';
     el.addEventListener('click',()=>showScreen('scr-venue'));
   });
+
+  // v1.2: 名義カード → 名義詳細（デモ遷移）
+  document.querySelectorAll('#scr-meigi .m-card').forEach(el=>{
+    el.style.cursor='pointer';
+    el.addEventListener('click',()=>showScreen('scr-meigi-detail'));
+  });
+
+  // v1.2: 担当色プリセット（コード上の設定配列・増減は配列編集のみ／金は不採用）
+  const OSHI_PRESETS = [
+    {name:'赤',    hex:'#E60033'},
+    {name:'オレンジ',hex:'#F6851F'},
+    {name:'黄',    hex:'#F2C500'},
+    {name:'黄緑',  hex:'#8FC31F'},
+    {name:'緑',    hex:'#00A960'},
+    {name:'水色',  hex:'#00AFEC'},
+    {name:'青',    hex:'#1D6EC9'},
+    {name:'紫',    hex:'#8957A1'},
+    {name:'ピンク', hex:'#EE87B4'},
+    {name:'白',    hex:'#FFFFFF'},
+    {name:'黒',    hex:'#2B2B2B'},
+  ];
+  const picker = document.getElementById('oshi-picker');
+  if (picker){
+    OSHI_PRESETS.forEach((c,i)=>{
+      const b = document.createElement('div');
+      b.className = 'swatch-opt' + (i===7 ? ' sel' : ''); // 初期選択=紫（デモ）
+      b.style.background = c.hex;
+      b.title = c.name;
+      if (c.hex === '#FFFFFF') b.style.borderColor = 'var(--keisen-strong)'; // 白は枠線必須
+      b.addEventListener('click',()=>{
+        picker.querySelectorAll('.swatch-opt').forEach(x=>x.classList.remove('sel'));
+        b.classList.add('sel');
+      });
+      picker.appendChild(b);
+    });
+  }
+
+  // v1.2: 参戦登録の公演検索付きセレクト（events共有マスタ・インクリメンタル絞り込み）
+  const EVENTS = [
+    {name:'LUMIÈRE「Prism of Night」東京ドーム', date:'2026.07.30（木）', venue:'東京ドーム',   access:'水道橋駅 徒歩3分'},
+    {name:'LUMIÈRE LIVE TOUR「Prism of Night」横浜アリーナ', date:'2026.07.25（土）', venue:'横浜アリーナ', access:'新横浜駅 徒歩5分'},
+    {name:'8PEACE「BLUE HOUR」東京', date:'2026.07.05（土）', venue:'味の素スタジアム', access:'飛田給駅 徒歩5分'},
+  ];
+  const evSearch = document.getElementById('ev-search');
+  const evList   = document.getElementById('ev-list');
+  const evAuto   = document.getElementById('ev-auto');
+  const evNohit  = document.getElementById('ev-nohit');
+  function renderEvList(q){
+    if (!evList) return;
+    const hits = EVENTS.filter(e=>e.name.toLowerCase().includes(q.toLowerCase()));
+    evList.innerHTML = '';
+    evNohit.hidden = !(q && hits.length === 0);
+    if (!q){ return; }
+    hits.forEach(e=>{
+      const b = document.createElement('button');
+      b.innerHTML = e.name + '<div class="sub">'+e.date+'・'+e.venue+'</div>';
+      b.addEventListener('click',()=>{
+        evSearch.value = e.name;
+        evList.innerHTML = '';
+        evNohit.hidden = true;
+        document.getElementById('ev-date').textContent   = e.date;
+        document.getElementById('ev-venue').textContent  = e.venue;
+        document.getElementById('ev-access').textContent = e.access;
+        evAuto.style.display = 'block';
+      });
+      evList.appendChild(b);
+    });
+  }
+  if (evSearch){ evSearch.addEventListener('input',e=>renderEvList(e.target.value)); }
 </script>
 </body>
 </html>

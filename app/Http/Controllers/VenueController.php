@@ -16,21 +16,26 @@ class VenueController extends Controller
     public function show(Venue $venue)
     {
         $note = $venue->noteForUser(Auth::id());
-        $attendances = Attendance::with('fcMemberships.person')
-            ->where('venue_id', $venue->id)
-            ->orderByDesc('event_date')
+
+        // 会場は event 経由で解決する（v1.2: attendances に venue_id なし）。自分の参戦のみ
+        $attendances = Attendance::with(['event.venue', 'fcMemberships.person'])
+            ->whereHas('event', fn ($e) => $e->where('venue_id', $venue->id))
+            ->orderByEventDateDesc()
             ->get();
 
-        // 見え方マッピング（spec §5-9）: 全メンバーの写真を座席情報つきで表示（規約0-6の例外②）
+        // 見え方マッピング（spec §5-9）: 全メンバーの写真を座席情報つきで表示（規約0-6の例外③）
         $photos = AttendancePhoto::with(['user'])
             ->whereHas('attendance', function ($q) use ($venue) {
-                $q->withoutGlobalScope(UserScope::class)->where('venue_id', $venue->id);
+                $q->withoutGlobalScope(UserScope::class)
+                    ->whereHas('event', fn ($e) => $e->where('venue_id', $venue->id));
             })
             ->get()
             ->each(function ($photo) {
                 $photo->setRelation(
                     'attendance',
-                    Attendance::withoutGlobalScope(UserScope::class)->find($photo->attendance_id),
+                    Attendance::withoutGlobalScope(UserScope::class)
+                        ->with('event')
+                        ->find($photo->attendance_id),
                 );
             });
 
@@ -66,28 +71,6 @@ class VenueController extends Controller
             ->get(['id', 'name', 'address']);
 
         return response()->json($venues);
-    }
-
-    /**
-     * 公演名サジェスト（spec §5-1-2）: 自分＋メンバーの過去 attendances から読み取りのみ（規約0-6の例外③）。
-     */
-    public function eventSuggest(Request $request)
-    {
-        $q = $request->get('q', '');
-        if (mb_strlen($q) < 1) {
-            return response()->json([]);
-        }
-
-        $events = Attendance::withoutGlobalScope(UserScope::class)
-            ->where('event_name', 'like', "%{$q}%")
-            ->orderByDesc('event_date')
-            ->limit(30)
-            ->get(['event_name', 'event_date', 'venue_id'])
-            ->unique('event_name')
-            ->take(10)
-            ->values();
-
-        return response()->json($events);
     }
 
     /**
