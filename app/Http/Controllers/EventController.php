@@ -22,11 +22,19 @@ class EventController extends Controller
 
     public function index()
     {
+        // 「参戦 N」は共有マスタとして全メンバー分を数える（削除ガードと同じ withoutGlobalScopes）
         $events = Event::with('venue')
-            ->orderByDesc('event_date')
+            ->withCount(['attendances' => fn ($q) => $q->withoutGlobalScopes()])
+            ->orderBy('event_date')
             ->get();
 
-        return view('events.index', compact('events'));
+        $today = \Illuminate\Support\Carbon::today();
+
+        // 今後（本日以降）は近い順、過去は新しい順（mockup: 今後の公演 → 過去の公演）
+        $upcoming = $events->filter(fn ($e) => $e->event_date->gte($today))->values();
+        $past = $events->filter(fn ($e) => $e->event_date->lt($today))->sortByDesc('event_date')->values();
+
+        return view('events.index', compact('upcoming', 'past'));
     }
 
     public function create()

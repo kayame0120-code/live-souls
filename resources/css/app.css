@@ -208,7 +208,7 @@ a.rec:hover { border-color: var(--color-keisen-strong); }
 .bottom-nav {
     position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: 420px;
-    display: grid; grid-template-columns: repeat(4, 1fr);
+    display: grid; grid-template-columns: repeat(5, 1fr);
     background: rgba(250,250,247,.96); backdrop-filter: blur(8px);
     border-top: 1px solid var(--color-keisen); z-index: 20;
 }
@@ -244,10 +244,14 @@ a.rec:hover { border-color: var(--color-keisen-strong); }
 
 /* フォーム */
 .form-group { margin-bottom: 16px; }
+/* mockup .f-field>label 相当の縦リズム。素の form-label を並べる v1.2/1.3 フォームの
+   入力欄と次ラベルが密着する崩れ（前回D1）をここで一括解消する。 */
 .form-label {
     display: block; font-size: 11px; font-weight: 700; color: var(--color-ink-sub);
-    letter-spacing: .16em; margin-bottom: 6px;
+    letter-spacing: .16em; margin: 14px 0 6px;
 }
+.form-group > .form-label:first-child,
+form > .form-label:first-child { margin-top: 0; }
 .form-input {
     width: 100%; padding: 10px 14px; font-size: 14px; font-family: inherit;
     border: 1px solid var(--color-keisen-strong); border-radius: 10px;
@@ -504,3 +508,148 @@ a.rec:hover { border-color: var(--color-keisen-strong); }
 .link-row a { flex: 1; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: .06em; padding: 11px 0; border-radius: 999px; text-decoration: none; cursor: pointer; border: 1px solid var(--color-keisen-strong); color: var(--color-ink); }
 .link-row a.primary { background: var(--color-ink); color: #fff; border-color: var(--color-ink); }
 .back-link { font-size: 12px; color: var(--color-ink-sub); cursor: pointer; display: inline-block; margin-bottom: 8px; text-decoration: none; }
+
+/* ================= v1.3 mockup 追従 ================= */
+/* 公演（events）一覧 */
+.ev-lead {
+    font-size: 11px; color: var(--color-ink-sub); line-height: 1.7; margin-bottom: 14px;
+    padding: 11px 14px; background: var(--color-card); border: 1px solid var(--color-keisen); border-radius: 10px;
+}
+.ev-actions { display: flex; gap: 8px; margin-bottom: 18px; }
+.ev-actions a, .ev-actions button {
+    flex: 1; font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: .06em;
+    padding: 11px 0; border-radius: 10px; cursor: pointer; text-align: center; text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.ev-new { background: var(--color-ink); color: #fff; border: 1px solid var(--color-ink); }
+.ev-import { background: var(--color-card); color: var(--color-ink); border: 1px solid var(--color-keisen-strong); }
+.ev {
+    background: var(--color-card); border: 1px solid var(--color-keisen);
+    border-radius: var(--radius-card); padding: 14px 16px; margin-bottom: 10px;
+    display: flex; align-items: baseline; gap: 12px; text-decoration: none; color: inherit;
+}
+.ev-date {
+    font-size: 11px; font-weight: 700; color: var(--color-oshi); white-space: nowrap;
+    font-feature-settings: "tnum"; letter-spacing: .04em; flex: none; min-width: 44px; text-align: center;
+}
+.ev-body { flex: 1; min-width: 0; }
+.ev-name { font-size: 13px; font-weight: 700; line-height: 1.5; }
+.ev-venue { font-size: 11px; color: var(--color-ink-sub); margin-top: 3px; }
+.ev-time {
+    display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 700;
+    color: var(--color-oshi); font-feature-settings: "tnum"; letter-spacing: .04em;
+}
+.ev-count { font-size: 10px; color: var(--color-ink-sub); white-space: nowrap; flex: none; }
+.ev-delete { font-size: 10px; color: var(--color-oshi); background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; }
+
+/* 詳細画面：ブロック / 行 */
+.d-block {
+    background: var(--color-card); border: 1px solid var(--color-keisen);
+    border-radius: var(--radius-card); padding: 16px 18px; margin-bottom: 14px;
+}
+.d-block .d-h {
+    font-size: 11px; font-weight: 700; color: var(--color-ink-sub); letter-spacing: .16em; margin-bottom: 12px;
+}
+.d-row {
+    display: flex; justify-content: space-between; gap: 14px;
+    padding: 9px 0; border-bottom: 1px solid var(--color-keisen); font-size: 13px;
+}
+.d-row:last-child { border-bottom: none; }
+.d-row .k { color: var(--color-ink-sub); white-space: nowrap; flex: none; }
+.d-row .v { color: var(--color-ink); font-weight: 500; text-align: right; }
+.d-row .v.mono { font-feature-settings: "tnum"; letter-spacing: .1em; }
+
+/* 参戦詳細：ヒーロー */
+.att-hero {
+    border-radius: var(--radius-card); padding: 20px; margin-bottom: 14px; position: relative;
+    background: color-mix(in srgb, var(--oshi-color, var(--color-oshi)) 8%, #fff);
+    border: 1px solid color-mix(in srgb, var(--oshi-color, var(--color-oshi)) 30%, var(--color-keisen));
+}
+.att-hero::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: var(--oshi-color, var(--color-oshi)); border-radius: var(--radius-card) 0 0 var(--radius-card);
+}
+.att-date { font-size: 12px; color: var(--color-ink-sub); font-feature-settings: "tnum"; letter-spacing: .06em; }
+.att-title { font-size: 17px; font-weight: 700; line-height: 1.5; margin: 6px 0 12px; }
+.att-meigi {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500;
+    background: var(--color-card); border: 1px solid var(--color-keisen-strong); border-radius: 999px; padding: 4px 12px;
+}
+
+/* 詳細画面 戻る・編集 */
+.detail-back {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: inherit; background: none; border: none; cursor: pointer;
+    font-size: 12px; color: var(--color-ink-sub); font-weight: 500; letter-spacing: .04em;
+    margin-bottom: 16px; padding: 0; text-decoration: none;
+}
+.detail-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.detail-topbar .detail-back { margin-bottom: 0; }
+.detail-edit {
+    font-family: inherit; background: var(--color-card); cursor: pointer;
+    border: 1px solid var(--color-keisen-strong); border-radius: 999px;
+    padding: 6px 16px; font-size: 12px; font-weight: 700; color: var(--color-ink); letter-spacing: .06em; text-decoration: none;
+}
+
+/* サムネイルグリッド（参戦詳細） */
+.thumb-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.thumb-grid .thumb { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--color-keisen); display: flex; align-items: center; justify-content: center; }
+.thumb-grid .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* 会場ビュー導線ボタン */
+.venue-view-btn {
+    width: 100%; font-family: inherit; cursor: pointer; text-align: left;
+    background: var(--color-ink); color: #fff; border: none; border-radius: var(--radius-card);
+    padding: 15px 18px; display: flex; flex-direction: column; gap: 3px; margin-top: 4px; text-decoration: none;
+}
+.venue-view-btn span { font-size: 13px; font-weight: 700; letter-spacing: .06em; }
+.venue-view-btn small { font-size: 10.5px; color: rgba(255,255,255,.6); letter-spacing: .04em; }
+
+/* 参戦した？確認カード（mockup v1.3: クリーム地・左バーなし） */
+.confirm-card {
+    background: #FBF7EE; border: 1px solid #EADFC7;
+    border-radius: var(--radius-card); padding: 16px 18px; margin-bottom: 12px;
+}
+.confirm-card::before { content: none; }
+.confirm-lead { font-size: 12px; color: #9A7B34; font-weight: 700; letter-spacing: .08em; margin-bottom: 10px; }
+.confirm-title { font-size: 14px; font-weight: 700; line-height: 1.5; margin-bottom: 4px; }
+.confirm-sub { font-size: 11px; color: var(--color-ink-sub); margin-bottom: 12px; font-feature-settings: "tnum"; }
+.confirm-actions { display: flex; gap: 8px; }
+.confirm-actions button {
+    flex: 1; font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: .06em;
+    padding: 9px 0; border-radius: 10px; cursor: pointer; border: 1px solid var(--color-keisen-strong);
+}
+.btn-attended { background: var(--color-ink); color: #fff; border-color: var(--color-ink); }
+.btn-skipped { background: var(--color-card); color: var(--color-ink-sub); }
+
+/* 申込・当落一覧行（mockup .apply-row / 名義詳細・参戦詳細で共用） */
+.apply-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--color-keisen); font-size: 12.5px;
+}
+.apply-row:last-child { border-bottom: none; }
+.apply-row .ar-body { flex: 1; min-width: 0; }
+.apply-row .ar-name { font-weight: 500; line-height: 1.4; display: flex; align-items: center; gap: 7px; }
+.apply-row .ar-date { font-size: 10.5px; color: var(--color-ink-sub); margin-top: 2px; font-feature-settings: "tnum"; }
+.ar-st {
+    font-size: 10px; font-weight: 700; letter-spacing: .1em; flex: none;
+    padding: 3px 10px; border-radius: 999px; min-width: 52px; text-align: center;
+}
+.ar-st.won { background: var(--color-oshi); color: #fff; }
+.ar-st.lost { background: var(--color-keisen); color: var(--color-ink-sub); }
+.ar-st.pending { border: 1px solid var(--color-keisen-strong); color: var(--color-ink-sub); }
+
+/* 当落セレクト（mockup .lot-select・選択値で見た目を変える） */
+.lot-select {
+    font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: .08em;
+    padding: 4px 8px; border-radius: 999px; border: 1px solid var(--color-keisen-strong);
+    background: var(--color-card); color: var(--color-ink-sub); cursor: pointer;
+}
+.lot-select[data-v="won"] { background: var(--color-oshi); color: #fff; border-color: var(--color-oshi); }
+.lot-select[data-v="lost"] { background: var(--color-keisen); color: var(--color-ink-sub); }
+
+/* 危険操作リンク（削除） */
+.f-danger {
+    width: 100%; font-family: inherit; font-size: 12px; font-weight: 500; letter-spacing: .06em;
+    background: none; border: none; color: var(--color-oshi); cursor: pointer; padding: 14px; margin-top: 6px;
+}

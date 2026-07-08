@@ -1,116 +1,95 @@
-<x-app-layout :hide-header="true" :hide-fab="true">
-    <x-slot:pageHeader>
-        <div class="page-header">
-            <a href="{{ route('attendances.index') }}" class="back">← 戻る</a>
-            <h1>参戦詳細</h1>
-            <div class="actions">
-                <a href="{{ route('attendances.edit', $attendance) }}" class="btn btn-secondary btn-sm">編集</a>
-            </div>
+<x-app-layout :hide-fab="true">
+    <div class="detail-topbar">
+        <a href="{{ route('attendances.index') }}" class="detail-back">‹ 参戦記録へ戻る</a>
+        <a href="{{ route('attendances.edit', $attendance) }}" class="detail-edit">編集</a>
+    </div>
+
+    @php $firstM = $attendance->fcMemberships->first(); @endphp
+    <div class="att-hero" style="--oshi-color: {{ $firstM->oshi_color ?? '#C7414F' }}">
+        <div class="att-date">{{ optional($attendance->event_date)->format('Y.m.d') }}（{{ optional($attendance->event_date)->translatedFormat('D') }}）</div>
+        <div class="att-title">{{ $attendance->event_name }}</div>
+        @if($firstM)
+        <span class="att-meigi">
+            <span class="dot" style="--oshi-color: {{ $firstM->oshi_color ?? '#C7414F' }}"></span>
+            {{ $firstM->displayName() }}
+        </span>
+        @endif
+    </div>
+
+    {{-- 公演情報（共有マスタ）。開演は event.start_time（H:i・null非表示）。開場(open_time)行は廃止（mockup準拠） --}}
+    <div class="d-block">
+        <div class="d-h">公演情報（共有マスタ）</div>
+        @if($attendance->venue)
+        <div class="d-row">
+            <span class="k">会場</span>
+            <span class="v"><a href="{{ route('venues.show', $attendance->venue) }}" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">{{ $attendance->venue->name }}</a></span>
         </div>
-    </x-slot:pageHeader>
-
-    <div class="detail-section">
-        <div class="detail-label">公演名</div>
-        <div class="detail-value">{{ $attendance->event_name }}</div>
+        @endif
+        @if($attendance->venue?->nearest_station)
+        <div class="d-row"><span class="k">最寄</span><span class="v">{{ $attendance->venue->nearest_station }}</span></div>
+        @endif
+        @if($attendance->event?->start_time)
+        <div class="d-row"><span class="k">開演</span><span class="v mono">{{ $attendance->event->start_time->format('H:i') }}</span></div>
+        @endif
     </div>
 
-    <div class="detail-section">
-        <div style="display:flex; gap:24px;">
-            <div>
-                <div class="detail-label">日付</div>
-                <div class="detail-value">{{ optional($attendance->event_date)->format('Y.m.d') }}（{{ optional($attendance->event_date)->translatedFormat('D') }}）</div>
-            </div>
-            <div>
-                <div class="detail-label">ステータス</div>
-                <span class="status-badge status-{{ $attendance->status }}">
-                    {{ ['attended' => '参戦済み', 'planned' => '参戦予定', 'applied' => '申込中', 'skipped' => 'スキップ'][$attendance->status] }}
-                </span>
-            </div>
+    {{-- 座席・記録 --}}
+    <div class="d-block">
+        <div class="d-h">座席・記録</div>
+        <div class="d-row">
+            <span class="k">ステータス</span>
+            <span class="v"><span class="status-badge status-{{ $attendance->status }}">{{ ['attended' => '参戦済み', 'planned' => '参戦予定', 'applied' => '申込中', 'skipped' => 'スキップ'][$attendance->status] }}</span></span>
         </div>
+        @if($attendance->seat_raw)
+        <div class="d-row"><span class="k">座席</span><span class="v">{{ $attendance->seat_raw }}</span></div>
+        @endif
+        @if($attendance->companion)
+        <div class="d-row"><span class="k">同行</span><span class="v">{{ $attendance->companion }}</span></div>
+        @endif
     </div>
 
-    @if($attendance->venue)
-    <div class="detail-section">
-        <div class="detail-label">会場</div>
-        <div class="detail-value">
-            <a href="{{ route('venues.show', $attendance->venue) }}" style="color:inherit; text-decoration:underline; text-underline-offset:3px;">
-                {{ $attendance->venue->name }}
-            </a>
-        </div>
-    </div>
-    @endif
-
-    {{-- ★v1.3（QV13-1）：開演は公演(event)の属性を参照。開場(open_time)は event に相当が無いため参戦側を暫定表示。 --}}
-    @if($attendance->open_time || $attendance->event?->start_time)
-    <div class="detail-section">
-        <div style="display:flex; gap:24px;">
-            @if($attendance->open_time)
-            <div>
-                <div class="detail-label">開場</div>
-                <div class="detail-value">{{ \Carbon\Carbon::parse($attendance->open_time)->format('H:i') }}</div>
-            </div>
-            @endif
-            @if($attendance->event?->start_time)
-            <div>
-                <div class="detail-label">開演</div>
-                <div class="detail-value">{{ $attendance->event->start_time->format('H:i') }}</div>
-            </div>
-            @endif
-        </div>
-    </div>
-    @endif
-
-    @if($attendance->seat_raw)
-    <div class="detail-section">
-        <div class="detail-label">座席</div>
-        <div class="detail-value">{{ $attendance->seat_raw }}</div>
-    </div>
-    @endif
-
+    {{-- 名義・当落（申込名義ごとに result 更新。ロジックは不変） --}}
     @if($attendance->fcMemberships->isNotEmpty())
-    <div class="detail-section">
-        <div class="detail-label">名義・当落</div>
+    <div class="d-block">
+        <div class="d-h">名義・当落</div>
         @foreach($attendance->fcMemberships as $m)
-        <div style="display:flex; align-items:center; gap:8px; padding:8px 0; font-size:13px; flex-wrap:wrap;">
-            <span class="dot" style="--oshi-color: {{ $m->oshi_color ?? '#C7414F' }}"></span>
-            <span style="flex:1">{{ $m->displayName() }}</span>
-            {{-- 当落結果の更新フォーム（S5/S6 の入力動線） --}}
+        <div class="apply-row">
+            <div class="ar-body">
+                <div class="ar-name">
+                    <span class="dot" style="--oshi-color: {{ $m->oshi_color ?? '#C7414F' }}"></span>
+                    {{ $m->displayName() }}
+                </div>
+            </div>
             <form method="POST" action="{{ route('attendance-identities.update-result', $m->pivot->id) }}"
                   style="display:flex; align-items:center; gap:6px;">
                 @csrf @method('PATCH')
-                <select name="result" class="form-select" style="width:auto; padding:4px 28px 4px 10px; font-size:11px;">
+                <select name="result" class="lot-select" data-v="{{ $m->pivot->result }}"
+                        onchange="this.form.submit()">
                     <option value="pending" {{ $m->pivot->result === 'pending' ? 'selected' : '' }}>未発表</option>
                     <option value="won" {{ $m->pivot->result === 'won' ? 'selected' : '' }}>当選</option>
                     <option value="lost" {{ $m->pivot->result === 'lost' ? 'selected' : '' }}>落選</option>
                 </select>
-                <button type="submit" class="btn btn-secondary btn-sm" style="padding:5px 12px;">更新</button>
             </form>
         </div>
         @endforeach
     </div>
     @endif
 
-    @if($attendance->companion)
-    <div class="detail-section">
-        <div class="detail-label">同行者</div>
-        <div class="detail-value">{{ $attendance->companion }}</div>
-    </div>
-    @endif
-
+    {{-- メモ --}}
     @if($attendance->memo)
-    <div class="detail-section">
-        <div class="detail-label">メモ</div>
-        <div class="rec-note" style="margin:4px 0 0 0;">{{ $attendance->memo }}</div>
+    <div class="d-block">
+        <div class="d-h">メモ</div>
+        <p style="font-size:12.5px; line-height:1.8; color:var(--color-ink);">{{ $attendance->memo }}</p>
     </div>
     @endif
 
-    {{-- 添付写真（メンバー間共有 / 削除は投稿者のみ） --}}
+    {{-- この日の写真（メンバー間共有 / 削除は投稿者のみ） --}}
     @if($attendance->photos->isNotEmpty())
-    <div class="detail-section">
-        <div class="detail-label">写真</div>
-        <div class="photo-thumbs">
+    <div class="d-block">
+        <div class="d-h">この日の写真（{{ $attendance->photos->count() }}）</div>
+        <div class="thumb-grid">
             @foreach($attendance->photos as $photo)
-            <span class="thumb">
+            <div class="thumb">
                 <img src="{{ route('photos.show', $photo) }}" alt="">
                 @if($photo->user_id === auth()->id())
                 <form method="POST" action="{{ route('photos.destroy', $photo) }}"
@@ -120,23 +99,31 @@
                     <button type="submit" class="copy-btn" style="padding:2px 7px; background:rgba(250,250,247,.9);">✕</button>
                 </form>
                 @endif
-            </span>
+            </div>
             @endforeach
         </div>
     </div>
     @endif
 
-    <div style="margin-top:24px;">
-        {{-- won付き（昇格済み）は削除不可。当選履歴保全（spec §7 Q3） --}}
+    {{-- 会場のビュー（見え方マッピング）への導線。360°(C)は対象外・通常の会場詳細へ --}}
+    @if($attendance->venue)
+    <a href="{{ route('venues.show', $attendance->venue) }}" class="venue-view-btn">
+        <span>この会場のビューを見る</span>
+        <small>{{ $attendance->venue->name }} ・ 見え方マッピング</small>
+    </a>
+    @endif
+
+    {{-- 削除（won付きは不可・spec §7 Q3）。ロジック不変 --}}
+    <div style="margin-top:14px;">
         @if($attendance->canBeDeleted())
         <form method="POST" action="{{ route('attendances.destroy', $attendance) }}"
               onsubmit="return confirm('この参戦記録を削除しますか？添付写真も削除されます。')">
             @csrf @method('DELETE')
-            <button type="submit" class="btn btn-secondary btn-sm" style="color:#C7414F;">削除</button>
+            <button type="submit" class="f-danger">この参戦記録を削除する</button>
         </form>
         @else
-        <p style="font-size:11px; color:var(--color-ink-sub); line-height:1.7;">
-            当選済みの記録は削除できません。行かなかった場合は編集画面でステータスを「スキップ」に変更してください。
+        <p style="font-size:11px; color:var(--color-ink-sub); line-height:1.7; text-align:center;">
+            当選済みの記録は削除できません。行かなかった場合は編集でステータスを「スキップ」に。
         </p>
         @endif
     </div>

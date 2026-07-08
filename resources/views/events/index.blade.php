@@ -1,40 +1,23 @@
-<x-app-layout :hide-header="true" :hide-fab="true">
-    <x-slot:pageHeader>
-        <div class="page-header">
-            <a href="{{ route('lots.index') }}" class="back">← 戻る</a>
-            <h1>公演（共有マスタ）</h1>
-        </div>
-    </x-slot:pageHeader>
-
-    <div class="link-row">
-        <a href="{{ route('events.create') }}" class="primary">＋ 公演を登録</a>
-        <a href="{{ route('events.import') }}">一括インポート</a>
+<x-app-layout :hide-fab="true">
+    <div class="ev-lead">
+        公演情報はメンバー全員で持ち寄る共有台帳です。参戦・申込のときはここから公演を選ぶだけで日付・会場が入ります。
+    </div>
+    <div class="ev-actions">
+        <a href="{{ route('events.create') }}" class="ev-new">＋ 公演を追加</a>
+        <a href="{{ route('events.import') }}" class="ev-import">一覧を貼って一括登録</a>
     </div>
 
-    @forelse($events as $event)
-    <div class="ev-card">
-        <span class="d">
-            {{ $event->event_date->format('m.d') }}
-            @if($event->start_time)<small class="ev-time">開演 {{ $event->start_time->format('H:i') }}</small>@endif
-        </span>
-        <div class="t">
-            {{ $event->event_name }}
-            <div class="vn">{{ $event->venue?->name ?? '会場未設定' }}</div>
-        </div>
-        @if($event->canBeDeleted())
-        <form method="POST" action="{{ route('events.destroy', $event) }}"
-              onsubmit="return confirm('この公演を削除しますか？')">
-            @csrf @method('DELETE')
-            <button type="submit" class="copy-btn" style="color:#C7414F;">削除</button>
-        </form>
-        @else
-        <span class="shared">参戦あり</span>
-        @endif
-    </div>
+    <div class="sec-label">今後の公演</div>
+    @forelse($upcoming as $event)
+        @include('events._ev', ['event' => $event])
     @empty
-    <div class="empty-state">
-        まだ公演がありません。<br>
-        <a href="{{ route('events.create') }}" class="btn btn-secondary btn-sm" style="margin-top:12px;">公演を登録する</a>
-    </div>
+        <div class="empty-state" style="padding:24px;">今後の公演はありません</div>
     @endforelse
+
+    @if($past->isNotEmpty())
+    <div class="sec-label">過去の公演</div>
+    @foreach($past as $event)
+        @include('events._ev', ['event' => $event])
+    @endforeach
+    @endif
 </x-app-layout>

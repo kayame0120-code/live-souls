@@ -1,4 +1,72 @@
-# REPORT.md — 現場手帖 v1.2 改修レポート（2026-07-08）
+# REPORT.md — 現場手帖 v1.3 view 再テンプレート（2026-07-09）
+
+> 検証はすべて **PHP 8.2.32（`/usr/bin/php8.2`・本番Flyと同一系）** で実行。
+> 本タスクは **view の骨格と CSS を mockup(v1.3) に追従させる再テンプレートのみ**（ロジック・ルート・データ設計は不変）。
+> A/B（events.start_time・一括インポートPHP移植）はベースラインとして取り込み済み。C（360°）は対象外。
+
+## 検証ライン判定表（生出力）
+
+### V1: `php artisan migrate`
+```
+   INFO  Nothing to migrate.
+V1 EXIT: 0
+```
+（本タスクで新規マイグレーションは追加していない）
+
+### build: `npm run build`（前回のビルド忘れ事故防止のため必須）
+```
+public/build/assets/app-DOE0EqIZ.css  79.78 kB │ gzip: 15.78 kB
+public/build/assets/app-CIomGrQN.js   46.16 kB │ gzip: 17.79 kB
+✓ built in 654ms
+BUILD EXIT: 0
+```
+新クラスの `public/build` 反映を grep で確認: ev-lead/ev-date/ev-body/ev-time/ev-count/d-block/att-hero/confirm-lead/confirm-title/btn-attended/btn-skipped/apply-row/lot-select/f-danger/detail-topbar/venue-view-btn = **全て OK**。
+
+### V3: `php artisan test`
+```
+  Tests:    101 passed (282 assertions)
+  Duration: 0.95s
+V3 EXIT: 0
+```
+指定テストの個別確認（生出力抜粋）:
+```
+PASS Tests\Unit\EventImportParserTest          （t1 SAMPLE一致・昼夜別・ノイズ遮断・未解析保持 ほか）
+PASS Tests\Feature\EventDuplicateKeyTest        （昼夜別レコード・開演違いは非重複・null同士のみ重複）
+PASS Tests\Feature\EventMasterTest              （削除ガード・重複警告非ブロック・全ユーザー追加・一括インポート）
+PASS Tests\Feature\PageRenderSmokeTest          （全12画面200＋名義編集/会場詳細200。公演一覧・参戦詳細・ホーム含む）
+Tests: 25 passed (86 assertions)
+```
+
+## 変更したクラス／画面の対応表
+
+| 画面 / ファイル | 変更 | 主なクラス |
+|---|---|---|
+| `components/app-layout.blade.php` | ボトムナビを**5タブ化**（公演=`events.index`を5つ目）。`.bottom-nav` を `repeat(5,1fr)` | bottom-nav |
+| `home.blade.php` | 前任の「公演マスタ」link-row を**撤去**（導線は5タブ目へ一本化）。確認カードを mockup 構造へ改名 | confirm-card / confirm-lead / confirm-title / confirm-sub / btn-attended / btn-skipped |
+| `events/index.blade.php` ＋ `_ev.blade.php` | `.ev-card` 旧構造を廃し **ev-lead → ev-actions → 今後/過去2セクション → .ev** に刷新。`EventController@index` を upcoming/past 分割＋`withCount(attendances)`（全メンバー分） | ev-lead / ev-actions / ev-new / ev-import / ev / ev-date / ev-body / ev-name / ev-venue / ev-time / ev-count / ev-delete |
+| `attendances/show.blade.php` | `.detail-section` 系 → **att-hero ＋ d-block/d-row(k/v)** 構造へ。開演は `event.start_time`（H:i・null非表示）、**開場(open_time)行は削除**。会場ビュー導線は通常の会場詳細へ（360°は対象外） | detail-topbar / detail-back / detail-edit / att-hero / att-date / att-title / att-meigi / d-block / d-row / k / v / apply-row / lot-select / thumb-grid / venue-view-btn / f-danger |
+| `events/create.blade.php`・`events/import-confirm.blade.php` | 開演入力（既存）維持。`.form-label` の縦リズム修正でトーン統一（name属性・送信先は不変） | form-label / warn / imp-row |
+| `resources/css/app.css` | v1.3 クラス群を既存トークン（`--color-*`／`--oshi-color`）で移植。`.form-label` に上マージン（前回D1の詰まり一括解消） | 上記すべて |
+
+## 実装手段の決定
+| 決定 | 理由 |
+|---|---|
+| 公演カードの「参戦 N」は `withCount(['attendances' => withoutGlobalScopes])` | events は共有マスタ。件数は削除ガード（withoutGlobalScopes）と同じく全メンバー分を数える |
+| ナビは**ボトムナビのまま**5タブ化（mockupの上部pillナビには変更せず） | 指示は「公演を5つ目に追加」。ナビ位置の変更は指示範囲外・既存FAB/レイアウトへの影響を避ける |
+| `.form-label` に上マージン付与 | 素のラベルを並べる v1.2/1.3 フォームの密着（前回D1）を1箇所で解消。mockup `.f-field>label` のリズムに一致 |
+
+## スコープ外（未実施・意図通り）
+- C（360°ビュー `.arena-view-btn` / `#scr-arena-view` / `venues.arena_view_key`）。会場詳細の360°導線も出していない。
+- 名義（`identities/*`）・編集フォーム（`.f-field`/`.f-input`/`.form-bar`）の mockup 全面追従は本タスクの列挙外のため未着手（機能は現状維持）。
+
+## QUESTIONS.md 残件（本タスク起票）
+| No | 内容 | ステータス |
+|---|---|---|
+| QV13-6 | spec §3「4タブ＋公演」 vs mockup「公演=5タブ目」の食い違い | 起票（mockup準拠で5タブ仮実装・spec文言更新を要人間確認） |
+
+---
+
+# （過去）現場手帖 v1.2 改修レポート（2026-07-08）
 
 > 検証はすべて **PHP 8.2.32（`/usr/bin/php8.2`・本番Flyと同一系）** で実行。
 > v1.1 以前のレポートは本節の後ろに残置。

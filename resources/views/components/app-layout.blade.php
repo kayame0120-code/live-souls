@@ -55,6 +55,9 @@
         <a href="{{ route('lots.index') }}" class="{{ request()->routeIs('lots.*') ? 'on' : '' }}">
             <span class="bar"></span>当落
         </a>
+        <a href="{{ route('events.index') }}" class="{{ request()->routeIs('events.*') ? 'on' : '' }}">
+            <span class="bar"></span>公演
+        </a>
     </nav>
     @endunless
 </div>
