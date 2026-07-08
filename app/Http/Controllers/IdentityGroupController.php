@@ -65,9 +65,9 @@ class IdentityGroupController extends Controller
 
     public function destroy(IdentityGroup $identityGroup)
     {
-        // E1未決: 配下名義がある場合は削除不可
+        // spec §7 [確定]（E1=A案で解決済み）: 配下名義ありは削除拒否
         if ($identityGroup->fcMemberships()->exists()) {
-            return back()->with('error', 'このグループには名義が含まれているため削除できません。先に名義を移動してください。');
+            return back()->with('error', '先に名義を削除または移動してください');
         }
 
         $identityGroup->delete();

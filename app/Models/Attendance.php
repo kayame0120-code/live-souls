@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[ScopedBy(UserScope::class)]
 class Attendance extends Model
@@ -49,5 +50,24 @@ class Attendance extends Model
         return $this->belongsToMany(FcMembership::class, 'attendance_identity')
             ->withPivot(['result', 'ticket_count', 'id'])
             ->withTimestamps();
+    }
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(AttendancePhoto::class);
+    }
+
+    /**
+     * 座席の自動合成（spec §5-8）: 「{block} {row}列 {number}番」空要素はスキップ。
+     */
+    public static function composeSeatRaw(?string $block, ?string $row, ?string $number): ?string
+    {
+        $parts = array_filter([
+            $block,
+            $row !== null && $row !== '' ? "{$row}列" : null,
+            $number !== null && $number !== '' ? "{$number}番" : null,
+        ], fn ($p) => $p !== null && $p !== '');
+
+        return $parts ? implode(' ', $parts) : null;
     }
 }

@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use App\Models\Scopes\UserScope;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Carbon;
 
 #[ScopedBy(UserScope::class)]
 class FcMembership extends Model
@@ -16,12 +18,10 @@ class FcMembership extends Model
         'person_id',
         'group_id',
         'artist_name',
-        'club_name',
         'member_no',
         'login_id',
         'password',
-        'joined_month',
-        'renewal_cycle',
+        'joined_on',
         'oshi_color',
     ];
 
@@ -30,6 +30,7 @@ class FcMembership extends Model
         return [
             'login_id' => 'encrypted',
             'password' => 'encrypted',
+            'joined_on' => 'date',
         ];
     }
 
@@ -78,5 +79,60 @@ class FcMembership extends Model
     {
         $label = $this->person->label ? "（{$this->person->label}）" : '';
         return $this->person->name . $label;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 更新期間の自動計算（spec §5-6・全FC共通式・PHP側計算）
+    |--------------------------------------------------------------------------
+    | 有効期限 = joined_on の月の1日 + 1年 − 1日（以後毎年同月日）
+    |          = 入会前月の月末日（毎年）。3月入会は2月末（うるう年考慮）
+    | 更新受付 = 有効期限月の前月2日 〜 有効期限日
+    */
+
+    /** 次に到来する有効期限（今日を含む・joined_on null なら null） */
+    public function expiryDate(?Carbon $today = null): ?CarbonImmutable
+    {
+        if (! $this->joined_on) {
+            return null;
+        }
+
+        $today = CarbonImmutable::parse(($today ?? Carbon::today())->toDateString());
+
+        // 入会月1日 + 1年 - 1日 → 有効期限の月日（入会前月の月末）
+        $firstExpiry = CarbonImmutable::parse($this->joined_on->toDateString())
+            ->startOfMonth()->addYear()->subDay();
+
+        // 今年の同月の月末を候補とし、過ぎていれば翌年（月末はうるう年で日が動くため endOfMonth で再計算）
+        $candidate = CarbonImmutable::create($today->year, $firstExpiry->month, 1)
+            ->endOfMonth()->startOfDay();
+        if ($candidate->lt($today)) {
+            $candidate = CarbonImmutable::create($today->year + 1, $firstExpiry->month, 1)
+                ->endOfMonth()->startOfDay();
+        }
+
+        return $candidate;
+    }
+
+    /** 更新受付開始日（有効期限月の前月2日） */
+    public function renewalWindowStart(?Carbon $today = null): ?CarbonImmutable
+    {
+        $expiry = $this->expiryDate($today);
+
+        return $expiry?->startOfMonth()->subMonth()->setDay(2);
+    }
+
+    /** 今日が更新受付期間内か（境界日=初日2日・期限日当日を含む） */
+    public function isInRenewalWindow(?Carbon $today = null): bool
+    {
+        if (! $this->joined_on) {
+            return false;
+        }
+
+        $todayDate = CarbonImmutable::parse(($today ?? Carbon::today())->toDateString());
+        $expiry = $this->expiryDate($today);
+        $start = $this->renewalWindowStart($today);
+
+        return $todayDate->gte($start) && $todayDate->lte($expiry);
     }
 }

@@ -21,25 +21,24 @@
         @endphp
 
         @forelse($filtered as $m)
-            <a href="{{ route('identities.show', $m) }}" class="m-card" style="--oshi-color: {{ $m->oshi_color ?? '#C7414F' }}">
-                @if($m->club_name)
-                <div class="m-club">{{ $m->club_name }}</div>
-                @else
-                <div class="m-club">{{ $m->artist_name }}</div>
-                @endif
+            <a href="{{ route('identities.show', $m) }}" class="m-card">
+                {{-- 担当色は丸スウォッチ（バー表現は廃止 / spec v1.1 §3） --}}
+                <span class="swatch" style="--oshi-color: {{ $m->oshi_color ?? '#C7414F' }}"></span>
+                {{-- グループ名＝FC名（spec v1.1 §4） --}}
+                <div class="m-club">{{ $m->group->name }}</div>
                 <div class="m-kind">MEMBERSHIP</div>
                 <div class="m-name">{{ $m->person->name }}@if($m->person->label)<small>{{ $m->person->label }}</small>@endif</div>
                 @if($m->member_no)
                 <div class="m-no">No. {{ $m->member_no }}</div>
                 @endif
                 <div class="m-foot">
-                    @if($m->joined_month)
-                    <span>入会 <b>{{ $m->joined_month }}</b></span>
+                    @if($m->joined_on)
+                    <span>入会 <b>{{ $m->joined_on->format('Y.m') }}</b></span>
                     @else
                     <span></span>
                     @endif
-                    @if($m->renewal_cycle)
-                    <span class="badge ok">{{ $m->renewal_cycle }}</span>
+                    @if($m->isInRenewalWindow())
+                    <span class="badge renewal">更新受付中</span>
                     @endif
                 </div>
             </a>

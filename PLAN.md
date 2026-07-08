@@ -1,58 +1,40 @@
-# PLAN.md — 現場手帖 実装計画
+# PLAN.md — 現場手帖
 
-## Phase 0: laravel-starter化（Fortify + 招待制）
-- [ ] `composer require laravel/fortify`
-- [ ] FortifyServiceProvider 作成・登録
-- [ ] Actions 作成（CreateNewUser, UpdateUserPassword 等）
-- [ ] `Features::registration()` 無効化
-- [ ] ログインビュー作成
-- [ ] 招待コード付き登録ルート `/register/{code}` 実装
+## v1.1 改修（2026-07-08）— 完了
 
-## Phase 1: マイグレーション（spec §4 全テーブル）
-- [ ] users 拡張（invited_by）
-- [ ] invitations
-- [ ] identity_groups
-- [ ] persons
-- [ ] fc_memberships
-- [ ] venues
-- [ ] venue_notes
-- [ ] attendances
-- [ ] attendance_identity
+### Phase A: PHP 8.2 依存ツリー修正 ✅
+- config.platform.php=8.2.32 固定 / fortify ~1.36.2（passkeys非内包）
+- config/fortify.php から passkeys・2FA limiter 除去
+- V1〜V3 を PHP 8.2.32 で通過（commit 5cf7270）
 
-## Phase 2: モデル・リレーション・スコープ
-- [ ] 全モデル作成 + encrypted キャスト
-- [ ] user_id グローバルスコープ（venues 除く）
-- [ ] リレーション定義
+### Phase B: DB移行 ✅
+- バックアップ database.sqlite.v1.0.bak（md5一致確認）
+- joined_on 変換マイグレーション（PHP側変換・形式不一致で停止する安全弁）
+- genba:verify-joined-on で機械検証（1件一致）
+- club_name / joined_month / renewal_cycle を DROP
+- attendance_photos 作成（グローバルuser_idスコープなし）
 
-## Phase 3: Service・Controller・ルーティング
-- [ ] HomeController（ダッシュボード）
-- [ ] AttendanceController（CRUD + 会場サジェスト）
-- [ ] IdentityController（名義人 + FC会員）
-- [ ] IdentityGroupController（グループ管理）
-- [ ] LotController（当落一覧）
-- [ ] VenueController（会場詳細 + 個人メモ upsert）
-- [ ] InvitationController（招待管理）
-- [ ] web.php ルート定義
+### Phase C: 機能改修11工程 ✅
+1. 廃止カラム参照除去 / 2. グループ削除ガード / 3. 更新期間アクセサ+バッジ /
+4. 申込登録+当選昇格+applied除外 / 5. 座席3フィールド+seat_raw合成 /
+6. 公演名サジェスト / 7. 写真添付+EXIF除去 / 8. 見え方マッピング /
+9. 一括インポート / 10. 同意文言 / 11. Places APIオートフィル
 
-## Phase 4: Blade ビュー
-- [ ] レイアウト（mockup.html デザイントークン準拠）
-- [ ] 認証（ログイン・招待付き登録）
-- [ ] ホーム（次の現場・積み上げ・直近の記録）
-- [ ] 参戦記録（一覧・登録・詳細・編集）
-- [ ] 名義（一覧・詳細・登録・編集）
-- [ ] グループ管理
-- [ ] 当落
-- [ ] 会場詳細
-- [ ] 招待管理
+### Phase D: mockup.html 改訂 ✅
+- 丸スウォッチ / 当落導線 / 会場詳細タイル画面 / 参戦登録座席3フィールド画面
 
-## Phase 5: テスト（spec §7 エッジケース）
-- [ ] マルチテナント 403（他ユーザーの attendance/venue_note への直アクセス拒否）
-- [ ] うるう年 2/29 誕生日の年齢計算
-- [ ] 招待コード同時多重使用（最初のみ成功）
-- [ ] 当選率ゼロ除算（申込0件→「—」表示）
+### Phase E: テスト ✅ 61件通過
+- 更新期間境界（1月/2月年跨ぎ/境界日/うるう年）/ グループ削除ガード /
+  applied除外 / 当選昇格・非降格 / 写真403・枚数・サイズ・EXIF / 変換突合
 
-## Phase 6: 検証ライン V1-V3
-- [ ] V1: `php artisan migrate --force` exit 0
-- [ ] V2: `/up` HTTP 200
-- [ ] V3: `php artisan test` exit 0
-- [ ] REPORT.md / QUESTIONS.md / deploy_runbook.md 完成
+### Phase F: 検証+成果物 ✅
+- V1〜V3 を PHP 8.2.32 で全通過（生出力を REPORT.md に貼付）
+- REPORT.md / QUESTIONS.md / deploy_runbook.md 更新
+
+## 残件（人間判断待ち・QUESTIONS.md）
+- Q3: 参戦記録の削除機能が spec に未記載（残置中）
+- Q5: HEIC 受付除外（環境上 EXIF 除去を保証できないため安全側）
+
+## v1.0（初版）— 完了
+Fortify招待制 / 全テーブル / 全画面 / マルチテナント / セキュリティ修正
+（commit 1be8709 / cc2b737 / d99305a）

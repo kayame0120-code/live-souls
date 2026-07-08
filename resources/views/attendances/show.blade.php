@@ -103,6 +103,28 @@
     </div>
     @endif
 
+    {{-- 添付写真（メンバー間共有 / 削除は投稿者のみ） --}}
+    @if($attendance->photos->isNotEmpty())
+    <div class="detail-section">
+        <div class="detail-label">写真</div>
+        <div class="photo-thumbs">
+            @foreach($attendance->photos as $photo)
+            <span class="thumb">
+                <img src="{{ route('photos.show', $photo) }}" alt="">
+                @if($photo->user_id === auth()->id())
+                <form method="POST" action="{{ route('photos.destroy', $photo) }}"
+                      onsubmit="return confirm('この写真を削除しますか？')"
+                      style="position:absolute; top:4px; right:4px;">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="copy-btn" style="padding:2px 7px; background:rgba(250,250,247,.9);">✕</button>
+                </form>
+                @endif
+            </span>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     <div style="margin-top:24px;">
         <form method="POST" action="{{ route('attendances.destroy', $attendance) }}"
               onsubmit="return confirm('この参戦記録を削除しますか？')">

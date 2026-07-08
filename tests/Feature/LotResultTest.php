@@ -46,8 +46,10 @@ class LotResultTest extends TestCase
     {
         $pivotId = $this->attendance->fcMemberships()->first()->pivot->id;
 
+        // 更新後は元の画面（当落 or 参戦詳細）へ戻る
         $this->patch(route('attendance-identities.update-result', $pivotId), ['result' => 'won'])
-            ->assertRedirect(route('attendances.show', $this->attendance));
+            ->assertRedirect()
+            ->assertSessionHas('success');
 
         $this->assertDatabaseHas('attendance_identity', [
             'id' => $pivotId,

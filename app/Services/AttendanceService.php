@@ -21,7 +21,7 @@ class AttendanceService
                 'event_date' => $data['event_date'],
                 'open_time' => $data['open_time'] ?? null,
                 'start_time' => $data['start_time'] ?? null,
-                'seat_raw' => $data['seat_raw'] ?? null,
+                'seat_raw' => $this->resolveSeatRaw($data),
                 'seat_block' => $data['seat_block'] ?? null,
                 'seat_row' => $data['seat_row'] ?? null,
                 'seat_number' => $data['seat_number'] ?? null,
@@ -49,7 +49,7 @@ class AttendanceService
                 'event_date' => $data['event_date'],
                 'open_time' => $data['open_time'] ?? null,
                 'start_time' => $data['start_time'] ?? null,
-                'seat_raw' => $data['seat_raw'] ?? null,
+                'seat_raw' => $this->resolveSeatRaw($data),
                 'seat_block' => $data['seat_block'] ?? null,
                 'seat_row' => $data['seat_row'] ?? null,
                 'seat_number' => $data['seat_number'] ?? null,
@@ -80,13 +80,39 @@ class AttendanceService
         }
 
         if (! empty($data['venue_name'])) {
+            // 名前完全一致の既存会場があれば再利用（spec §5-10-3）。なければ新規作成
+            $existing = Venue::where('name', $data['venue_name'])->first();
+            if ($existing) {
+                return $existing->id;
+            }
+
+            // 住所はユーザーが確認・確定した入力値のみ保存（規約0-7）
             $venue = Venue::create([
                 'name' => $data['venue_name'],
+                'address' => $data['venue_address'] ?? null,
                 'created_by' => Auth::id(),
             ]);
             return $venue->id;
         }
 
         return null;
+    }
+
+    /**
+     * seat_raw の決定（spec §5-8）:
+     * 送信された seat_raw（手動編集値）を優先。空なら構造化3フィールドから自動合成。
+     */
+    private function resolveSeatRaw(array $data): ?string
+    {
+        $manual = $data['seat_raw'] ?? null;
+        if ($manual !== null && $manual !== '') {
+            return $manual;
+        }
+
+        return Attendance::composeSeatRaw(
+            $data['seat_block'] ?? null,
+            $data['seat_row'] ?? null,
+            $data['seat_number'] ?? null,
+        );
     }
 }

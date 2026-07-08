@@ -9,18 +9,21 @@
         </div>
     </x-slot:pageHeader>
 
-    <div class="m-card" style="--oshi-color: {{ $fcMembership->oshi_color ?? '#C7414F' }}; margin-top:16px;">
-        @if($fcMembership->club_name)
-        <div class="m-club">{{ $fcMembership->club_name }}</div>
-        @else
-        <div class="m-club">{{ $fcMembership->artist_name }}</div>
-        @endif
+    <div class="m-card" style="margin-top:16px;">
+        <span class="swatch" style="--oshi-color: {{ $fcMembership->oshi_color ?? '#C7414F' }}"></span>
+        {{-- グループ名＝FC名（spec v1.1 §4） --}}
+        <div class="m-club">{{ $fcMembership->group->name }}</div>
         <div class="m-kind">MEMBERSHIP</div>
         <div class="m-name">{{ $fcMembership->person->name }}@if($fcMembership->person->label)<small>{{ $fcMembership->person->label }}</small>@endif</div>
         @if($fcMembership->member_no)
         {{-- S4: 名義詳細では会員番号も伏字（コピーで取得） --}}
         <div class="m-no">No. ••••••••</div>
         @endif
+    </div>
+
+    <div class="detail-section">
+        <div class="detail-label">担当アーティスト</div>
+        <div class="detail-value">{{ $fcMembership->artist_name }}</div>
     </div>
 
     {{-- 機密情報（伏字+コピー） --}}
@@ -67,17 +70,26 @@
     </div>
     @endif
 
-    @if($fcMembership->joined_month)
+    {{-- 更新期間（spec §5-6・joined_on null なら欄ごと非表示） --}}
+    @if($fcMembership->joined_on)
     <div class="detail-section">
-        <div class="detail-label">入会月</div>
-        <div class="detail-value">{{ $fcMembership->joined_month }}</div>
+        <div class="detail-label">入会</div>
+        <div class="detail-value">{{ $fcMembership->joined_on->format('Y.m') }}</div>
     </div>
-    @endif
-
-    @if($fcMembership->renewal_cycle)
     <div class="detail-section">
-        <div class="detail-label">更新サイクル</div>
-        <div class="detail-value">{{ $fcMembership->renewal_cycle }}</div>
+        <div class="detail-label">有効期限</div>
+        <div class="detail-value" style="display:flex; align-items:center; gap:10px;">
+            {{ $fcMembership->expiryDate()->format('Y.m.d') }}
+            @if($fcMembership->isInRenewalWindow())
+            <span class="badge renewal">更新受付中</span>
+            @endif
+        </div>
+    </div>
+    <div class="detail-section">
+        <div class="detail-label">更新受付期間</div>
+        <div class="detail-value">
+            {{ $fcMembership->renewalWindowStart()->format('Y.m.d') }} 〜 {{ $fcMembership->expiryDate()->format('Y.m.d') }}
+        </div>
     </div>
     @endif
 
@@ -110,12 +122,13 @@
 document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const text = this.dataset.copy;
+        const done = () => {
+            this.textContent = 'コピー済';
+            this.classList.add('copied');
+            setTimeout(() => { this.textContent = 'コピー'; this.classList.remove('copied'); }, 1500);
+        };
         if (navigator.clipboard) {
-            navigator.clipboard.writeText(text).then(() => {
-                this.textContent = 'コピー済';
-                this.classList.add('copied');
-                setTimeout(() => { this.textContent = 'コピー'; this.classList.remove('copied'); }, 1500);
-            });
+            navigator.clipboard.writeText(text).then(done);
         } else {
             const ta = document.createElement('textarea');
             ta.value = text;
@@ -124,9 +137,7 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
-            this.textContent = 'コピー済';
-            this.classList.add('copied');
-            setTimeout(() => { this.textContent = 'コピー'; this.classList.remove('copied'); }, 1500);
+            done();
         }
     });
 });

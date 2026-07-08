@@ -48,6 +48,11 @@
                 <input class="form-input" id="password_confirmation" type="password" name="password_confirmation" required>
             </div>
 
+            {{-- 写真共有の同意文言（spec §5-4-3・登録＝同意） --}}
+            <p style="font-size:11px; color: #8A8C92; line-height:1.8; margin-bottom:16px;">
+                投稿した参戦写真はメンバー間で共有されます。登録することでこれに同意したものとみなされます。
+            </p>
+
             <button type="submit" class="btn btn-primary">登録する</button>
         </form>
     </div>

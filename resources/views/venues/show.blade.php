@@ -46,6 +46,33 @@
         <button type="submit" class="btn btn-primary">メモを保存</button>
     </form>
 
+    {{-- 見え方マッピング（spec §5-9）: 全メンバーの写真を座席情報つきで表示 --}}
+    <div class="sec-label">見え方マッピング</div>
+    @if($photos->isEmpty())
+        <div class="empty-state" style="padding:24px;">まだ写真がありません</div>
+    @else
+    <div class="photo-grid">
+        @foreach($photos as $photo)
+        <div class="photo-tile">
+            <img src="{{ route('photos.show', $photo) }}" alt="" loading="lazy">
+            <div class="meta">
+                @if($photo->attendance?->seat_raw)
+                <div>座席 <b>{{ $photo->attendance->seat_raw }}</b></div>
+                @endif
+                <div>{{ optional($photo->attendance?->event_date)->format('Y.m.d') }}・{{ $photo->user->name }}</div>
+                @if($photo->user_id === auth()->id())
+                <form method="POST" action="{{ route('photos.destroy', $photo) }}"
+                      onsubmit="return confirm('この写真を削除しますか？')" style="margin-top:4px;">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="copy-btn" style="font-size:10px;">削除</button>
+                </form>
+                @endif
+            </div>
+        </div>
+        @endforeach
+    </div>
+    @endif
+
     @if($attendances->isNotEmpty())
     <div class="sec-label">この会場の参戦履歴</div>
     @foreach($attendances as $attendance)

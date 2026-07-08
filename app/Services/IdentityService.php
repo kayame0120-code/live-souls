@@ -26,12 +26,10 @@ class IdentityService
                 'person_id' => $person->id,
                 'group_id' => $membershipData['group_id'],
                 'artist_name' => $membershipData['artist_name'],
-                'club_name' => $membershipData['club_name'] ?? null,
                 'member_no' => $membershipData['member_no'] ?? null,
                 'login_id' => $membershipData['login_id'] ?? null,
                 'password' => $membershipData['password'] ?? null,
-                'joined_month' => $membershipData['joined_month'] ?? null,
-                'renewal_cycle' => $membershipData['renewal_cycle'] ?? null,
+                'joined_on' => $membershipData['joined_on'] ?? null,
                 'oshi_color' => $membershipData['oshi_color'] ?? null,
             ]);
         });
@@ -51,11 +49,9 @@ class IdentityService
             $update = [
                 'group_id' => $membershipData['group_id'],
                 'artist_name' => $membershipData['artist_name'],
-                'club_name' => $membershipData['club_name'] ?? null,
                 'member_no' => $membershipData['member_no'] ?? null,
                 'login_id' => $membershipData['login_id'] ?? null,
-                'joined_month' => $membershipData['joined_month'] ?? null,
-                'renewal_cycle' => $membershipData['renewal_cycle'] ?? null,
+                'joined_on' => $membershipData['joined_on'] ?? null,
                 'oshi_color' => $membershipData['oshi_color'] ?? null,
             ];
 

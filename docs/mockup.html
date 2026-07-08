@@ -119,14 +119,17 @@
   }
 
   /* ---- 名義カード（boldness投資先：会員証様式） ---- */
+  /* v1.1: 担当色はバー表現を廃止し丸スウォッチで表現 */
   .m-card{
     background:var(--card);border:1px solid var(--keisen);
     border-radius:var(--radius);padding:18px 20px 16px;margin-bottom:14px;
     position:relative;overflow:hidden;
   }
-  .m-card::before{
-    content:"";position:absolute;left:0;right:0;top:0;height:5px;
+  .swatch{
+    position:absolute;top:16px;right:18px;
+    width:18px;height:18px;border-radius:50%;
     background:var(--oshi);
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.35);
   }
   .m-club{
     font-size:11px;font-weight:700;letter-spacing:.24em;
@@ -179,6 +182,44 @@
   .st.win{background:var(--oshi);color:#fff}
   .st.lose{background:var(--keisen);color:var(--ink-sub)}
   .st.wait{border:1px solid var(--keisen-strong);color:var(--ink-sub)}
+
+  /* ---- v1.1: 当落導線ボタン ---- */
+  .lot-actions{display:flex;gap:8px;margin-bottom:16px}
+  .lot-actions a{
+    flex:1;display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;letter-spacing:.08em;
+    padding:11px 0;border-radius:999px;text-decoration:none;cursor:pointer;
+  }
+  .lot-actions .primary{background:var(--ink);color:#fff}
+  .lot-actions .secondary{border:1px solid var(--keisen-strong);color:var(--ink)}
+
+  /* ---- v1.1: 見え方マッピング（写真タイル） ---- */
+  .photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .photo-tile{
+    background:var(--card);border:1px solid var(--keisen);
+    border-radius:10px;overflow:hidden;
+  }
+  .photo-tile .ph{
+    aspect-ratio:4/3;background:linear-gradient(135deg,var(--keisen) 0%,var(--keisen-strong) 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;color:var(--ink-sub);letter-spacing:.2em;
+  }
+  .photo-tile .meta{padding:8px 10px;font-size:10.5px;color:var(--ink-sub);line-height:1.6}
+  .photo-tile .meta b{color:var(--ink);font-weight:500}
+
+  /* ---- v1.1: 参戦登録フォーム（座席3フィールド） ---- */
+  .form-label{
+    display:block;font-size:11px;font-weight:700;color:var(--ink-sub);
+    letter-spacing:.16em;margin:14px 0 6px;
+  }
+  .form-input{
+    width:100%;padding:10px 14px;font-size:14px;font-family:inherit;
+    border:1px solid var(--keisen-strong);border-radius:10px;
+    background:var(--paper);color:var(--ink);
+  }
+  .seat-fields{display:flex;gap:8px}
+  .seat-fields .form-input:first-child{flex:2}
+  .seat-fields .form-input{flex:1}
 
   /* ---- 記帳ボタン ---- */
   .fab{
@@ -304,7 +345,7 @@
           <div class="rec-date">2026.04.11</div>
         </div>
         <div class="rec-meta">
-          <span>会場 <b>横浜アリーナ</b></span>
+          <span>会場 <b data-venue-link>横浜アリーナ</b></span>
           <span>座席 <b>センター C2ブロック</b></span>
           <span>名義 <b>紫の名義</b></span>
         </div>
@@ -316,17 +357,19 @@
       <div class="sec-label">名義台帳</div>
 
       <div class="m-card" style="--oshi:#7B5CC6">
+        <span class="swatch"></span>
         <div class="m-club">LUMIÈRE FAMILY CLUB</div>
         <div class="m-kind">MEMBERSHIP</div>
         <div class="m-name">片倉 菖<small>自名義</small></div>
         <div class="m-no">No. 0482 1957 33</div>
         <div class="m-foot">
           <span>入会 <b>2019.03</b>（8年目）</span>
-          <span class="badge">更新まで24日</span>
+          <span class="badge">更新受付中</span>
         </div>
       </div>
 
       <div class="m-card" style="--oshi:#3D77C9">
+        <span class="swatch"></span>
         <div class="m-club">8PEACE OFFICIAL FC</div>
         <div class="m-kind">MEMBERSHIP</div>
         <div class="m-name">片倉 洋子<small>母名義</small></div>
@@ -338,6 +381,7 @@
       </div>
 
       <div class="m-card" style="--oshi:#D8A03C">
+        <span class="swatch"></span>
         <div class="m-club">LUMIÈRE FAMILY CLUB</div>
         <div class="m-kind">MEMBERSHIP</div>
         <div class="m-name">佐藤 由紀<small>ゆきちゃん共同</small></div>
@@ -353,6 +397,12 @@
 
     <!-- ================= 当落 ================= -->
     <section class="screen" id="scr-lot">
+      <!-- v1.1: 申込登録・一括インポートへの導線 -->
+      <div class="lot-actions">
+        <a class="primary">＋ 申込を登録</a>
+        <a class="secondary">一括インポート</a>
+      </div>
+
       <div class="sec-label">当落待ち</div>
 
       <div class="lot">
@@ -410,6 +460,70 @@
         </div>
       </div>
     </section>
+    <!-- ================= v1.1: 会場詳細（見え方マッピング） ================= -->
+    <section class="screen" id="scr-venue">
+      <div class="sec-label">横浜アリーナ</div>
+      <div class="rec">
+        <div class="rec-meta" style="margin:0">
+          <span>住所 <b>神奈川県横浜市港北区新横浜3-10</b></span>
+          <span>最寄 <b>新横浜駅</b></span>
+          <span>キャパ <b>17,000</b></span>
+        </div>
+      </div>
+
+      <div class="sec-label">見え方マッピング</div>
+      <div class="photo-grid">
+        <div class="photo-tile">
+          <div class="ph">PHOTO</div>
+          <div class="meta">
+            <div>座席 <b>センター C2 4列</b></div>
+            <div>2026.04.11・片倉 菖</div>
+          </div>
+        </div>
+        <div class="photo-tile">
+          <div class="ph">PHOTO</div>
+          <div class="meta">
+            <div>座席 <b>スタンド上手 12列</b></div>
+            <div>2026.06.14・ゆき</div>
+          </div>
+        </div>
+        <div class="photo-tile">
+          <div class="ph">PHOTO</div>
+          <div class="meta">
+            <div>座席 <b>アリーナ B4 22列</b></div>
+            <div>2025.12.24・まお</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= v1.1: 参戦登録（座席3フィールド） ================= -->
+    <section class="screen" id="scr-create">
+      <div class="sec-label">参戦を記録</div>
+
+      <label class="form-label">日付</label>
+      <input class="form-input" type="date" value="2026-07-08">
+
+      <label class="form-label">公演名</label>
+      <input class="form-input" type="text" placeholder="過去の入力からサジェスト">
+
+      <label class="form-label">会場</label>
+      <input class="form-input" type="text" placeholder="会場名（既存会場をサジェスト）">
+
+      <!-- v1.1: 座席は構造化3フィールドが主入力。seat_rawは自動合成＋編集可 -->
+      <label class="form-label">座席</label>
+      <div class="seat-fields">
+        <input class="form-input" type="text" placeholder="ブロック">
+        <input class="form-input" type="text" placeholder="列">
+        <input class="form-input" type="text" placeholder="番">
+      </div>
+
+      <label class="form-label">座席表記（自動合成・編集可）</label>
+      <input class="form-input" type="text" placeholder="アリーナ B4 3列 15番">
+
+      <label class="form-label">写真（5枚まで・メンバー間で共有）</label>
+      <input class="form-input" type="file" multiple>
+    </section>
   </main>
 
   <button class="fab" id="fab">＋ 参戦を記録</button>
@@ -426,16 +540,29 @@
   const navBtns = document.querySelectorAll('nav button');
   const screens = document.querySelectorAll('.screen');
   const fab = document.getElementById('fab');
+
+  function showScreen(id){
+    screens.forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelector('main').scrollTo(0,0);
+  }
+
   navBtns.forEach(btn=>{
     btn.addEventListener('click',()=>{
       navBtns.forEach(b=>b.classList.remove('on'));
-      screens.forEach(s=>s.classList.remove('active'));
       btn.classList.add('on');
-      document.getElementById(btn.dataset.scr).classList.add('active');
+      showScreen(btn.dataset.scr);
       // 記帳ボタンは名義画面では非表示（機微情報画面に記録動線を混ぜない）
       fab.style.display = btn.dataset.scr === 'scr-meigi' ? 'none' : 'block';
-      document.querySelector('main').scrollTo(0,0);
     });
+  });
+
+  // v1.1: FAB → 参戦登録フォーム / 会場名クリック → 会場詳細（デモ遷移）
+  fab.addEventListener('click',()=>showScreen('scr-create'));
+  document.querySelectorAll('[data-venue-link]').forEach(el=>{
+    el.style.textDecoration='underline';
+    el.style.cursor='pointer';
+    el.addEventListener('click',()=>showScreen('scr-venue'));
   });
 </script>
 </body>

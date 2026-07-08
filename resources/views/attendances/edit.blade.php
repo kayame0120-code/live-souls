@@ -6,7 +6,7 @@
         </div>
     </x-slot:pageHeader>
 
-    <form method="POST" action="{{ route('attendances.update', $attendance) }}">
+    <form method="POST" action="{{ route('attendances.update', $attendance) }}" enctype="multipart/form-data">
         @csrf @method('PUT')
 
         <div class="form-group">
@@ -21,7 +21,8 @@
             <label class="form-label" for="event_name">公演名</label>
             <input class="form-input @error('event_name') is-invalid @enderror"
                    type="text" id="event_name" name="event_name"
-                   value="{{ old('event_name', $attendance->event_name) }}" required>
+                   value="{{ old('event_name', $attendance->event_name) }}" required autocomplete="off">
+            <div id="event-suggestions" style="display:none; background:var(--color-card); border:1px solid var(--color-keisen); border-radius:10px; margin-top:4px; overflow:hidden;"></div>
             @error('event_name')<div class="form-error">{{ $message }}</div>@enderror
         </div>
 
@@ -33,8 +34,27 @@
             <div id="venue-suggestions" style="display:none; background:var(--color-card); border:1px solid var(--color-keisen); border-radius:10px; margin-top:4px; overflow:hidden;"></div>
         </div>
 
+        <div class="form-group" id="venue-address-wrap" style="display:none;">
+            <label class="form-label" for="venue_address">会場住所（新規会場のみ・自動補完）</label>
+            <input class="form-input" type="text" id="venue_address" name="venue_address"
+                   value="{{ old('venue_address') }}" placeholder="空欄可">
+        </div>
+
+        {{-- 座席: 構造化3フィールドが主入力（spec §5-8） --}}
         <div class="form-group">
-            <label class="form-label" for="seat_raw">座席</label>
+            <label class="form-label">座席</label>
+            <div style="display:flex; gap:8px;">
+                <input class="form-input" type="text" id="seat_block" name="seat_block"
+                       value="{{ old('seat_block', $attendance->seat_block) }}" placeholder="ブロック" style="flex:2;">
+                <input class="form-input" type="text" id="seat_row" name="seat_row"
+                       value="{{ old('seat_row', $attendance->seat_row) }}" placeholder="列" style="flex:1;">
+                <input class="form-input" type="text" id="seat_number" name="seat_number"
+                       value="{{ old('seat_number', $attendance->seat_number) }}" placeholder="番" style="flex:1;">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="seat_raw">座席表記（自動合成・編集可）</label>
             <input class="form-input" type="text" id="seat_raw" name="seat_raw"
                    value="{{ old('seat_raw', $attendance->seat_raw) }}">
         </div>
@@ -89,56 +109,39 @@
             <textarea class="form-textarea" id="memo" name="memo">{{ old('memo', $attendance->memo) }}</textarea>
         </div>
 
+        {{-- 既存写真 + 追加アップロード（合計5枚まで） --}}
+        @if($attendance->photos->isNotEmpty())
+        <div class="form-group">
+            <label class="form-label">添付済みの写真（削除は詳細画面から）</label>
+            <div class="photo-thumbs">
+                @foreach($attendance->photos as $photo)
+                <span class="thumb"><img src="{{ route('photos.show', $photo) }}" alt=""></span>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        @if($attendance->photos->count() < \App\Services\PhotoService::MAX_PHOTOS_PER_ATTENDANCE)
+        <div class="form-group">
+            <label class="form-label" for="photos">写真を追加（合計5枚まで）</label>
+            <input class="form-input @error('photos') is-invalid @enderror @error('photos.*') is-invalid @enderror"
+                   type="file" id="photos" name="photos[]" multiple accept="image/jpeg,image/png,image/webp">
+            @error('photos')<div class="form-error">{{ $message }}</div>@enderror
+            @error('photos.*')<div class="form-error">{{ $message }}</div>@enderror
+        </div>
+        @endif
+
         <button type="submit" class="btn btn-primary">更新する</button>
     </form>
 </x-app-layout>
 
 @push('scripts')
+@include('partials.suggest-scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const input = document.getElementById('venue_name');
-    const hiddenId = document.getElementById('venue_id');
-    const sugBox = document.getElementById('venue-suggestions');
-    let timer;
-
-    input.addEventListener('input', function() {
-        clearTimeout(timer);
-        hiddenId.value = '';
-        const q = this.value.trim();
-        if (q.length < 1) { sugBox.style.display = 'none'; return; }
-        timer = setTimeout(() => {
-            fetch('/api/venues/suggest?q=' + encodeURIComponent(q))
-                .then(r => r.json())
-                .then(venues => {
-                    if (venues.length === 0) { sugBox.style.display = 'none'; return; }
-                    sugBox.textContent = '';
-                    venues.forEach(v => {
-                        const d = document.createElement('div');
-                        d.style.cssText = 'padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--color-keisen)';
-                        d.dataset.id = v.id;
-                        d.dataset.name = v.name;
-                        d.textContent = v.name;
-                        if (v.address) {
-                            const span = document.createElement('span');
-                            span.style.cssText = 'color:var(--color-ink-sub);font-size:11px;margin-left:6px';
-                            span.textContent = v.address;
-                            d.appendChild(span);
-                        }
-                        d.addEventListener('click', () => {
-                            input.value = d.dataset.name;
-                            hiddenId.value = d.dataset.id;
-                            sugBox.style.display = 'none';
-                        });
-                        sugBox.appendChild(d);
-                    });
-                    sugBox.style.display = 'block';
-                });
-        }, 300);
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!sugBox.contains(e.target) && e.target !== input) sugBox.style.display = 'none';
-    });
+    setupVenueField();
+    setupEventNameField();
+    setupSeatCompose();
 });
 </script>
 @endpush

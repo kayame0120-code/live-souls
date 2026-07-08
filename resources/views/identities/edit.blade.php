@@ -12,7 +12,7 @@
         <div class="sec-label" style="margin-top:8px;">FC情報</div>
 
         <div class="form-group">
-            <label class="form-label" for="group_id">グループ</label>
+            <label class="form-label" for="group_id">FC（グループ）</label>
             <select class="form-select" id="group_id" name="group_id" required>
                 @foreach($groups as $group)
                 <option value="{{ $group->id }}" {{ old('group_id', $fcMembership->group_id) == $group->id ? 'selected' : '' }}>{{ $group->name }}</option>
@@ -23,11 +23,6 @@
         <div class="form-group">
             <label class="form-label" for="artist_name">アーティスト名</label>
             <input class="form-input" type="text" id="artist_name" name="artist_name" value="{{ old('artist_name', $fcMembership->artist_name) }}" required>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label" for="club_name">FC名</label>
-            <input class="form-input" type="text" id="club_name" name="club_name" value="{{ old('club_name', $fcMembership->club_name) }}">
         </div>
 
         <div class="form-group">
@@ -48,18 +43,15 @@
 
         <div style="display:flex; gap:12px;">
             <div class="form-group" style="flex:1">
-                <label class="form-label" for="joined_month">入会月</label>
-                <input class="form-input" type="month" id="joined_month" name="joined_month" value="{{ old('joined_month', $fcMembership->joined_month) }}">
+                <label class="form-label" for="joined_month_input">入会年月</label>
+                <input class="form-input @error('joined_month_input') is-invalid @enderror" type="month" id="joined_month_input" name="joined_month_input"
+                       value="{{ old('joined_month_input', optional($fcMembership->joined_on)->format('Y-m')) }}">
+                @error('joined_month_input')<div class="form-error">{{ $message }}</div>@enderror
             </div>
             <div class="form-group" style="flex:1">
                 <label class="form-label" for="oshi_color">担当色</label>
                 <input class="form-input" type="color" id="oshi_color" name="oshi_color" value="{{ old('oshi_color', $fcMembership->oshi_color ?? '#C7414F') }}" style="height:42px; padding:4px;">
             </div>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label" for="renewal_cycle">更新サイクル</label>
-            <input class="form-input" type="text" id="renewal_cycle" name="renewal_cycle" value="{{ old('renewal_cycle', $fcMembership->renewal_cycle) }}">
         </div>
 
         <div class="sec-label">名義人情報</div>

@@ -141,15 +141,17 @@ a.rec:hover { border-color: var(--color-keisen-strong); }
     font-size: 12px; line-height: 1.7; color: var(--color-ink); border-radius: 0 8px 8px 0;
 }
 
-/* 名義カード */
+/* 名義カード（担当色はバー廃止・丸スウォッチで表現 / spec v1.1 §3） */
 .m-card {
     background: var(--color-card); border: 1px solid var(--color-keisen);
     border-radius: var(--radius-card); padding: 18px 20px 16px; margin-bottom: 14px;
     position: relative; overflow: hidden; display: block; text-decoration: none; color: inherit;
 }
-.m-card::before {
-    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 5px;
+.swatch {
+    position: absolute; top: 16px; right: 18px;
+    width: 18px; height: 18px; border-radius: 50%;
     background: var(--oshi-color, var(--color-oshi));
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
 }
 .m-club { font-size: 11px; font-weight: 700; letter-spacing: .24em; color: var(--oshi-color, var(--color-oshi)); margin-top: 4px; }
 .m-kind { font-size: 9px; letter-spacing: .3em; color: var(--color-ink-sub); margin-top: 2px; }
@@ -375,6 +377,44 @@ a.rec:hover { border-color: var(--color-keisen-strong); }
 }
 .alert-success { background: #E8F5E9; color: #2E7D32; }
 .alert-error { background: #FFEBEE; color: #C62828; }
+
+/* 見え方マッピング（写真タイル / spec §5-9） */
+.photo-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.photo-tile {
+    background: var(--color-card); border: 1px solid var(--color-keisen);
+    border-radius: 10px; overflow: hidden;
+}
+.photo-tile img {
+    width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block;
+}
+.photo-tile .meta {
+    padding: 8px 10px; font-size: 10.5px; color: var(--color-ink-sub); line-height: 1.6;
+}
+.photo-tile .meta b { color: var(--color-ink); font-weight: 500; }
+
+/* 参戦詳細のサムネイル */
+.photo-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.photo-thumbs .thumb { position: relative; }
+.photo-thumbs img {
+    width: 104px; height: 78px; object-fit: cover;
+    border-radius: 8px; border: 1px solid var(--color-keisen); display: block;
+}
+
+/* 更新受付中バッジ */
+.badge.renewal { background: var(--color-oshi); color: #fff; }
+
+/* インポート確認テーブル */
+.import-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.import-table th {
+    font-size: 10px; font-weight: 700; color: var(--color-ink-sub);
+    letter-spacing: .12em; text-align: left; padding: 6px 4px;
+    border-bottom: 1px solid var(--color-keisen-strong);
+}
+.import-table td { padding: 6px 4px; border-bottom: 1px solid var(--color-keisen); vertical-align: middle; }
+.import-table .form-input { padding: 6px 8px; font-size: 12px; }
+.import-row-invalid { background: #FFF6F0; }
 
 @media (prefers-reduced-motion: no-preference) {
     .screen-content { animation: fade .18s ease; }
