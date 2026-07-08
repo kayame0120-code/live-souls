@@ -55,9 +55,22 @@ Tests: 25 passed (86 assertions)
 | ナビは**ボトムナビのまま**5タブ化（mockupの上部pillナビには変更せず） | 指示は「公演を5つ目に追加」。ナビ位置の変更は指示範囲外・既存FAB/レイアウトへの影響を避ける |
 | `.form-label` に上マージン付与 | 素のラベルを並べる v1.2/1.3 フォームの密着（前回D1）を1箇所で解消。mockup `.f-field>label` のリズムに一致 |
 
+## 追加対応: 名義（identities）の mockup 追従（2026-07-09・利用者指摘）
+
+初回リリースでは名義を列挙外として据え置いたが、カード配色・フォーム項目順が mockup と乖離との指摘を受け追従。ロジック・name属性・ルートは不変。
+
+| 画面 | 変更 |
+|---|---|
+| `identities/index` | `.chip`グループタブ → `.fc-tabs/.fc-tab`。白カード＋隅スウォッチ → **担当色でカード全体を淡く塗り（color-mix 7%）＋3px担当色ボーダー＋インライン`.m-swatch`**（mockup .m-card v1.3）。FC名/MEMBERSHIP表記を廃し m-foot に集約。`.m-add` 追加ボタン |
+| `identities/show` | `.detail-section` → `detail-topbar` ＋ 塗り`.m-card` ＋ `.d-block`（`.copy-field`/`.cf-k`/`.cf-v`）でログイン情報/個人情報をグループ化、会員期限 d-row、`.apply-row`/`.ar-st` 当落一覧。伏字＋コピーは維持（member_no はspec S4で伏字＝mockupの平文表示より spec優先） |
+| `identities/create`・`edit` | **項目順を mockup グルーピングに再配置**: 名義の基本(FC/担当/呼び名/担当色) → ログイン情報(会員番号/パスワード/ID) → 個人情報(氏名/住所/電話/メール/誕生日) → 入会日。`.form-group/.form-label` → `.d-block`＋`.f-field`/`.f-input`/`.f-hint` |
+| `app.css` | `.m-card` を塗り版へ更新、`.m-cardhead`/`.m-swatch`/`.fc-tabs`/`.fc-tab`/`.m-add`/`.copy-field`/`.cf-k`/`.cf-v`/`.f-field`/`.f-input`/`.f-hint` 追加、`.swatch-opt` を mockup(border選択)へ |
+
+- テスト: `IdentityV12Test` の当落一覧見出しアサーションを mockup 文言「この名義の申込・当落」に更新（意図＝当落一覧表示・当選率非表示は不変）。**101件緑を維持**。
+- rebuild 済み（`.m-cardhead`/`.copy-field`/`.f-input`/`color-mix` の `public/build` 反映を確認）。
+
 ## スコープ外（未実施・意図通り）
 - C（360°ビュー `.arena-view-btn` / `#scr-arena-view` / `venues.arena_view_key`）。会場詳細の360°導線も出していない。
-- 名義（`identities/*`）・編集フォーム（`.f-field`/`.f-input`/`.form-bar`）の mockup 全面追従は本タスクの列挙外のため未着手（機能は現状維持）。
 
 ## QUESTIONS.md 残件（本タスク起票）
 | No | 内容 | ステータス |

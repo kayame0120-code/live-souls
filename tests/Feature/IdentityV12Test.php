@@ -90,7 +90,8 @@ class IdentityV12Test extends TestCase
 
         $response = $this->get(route('identities.show', $membership));
         $response->assertOk()
-            ->assertSee('申込の当落')
+            // v1.3: 見出しは mockup 準拠「この名義の申込・当落」。当落一覧が出て当選率は出ない
+            ->assertSee('申込・当落')
             ->assertSee('当選')
             ->assertDontSee('当選率');
     }
