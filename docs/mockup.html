@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>現場手帖 — UIモック v1.3</title>
+<title>現場手帖 — UIモック v1.2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -314,88 +314,6 @@
   .view-seat{font-size:12px;font-weight:700}
   .view-by{font-size:10.5px;color:var(--ink-sub);white-space:nowrap}
 
-  /* 360°ビュー導線（対応会場のみ・v1.3追加） */
-  .arena-view-btn{
-    width:100%;font-family:inherit;cursor:pointer;text-align:left;
-    background:linear-gradient(135deg,#2A2C34,#3A3D48);color:#fff;border:none;
-    border-radius:var(--radius);padding:16px 18px;margin-bottom:14px;
-    display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;
-  }
-  .arena-view-btn::after{
-    content:"";position:absolute;right:-30px;top:50%;transform:translateY(-50%);
-    width:120px;height:120px;border-radius:50%;
-    background:radial-gradient(circle,rgba(199,65,79,.35),transparent 70%);
-  }
-  .av-icon{
-    width:40px;height:40px;border-radius:50%;flex:none;
-    border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;
-    justify-content:center;font-size:18px;position:relative;z-index:1;
-  }
-  .av-body{flex:1;position:relative;z-index:1}
-  .av-title{font-size:14px;font-weight:700;letter-spacing:.06em}
-  .av-sub{font-size:10.5px;color:rgba(255,255,255,.65);margin-top:2px;letter-spacing:.04em}
-  .av-arrow{font-size:18px;color:rgba(255,255,255,.5);position:relative;z-index:1}
-
-  /* 360°ビュー フルスクリーン画面 */
-  #scr-arena-view.active{padding:0}
-  .av-stage{
-    position:relative;width:100%;min-height:calc(100dvh - 120px);
-    background:radial-gradient(ellipse at 50% 35%,#3A3D48,#1C1D22 75%);
-    display:flex;flex-direction:column;
-  }
-  .av-close{
-    position:absolute;top:16px;left:16px;z-index:5;
-    font-family:inherit;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.2);
-    color:#fff;font-size:12px;font-weight:500;letter-spacing:.04em;
-    padding:8px 14px;border-radius:999px;cursor:pointer;backdrop-filter:blur(6px);
-  }
-  .av-canvas{
-    flex:1;position:relative;display:flex;align-items:center;justify-content:center;
-    overflow:hidden;
-  }
-  /* 円形ドームの示唆（同心楕円） */
-  .av-canvas::before{
-    content:"";position:absolute;width:150%;height:70%;left:-25%;top:15%;
-    border-radius:50%;
-    border:1px solid rgba(255,255,255,.06);
-    box-shadow:0 0 0 40px rgba(255,255,255,.03),0 0 0 90px rgba(255,255,255,.02),
-               inset 0 0 80px rgba(199,65,79,.08);
-  }
-  .av-canvas-note{text-align:center;color:rgba(255,255,255,.75);z-index:1;padding:0 30px}
-  .av-canvas-icon{
-    font-size:34px;color:var(--oshi);margin-bottom:10px;
-    text-shadow:0 0 20px rgba(199,65,79,.6);
-  }
-  .av-canvas-title{font-size:15px;font-weight:700;letter-spacing:.14em;margin-bottom:8px}
-  .av-canvas-desc{font-size:11px;line-height:1.9;color:rgba(255,255,255,.5)}
-  /* 自席ピック */
-  .av-pin{
-    position:absolute;left:62%;top:44%;transform:translate(-50%,-100%);
-    z-index:3;text-align:center;
-  }
-  .av-pin-dot{
-    width:16px;height:16px;border-radius:50%;background:var(--oshi);margin:0 auto;
-    box-shadow:0 0 0 6px rgba(199,65,79,.25),0 0 16px rgba(199,65,79,.8);
-    animation:pin-pulse 2s ease-in-out infinite;
-  }
-  @keyframes pin-pulse{
-    0%,100%{box-shadow:0 0 0 6px rgba(199,65,79,.25),0 0 16px rgba(199,65,79,.8)}
-    50%{box-shadow:0 0 0 11px rgba(199,65,79,.12),0 0 22px rgba(199,65,79,.9)}
-  }
-  .av-pin-label{
-    margin-top:8px;font-size:11px;font-weight:700;color:#fff;
-    background:rgba(199,65,79,.9);padding:5px 11px;border-radius:8px;
-    white-space:nowrap;letter-spacing:.04em;line-height:1.4;
-  }
-  .av-pin-label small{font-size:9px;font-weight:500;color:rgba(255,255,255,.75);letter-spacing:.1em}
-  .av-hud{
-    position:relative;z-index:4;padding:14px 18px max(14px,env(safe-area-inset-bottom));
-    background:linear-gradient(to top,rgba(0,0,0,.55),transparent);
-    display:flex;flex-direction:column;gap:3px;
-  }
-  .av-hud-seat{font-size:12.5px;font-weight:700;color:#fff;letter-spacing:.04em}
-  .av-hud-hint{font-size:10.5px;color:rgba(255,255,255,.55);letter-spacing:.06em}
-
   /* ---- 編集フォーム ---- */
   .f-field{margin-bottom:14px}
   .f-field > label{
@@ -490,11 +408,38 @@
   .ev-body{flex:1}
   .ev-name{font-size:13px;font-weight:700;line-height:1.5}
   .ev-venue{font-size:11px;color:var(--ink-sub);margin-top:3px}
-  .ev-time{
-    display:inline-block;margin-left:6px;font-size:10px;font-weight:700;
-    color:var(--oshi);font-feature-settings:"tnum";letter-spacing:.04em;
-  }
   .ev-count{font-size:10px;color:var(--ink-sub);white-space:nowrap;flex:none}
+
+  /* ツアー名一覧カード（公演名だけシンプル・両タブ共通） */
+  .tour-card{
+    background:var(--card);border:1px solid var(--keisen);border-radius:var(--radius);
+    padding:18px 20px;margin-bottom:12px;cursor:pointer;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  .tour-card .tc-body{min-width:0}
+  .tour-card .tc-name{font-size:15px;font-weight:700;line-height:1.5}
+  .tour-card .tc-sub{font-size:11px;color:var(--ink-sub);margin-top:4px;letter-spacing:.04em}
+  .tour-card .tc-arrow{font-size:18px;color:var(--ink-sub);flex:none}
+
+  /* 公演詳細：日程行 */
+  .sched-row{
+    display:flex;align-items:baseline;gap:14px;
+    background:var(--card);border:1px solid var(--keisen);border-radius:12px;
+    padding:14px 16px;margin-bottom:10px;
+  }
+  .sched-date{
+    font-size:12px;font-weight:700;color:var(--oshi);white-space:nowrap;flex:none;
+    font-feature-settings:"tnum";letter-spacing:.04em;min-width:56px;text-align:center;
+  }
+  .sched-body{flex:1;min-width:0}
+  .sched-venue{font-size:13px;font-weight:700;line-height:1.4}
+  .sched-time{font-size:11px;color:var(--ink-sub);margin-top:3px;font-feature-settings:"tnum"}
+  .sched-tag{
+    font-size:10px;font-weight:700;letter-spacing:.06em;flex:none;
+    padding:3px 10px;border-radius:999px;background:var(--paper);
+    border:1px solid var(--keisen-strong);color:var(--ink-sub);
+  }
+  .sched-tag.done{background:var(--ink);color:#fff;border-color:var(--ink)}
 
   /* ---- 記帳ボタン ---- */
   .fab{
@@ -665,13 +610,41 @@
 
     <!-- ================= 当落（セレクト化） ================= -->
     <section class="screen" id="scr-lot">
+      <div class="sec-label">申込中の公演（ツアー）</div>
+
+      <div class="tour-card" data-detail="scr-lot-detail">
+        <div class="tc-body">
+          <div class="tc-name">LUMIÈRE「Prism of Night」</div>
+          <div class="tc-sub">当落待ちあり</div>
+        </div>
+        <span class="tc-arrow">›</span>
+      </div>
+
+      <div class="tour-card" data-detail="scr-lot-detail">
+        <div class="tc-body">
+          <div class="tc-name">8PEACE「BLUE HOUR」</div>
+          <div class="tc-sub">発表済</div>
+        </div>
+        <span class="tc-arrow">›</span>
+      </div>
+    </section>
+
+    <!-- ================= 当落詳細（ツアー内の全申込） ================= -->
+    <section class="screen" id="scr-lot-detail">
+      <button class="detail-back" data-back="scr-lot">‹ 当落一覧へ戻る</button>
+
+      <div class="venue-hero">
+        <div class="vh-name">LUMIÈRE「Prism of Night」</div>
+        <div class="vh-sub">この公演への申込と当落</div>
+      </div>
+
       <div class="sec-label">当落待ち</div>
 
       <div class="lot">
         <div class="lot-head">
           <div>
-            <div class="lot-title">LUMIÈRE「Prism of Night」東京ドーム</div>
-            <div class="lot-sub">発表予定 07.15（水）</div>
+            <div class="lot-title">東京ドーム 昼公演</div>
+            <div class="lot-sub">08.09（土）・発表予定 07.15（水）</div>
           </div>
         </div>
         <div class="lot-rows">
@@ -699,8 +672,8 @@
       <div class="lot">
         <div class="lot-head">
           <div>
-            <div class="lot-title">LUMIÈRE「Prism of Night」横浜アリーナ</div>
-            <div class="lot-sub">発表 06.20（土）</div>
+            <div class="lot-title">横浜アリーナ</div>
+            <div class="lot-sub">07.25（土）・発表 06.20（土）</div>
           </div>
         </div>
         <div class="lot-rows">
@@ -722,25 +695,6 @@
           </div>
         </div>
       </div>
-
-      <div class="lot">
-        <div class="lot-head">
-          <div>
-            <div class="lot-title">8PEACE「BLUE HOUR」追加公演 名古屋</div>
-            <div class="lot-sub">発表 06.02（火）</div>
-          </div>
-        </div>
-        <div class="lot-rows">
-          <div class="lot-row">
-            <span class="who"><span class="dot" style="--oshi:#1D6EC9"></span>母名義・2枚</span>
-            <select class="lot-select" data-v="won">
-              <option value="pending">未発表</option>
-              <option value="won" selected>当選</option>
-              <option value="lost">落選</option>
-            </select>
-          </div>
-        </div>
-      </div>
     </section>
 
     <!-- ================= 公演（共有マスタ・v1.2追加タブ） ================= -->
@@ -753,45 +707,78 @@
         <button class="ev-import">一覧を貼って一括登録</button>
       </div>
 
-      <div class="sec-label">今後の公演</div>
+      <div class="sec-label">公演（ツアー）</div>
 
-      <div class="ev">
-        <div class="ev-date">07.25<br>（土）</div>
-        <div class="ev-body">
-          <div class="ev-name">LUMIÈRE「Prism of Night」</div>
-          <div class="ev-venue">横浜アリーナ <span class="ev-time">開演 17:00</span></div>
+      <div class="tour-card" data-detail="scr-event-detail">
+        <div class="tc-body">
+          <div class="tc-name">LUMIÈRE「Prism of Night」</div>
+          <div class="tc-sub">開催中 ・ 全4公演</div>
         </div>
-        <div class="ev-count">参戦 2</div>
+        <span class="tc-arrow">›</span>
       </div>
 
-      <!-- 同日昼夜は start_time で別レコード（v1.3：公演名に「昼/夜」を書かず開演で区別） -->
-      <div class="ev">
-        <div class="ev-date">08.09<br>（土）</div>
-        <div class="ev-body">
-          <div class="ev-name">LUMIÈRE「Prism of Night」東京ドーム</div>
-          <div class="ev-venue">東京ドーム <span class="ev-time">開演 14:00</span></div>
+      <div class="tour-card" data-detail="scr-event-detail">
+        <div class="tc-body">
+          <div class="tc-name">LUMIÈRE ARENA TOUR「Aurora」</div>
+          <div class="tc-sub">終了 ・ 全6公演</div>
         </div>
-        <div class="ev-count">参戦 1</div>
+        <span class="tc-arrow">›</span>
       </div>
 
-      <div class="ev">
-        <div class="ev-date">08.09<br>（土）</div>
-        <div class="ev-body">
-          <div class="ev-name">LUMIÈRE「Prism of Night」東京ドーム</div>
-          <div class="ev-venue">東京ドーム <span class="ev-time">開演 18:30</span></div>
+      <div class="tour-card" data-detail="scr-event-detail">
+        <div class="tc-body">
+          <div class="tc-name">8PEACE「BLUE HOUR」</div>
+          <div class="tc-sub">終了 ・ 全3公演</div>
         </div>
-        <div class="ev-count">参戦 0</div>
+        <span class="tc-arrow">›</span>
+      </div>
+    </section>
+
+    <!-- ================= 公演詳細（日程を一度に） ================= -->
+    <section class="screen" id="scr-event-detail">
+      <button class="detail-back" data-back="scr-event">‹ 公演一覧へ戻る</button>
+
+      <div class="venue-hero">
+        <div class="vh-name">LUMIÈRE「Prism of Night」</div>
+        <div class="vh-sub">開催中 ・ 全4公演</div>
       </div>
 
-      <div class="sec-label">過去の公演</div>
+      <div class="sec-label">日程</div>
 
-      <div class="ev">
-        <div class="ev-date">06.14<br>（土）</div>
-        <div class="ev-body">
-          <div class="ev-name">LUMIÈRE ARENA TOUR「Aurora」大阪 2日目</div>
-          <div class="ev-venue">大阪城ホール <span class="ev-time">開演 17:00</span></div>
+      <div class="sched-row">
+        <div class="sched-date">07.25<br>（土）</div>
+        <div class="sched-body">
+          <div class="sched-venue">横浜アリーナ</div>
+          <div class="sched-time">開演 17:00</div>
         </div>
-        <div class="ev-count">参戦 3</div>
+        <span class="sched-tag">予定</span>
+      </div>
+
+      <div class="sched-row">
+        <div class="sched-date">08.09<br>（土）</div>
+        <div class="sched-body">
+          <div class="sched-venue">東京ドーム 昼公演</div>
+          <div class="sched-time">開演 14:00</div>
+        </div>
+        <span class="sched-tag">予定</span>
+      </div>
+
+      <div class="sched-row">
+        <div class="sched-date">08.09<br>（土）</div>
+        <div class="sched-body">
+          <div class="sched-venue">東京ドーム 夜公演</div>
+          <div class="sched-time">開演 18:00</div>
+        </div>
+        <span class="sched-tag">予定</span>
+      </div>
+
+      <div class="sched-row">
+        <div class="sched-date">08.23<br>（土）</div>
+        <div class="sched-body">
+          <div class="sched-venue">京セラドーム大阪</div>
+          <div class="sched-time">開演 17:00</div>
+        </div>
+        <span class="sched-tag">予定</span>
       </div>
     </section>
 
@@ -947,16 +934,6 @@
         <div class="vh-sub">大阪環状線 大阪城公園駅 ・ キャパ約16,000</div>
       </div>
 
-      <!-- 360°ビュー導線：arena_view_key 非NULLの会場のみ表示（v1.3追加） -->
-      <button class="arena-view-btn" data-scr="scr-arena-view">
-        <span class="av-icon">◎</span>
-        <span class="av-body">
-          <span class="av-title">360°で会場を見る</span>
-          <span class="av-sub">あなたの席（スタンド上手 12列 41番）から見回す</span>
-        </span>
-        <span class="av-arrow">›</span>
-      </button>
-
       <div class="d-block">
         <div class="d-h">自分のメモ</div>
         <div class="d-row"><span class="k">定宿</span><span class="v">ホテル◯◯（京橋）</span></div>
@@ -986,29 +963,6 @@
         <div class="view-cap">
           <span class="view-seat">スタンド下手 8列</span>
           <span class="view-by">by たけ</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= 360°ビュー（別画面・フルスクリーン・v1.3追加） ================= -->
-    <section class="screen" id="scr-arena-view" style="padding:0">
-      <div class="av-stage">
-        <button class="av-close" data-back="scr-venue-detail">‹ 会場詳細へ戻る</button>
-        <div class="av-canvas">
-          <div class="av-canvas-note">
-            <div class="av-canvas-icon">◎</div>
-            <div class="av-canvas-title">360° 会場ビュー</div>
-            <div class="av-canvas-desc">大阪城ホール（円形ドーム型）<br>実装では Three.js の会場ジオメトリを<br>ここにフルスクリーン描画</div>
-          </div>
-          <!-- 自席ピック（①完全一致：block+row+number が引けた場合） -->
-          <div class="av-pin">
-            <div class="av-pin-dot"></div>
-            <div class="av-pin-label"><small>あなたの席</small><br>スタンド上手 12列 41番</div>
-          </div>
-        </div>
-        <div class="av-hud">
-          <div class="av-hud-seat">◎ スタンド上手 12列 41番からの視点</div>
-          <div class="av-hud-hint">ドラッグで見回す ・ ピンチでズーム</div>
         </div>
       </div>
     </section>
@@ -1116,8 +1070,8 @@
   const screens = document.querySelectorAll('.screen');
   const fab = document.getElementById('fab');
   const main = document.querySelector('main');
-  // FAB非表示にする画面（機微情報・共有マスタ・詳細・編集・360°には記録動線を混ぜない）
-  const noFab = ['scr-meigi','scr-event','scr-att-detail','scr-meigi-detail','scr-venue-detail','scr-meigi-edit','scr-arena-view'];
+  // FAB非表示にする画面（機微情報・共有マスタ・詳細・編集には記録動線を混ぜない）
+  const noFab = ['scr-meigi','scr-event','scr-lot','scr-att-detail','scr-meigi-detail','scr-venue-detail','scr-meigi-edit','scr-event-detail','scr-lot-detail'];
   const formBar = document.getElementById('formBar');
 
   function show(id){
@@ -1141,11 +1095,6 @@
   // カード → 詳細へ（ナビの選択状態は変えない）
   document.querySelectorAll('[data-detail]').forEach(el=>{
     el.addEventListener('click',()=> show(el.dataset.detail));
-  });
-
-  // 360°ビュー導線（会場詳細内・別画面へ・ナビの選択状態は変えない）
-  document.querySelectorAll('.arena-view-btn[data-scr]').forEach(el=>{
-    el.addEventListener('click',()=> show(el.dataset.scr));
   });
 
   // 詳細の「戻る」
