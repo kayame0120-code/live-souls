@@ -698,3 +698,19 @@ form > .form-label:first-child { margin-top: 0; }
     width: 100%; font-family: inherit; font-size: 12px; font-weight: 500; letter-spacing: .06em;
     background: none; border: none; color: var(--color-oshi); cursor: pointer; padding: 14px; margin-top: 6px;
 }
+
+/* 会場詳細（mockup v1.3: venue-hero / view-tile） */
+.venue-hero {
+    background: var(--color-card); border: 1px solid var(--color-keisen); border-radius: var(--radius-card);
+    padding: 18px 20px; margin-bottom: 14px;
+}
+.venue-hero .vh-name { font-size: 18px; font-weight: 700; letter-spacing: .06em; margin-bottom: 4px; }
+.venue-hero .vh-sub { font-size: 11.5px; color: var(--color-ink-sub); line-height: 1.7; }
+.view-tile {
+    background: var(--color-card); border: 1px solid var(--color-keisen); border-radius: 12px;
+    overflow: hidden; margin-bottom: 12px;
+}
+.view-tile .view-photo { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: var(--color-keisen); }
+.view-cap { padding: 10px 14px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.view-seat { font-size: 12px; font-weight: 700; }
+.view-by { font-size: 10.5px; color: var(--color-ink-sub); white-space: nowrap; display: flex; align-items: center; gap: 6px; }

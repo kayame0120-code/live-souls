@@ -59,4 +59,17 @@ class PageRenderSmokeTest extends TestCase
         $this->get(route('identities.show', $membership))->assertOk();
         $this->get(route('venues.show', $venue))->assertOk();
     }
+
+    public function test_参戦詳細_参戦編集_当落カードが200(): void
+    {
+        // 参戦詳細（att-hero/d-block）・編集・当落（lot-select）の描画を担保
+        $membership = \App\Models\FcMembership::first();
+        $event = $this->makeEvent('描画確認公演', now()->subDay()->format('Y-m-d'), \App\Models\Venue::first());
+        $attendance = $this->makeAttendance($this->user, $event, 'attended');
+        $attendance->fcMemberships()->attach($membership->id, ['result' => 'pending']);
+
+        $this->get(route('attendances.show', $attendance))->assertOk();
+        $this->get(route('attendances.edit', $attendance))->assertOk();
+        $this->get(route('lots.index'))->assertOk();
+    }
 }

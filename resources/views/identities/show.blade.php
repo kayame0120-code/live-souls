@@ -17,10 +17,14 @@
         <div class="m-foot">
             <span>
                 {{ $fcMembership->group->name }}
-                @if($fcMembership->joined_on)・入会 <b>{{ $fcMembership->joined_on->format('Y.m') }}</b>@endif
+                @if($fcMembership->joined_on)・入会 <b>{{ $fcMembership->joined_on->format('Y.m') }}</b>（{{ (int) floor($fcMembership->joined_on->diffInYears(now())) + 1 }}年目）@endif
             </span>
-            @if($fcMembership->isInRenewalWindow())
-            <span class="badge">更新受付中</span>
+            @if($fcMembership->joined_on)
+                @if($fcMembership->isInRenewalWindow())
+                <span class="badge">更新受付中</span>
+                @else
+                <span class="badge ok">更新済</span>
+                @endif
             @endif
         </div>
     </div>

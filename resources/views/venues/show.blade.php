@@ -1,78 +1,67 @@
-<x-app-layout :hide-header="true" :hide-fab="true">
-    <x-slot:pageHeader>
-        <div class="page-header">
-            <a href="javascript:history.back()" class="back">← 戻る</a>
-            <h1>{{ $venue->name }}</h1>
-        </div>
-    </x-slot:pageHeader>
+<x-app-layout :hide-fab="true">
+    <button type="button" class="detail-back" onclick="history.back()">‹ 戻る</button>
 
-    <div class="sec-label">会場情報</div>
-    <div class="card">
-        <div class="detail-section" style="padding-top:0;">
-            <div class="detail-label">住所</div>
-            <div class="detail-value {{ !$venue->address ? 'muted' : '' }}">{{ $venue->address ?? '未登録' }}</div>
+    {{-- 会場ヒーロー（mockup .venue-hero） --}}
+    <div class="venue-hero">
+        <div class="vh-name">{{ $venue->name }}</div>
+        <div class="vh-sub">
+            @if($venue->nearest_station){{ $venue->nearest_station }}@endif
+            @if($venue->nearest_station && $venue->capacity) ・ @endif
+            @if($venue->capacity)キャパ約{{ number_format($venue->capacity) }}@endif
+            @if(!$venue->nearest_station && !$venue->capacity)会場情報は未登録@endif
         </div>
-        <div class="detail-section">
-            <div class="detail-label">最寄駅</div>
-            <div class="detail-value {{ !$venue->nearest_station ? 'muted' : '' }}">{{ $venue->nearest_station ?? '未登録' }}</div>
-        </div>
-        <div class="detail-section" style="border-bottom:none;">
-            <div class="detail-label">キャパシティ</div>
-            <div class="detail-value {{ !$venue->capacity ? 'muted' : '' }}">{{ $venue->capacity ? number_format($venue->capacity) . '人' : '未登録' }}</div>
-        </div>
+        @if($venue->address)
+        <div class="vh-sub" style="margin-top:4px;">{{ $venue->address }}</div>
+        @endif
     </div>
 
-    <div class="sec-label">自分のメモ</div>
-    <form method="POST" action="{{ route('venues.update-note', $venue) }}">
-        @csrf @method('PUT')
+    {{-- 自分のメモ（編集可・d-block内の f-field） --}}
+    <div class="d-block">
+        <div class="d-h">自分のメモ</div>
+        <form method="POST" action="{{ route('venues.update-note', $venue) }}">
+            @csrf @method('PUT')
+            <div class="f-field">
+                <label for="lodging">定宿・ホテルエリア</label>
+                <input class="f-input" type="text" id="lodging" name="lodging"
+                       value="{{ old('lodging', $note->lodging ?? '') }}" placeholder="未記入">
+            </div>
+            <div class="f-field">
+                <label for="transport_cost">交通費目安</label>
+                <input class="f-input" type="text" id="transport_cost" name="transport_cost"
+                       value="{{ old('transport_cost', $note->transport_cost ?? '') }}" placeholder="未記入">
+            </div>
+            <div class="f-field" style="margin-bottom:12px;">
+                <label for="memo">個人メモ</label>
+                <textarea class="f-input" id="memo" name="memo" rows="3" placeholder="未記入" style="resize:vertical;">{{ old('memo', $note->memo ?? '') }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">メモを保存</button>
+        </form>
+    </div>
 
-        <div class="form-group">
-            <label class="form-label" for="lodging">定宿・ホテルエリア</label>
-            <input class="form-input" type="text" id="lodging" name="lodging"
-                   value="{{ old('lodging', $note->lodging ?? '') }}" placeholder="未記入">
-        </div>
-
-        <div class="form-group">
-            <label class="form-label" for="transport_cost">交通費目安</label>
-            <input class="form-input" type="text" id="transport_cost" name="transport_cost"
-                   value="{{ old('transport_cost', $note->transport_cost ?? '') }}" placeholder="未記入">
-        </div>
-
-        <div class="form-group">
-            <label class="form-label" for="memo">個人メモ</label>
-            <textarea class="form-textarea" id="memo" name="memo" placeholder="未記入">{{ old('memo', $note->memo ?? '') }}</textarea>
-        </div>
-
-        <button type="submit" class="btn btn-primary">メモを保存</button>
-    </form>
-
-    {{-- 見え方マッピング（spec §5-9）: 全メンバーの写真を座席情報つきで表示 --}}
-    <div class="sec-label">見え方マッピング</div>
-    @if($photos->isEmpty())
-        <div class="empty-state" style="padding:24px;">まだ写真がありません</div>
-    @else
-    <div class="photo-grid">
-        @foreach($photos as $photo)
-        <div class="photo-tile">
-            <img src="{{ route('photos.show', $photo) }}" alt="" loading="lazy">
-            <div class="meta">
-                @if($photo->attendance?->seat_raw)
-                <div>座席 <b>{{ $photo->attendance->seat_raw }}</b></div>
-                @endif
-                <div>{{ optional($photo->attendance?->event_date)->format('Y.m.d') }}・{{ $photo->user->name }}</div>
+    {{-- 見え方マッピング（全メンバーの写真を座席情報つきタイルで・mockup .view-tile） --}}
+    <div class="sec-label">見え方マッピング（メンバー全員の記録）</div>
+    @forelse($photos as $photo)
+    <div class="view-tile">
+        <img class="view-photo" src="{{ route('photos.show', $photo) }}" alt="" loading="lazy">
+        <div class="view-cap">
+            <span class="view-seat">{{ $photo->attendance?->seat_raw ?: '座席未記入' }}</span>
+            <span class="view-by">
+                by {{ $photo->user->name }}
                 @if($photo->user_id === auth()->id())
                 <form method="POST" action="{{ route('photos.destroy', $photo) }}"
-                      onsubmit="return confirm('この写真を削除しますか？')" style="margin-top:4px;">
+                      onsubmit="return confirm('この写真を削除しますか？')" style="display:inline;">
                     @csrf @method('DELETE')
-                    <button type="submit" class="copy-btn" style="font-size:10px;">削除</button>
+                    <button type="submit" class="copy-btn" style="padding:2px 8px;">削除</button>
                 </form>
                 @endif
-            </div>
+            </span>
         </div>
-        @endforeach
     </div>
-    @endif
+    @empty
+    <div class="empty-state" style="padding:24px;">まだ写真がありません</div>
+    @endforelse
 
+    {{-- この会場の参戦履歴 --}}
     @if($attendances->isNotEmpty())
     <div class="sec-label">この会場の参戦履歴</div>
     @foreach($attendances as $attendance)
@@ -81,13 +70,11 @@
             <div class="rec-head">
                 <span class="dot" style="--oshi-color: {{ $oshi }}"></span>
                 <div class="rec-title">{{ $attendance->event_name }}</div>
-                <div class="rec-date">{{ $attendance->event_date->format('Y.m.d') }}</div>
+                <div class="rec-date">{{ optional($attendance->event_date)->format('Y.m.d') }}</div>
             </div>
-            <div class="rec-meta">
-                @if($attendance->seat_raw)
-                <span>座席 <b>{{ $attendance->seat_raw }}</b></span>
-                @endif
-            </div>
+            @if($attendance->seat_raw)
+            <div class="rec-meta"><span>座席 <b>{{ $attendance->seat_raw }}</b></span></div>
+            @endif
         </a>
     @endforeach
     @endif

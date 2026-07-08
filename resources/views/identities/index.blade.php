@@ -33,11 +33,19 @@
                 @endif
                 <div class="m-foot">
                     <span>
-                        {{ $m->group->name }}
-                        @if($m->joined_on)・入会 <b>{{ $m->joined_on->format('Y.m') }}</b>@endif
+                        @if($m->joined_on)
+                        入会 <b>{{ $m->joined_on->format('Y.m') }}</b>（{{ (int) floor($m->joined_on->diffInYears(now())) + 1 }}年目）
+                        @else
+                        入会日未登録
+                        @endif
                     </span>
-                    @if($m->isInRenewalWindow())
-                    <span class="badge">更新受付中</span>
+                    {{-- 更新情報を常時表示（mockup: 受付期間内=更新受付中 / それ以外=更新済） --}}
+                    @if($m->joined_on)
+                        @if($m->isInRenewalWindow())
+                        <span class="badge">更新受付中</span>
+                        @else
+                        <span class="badge ok">更新済</span>
+                        @endif
                     @endif
                 </div>
             </a>

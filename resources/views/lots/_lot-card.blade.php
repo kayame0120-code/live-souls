@@ -19,9 +19,9 @@
                 {{ $m->displayName() }}・{{ $m->pivot->ticket_count }}枚
             </span>
             <form method="POST" action="{{ route('attendance-identities.update-result', $m->pivot->id) }}"
-                  style="display:flex; align-items:center; gap:6px;">
+                  style="display:flex; align-items:center;">
                 @csrf @method('PATCH')
-                <select name="result" class="form-select" style="width:auto; padding:3px 26px 3px 8px; font-size:10.5px;"
+                <select name="result" class="lot-select" data-v="{{ $m->pivot->result }}"
                         onchange="this.form.submit()">
                     <option value="pending" {{ $m->pivot->result === 'pending' ? 'selected' : '' }}>未発表</option>
                     <option value="won" {{ $m->pivot->result === 'won' ? 'selected' : '' }}>当選</option>

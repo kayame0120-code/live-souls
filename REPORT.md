@@ -69,6 +69,19 @@ Tests: 25 passed (86 assertions)
 - テスト: `IdentityV12Test` の当落一覧見出しアサーションを mockup 文言「この名義の申込・当落」に更新（意図＝当落一覧表示・当選率非表示は不変）。**101件緑を維持**。
 - rebuild 済み（`.m-cardhead`/`.copy-field`/`.f-input`/`color-mix` の `public/build` 反映を確認）。
 
+## 追加対応2: 全画面の mockup 突き合わせ（2026-07-09・利用者指摘「なるべく忠実に」）
+
+| 箇所 | 指摘 → 修正 |
+|---|---|
+| 名義カードの更新情報（右下） | mockup は全カードに「入会 YYYY.MM（N年目）」＋バッジ（受付中/更新済）を常時表示。現行は受付期間内のみバッジ・年数なし → **`index`/`show` の m-foot に (N年目) と常時バッジ（`badge`/`badge ok`）を実装** |
+| 当落カード | mockup は `.lot-select`（選択値で色が変わるピル型）。現行は素の `.form-select` → **`lots/_lot-card` を `.lot-select`＋`data-v` に**（onchange即送信は維持） |
+| 会場詳細 | mockup は `.venue-hero`（vh-name/vh-sub）＋`.view-tile`（view-photo/view-cap/view-seat/view-by）。現行は旧 `.card`/`.photo-grid` → **`venues/show` を venue-hero＋view-tile＋d-block(メモ)に刷新**。app.css に venue-hero/view-tile 系を追加 |
+| 参戦記録一覧 | mockup #scr-rec（filter-row＋rec）と**既に一致**（v1.1から）。変更不要と確認 |
+| 参戦詳細 | 先の retemplate で att-hero/d-block 化済み。`PageRenderSmokeTest` に参戦詳細・編集・当落の描画200を追加（未カバーだったため） |
+
+- テスト **102件緑**（描画スモークを1件追加）。rebuild 済み（venue-hero/view-tile/lot-select の `public/build` 反映を確認）。
+- 補足（mockup×spec）: 名義カードの非受付期間バッジ文言は mockup 準拠で「更新済」。厳密には「更新受付外」の意で、更新実施の有無は追跡していない（spec は受付中バッジのみ規定）。文言変更が要れば指示ください。
+
 ## スコープ外（未実施・意図通り）
 - C（360°ビュー `.arena-view-btn` / `#scr-arena-view` / `venues.arena_view_key`）。会場詳細の360°導線も出していない。
 
