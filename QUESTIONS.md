@@ -1,39 +1,40 @@
 # QUESTIONS.md — 現場手帖
 
-## v1.1 改修時（2026-07-08）
+## 未解決の質問・矛盾・スキップ
 
-### Q5: HEIC は受付対象から除外（[既定] の変更・要確認）
+**なし。**（2026-07-08 時点で全件クローズ済み）
 
-- **spec根拠**: §4 attendance_photos 制約「jpeg・png・webp・heic受付 / 保存時にEXIF除去」[既定]
-- **問題**: 実行環境（ローカル PHP 8.2 / 本番想定同等）に imagick が無く GD のみ。
-  GD は HEIC をデコードできず、**再エンコードによる EXIF 除去を保証できない**
-- **仮置き（安全側）**: 受付 mimes を jpeg/png/webp に限定し、HEIC は拒否
-  （EXIF除去できないまま保存するより安全側と判断）
-- **解除条件**: imagick + libheif が導入されたら mimes に heic を追加し PhotoService に変換を実装
-- **実装箇所**: `AttendanceController::validatedData()` / `PhotoService`
+---
 
-### 記録: 破壊的DROP前の現物値（spec §10-1 の記録義務）
+## クローズ済みの記録（監査用）
 
-- 対象データ: fc_memberships 全1件（id=1）
-- `club_name` = **null**（非null値なし）
-- `renewal_cycle` = **null**（非null値なし・spec記載どおり）
-- `joined_month` = `"2022-10"` → `joined_on` = `2022-10-01` に変換
-  （`genba:verify-joined-on` で件数・値一致を機械検証済み。生出力は REPORT.md 参照）
+### Q1: laravel-starter 未セットアップ → 解決済み（2026-07-08）
+starter化を CC が実施（Fortify招待制）。
 
-### v1.0 からの繰越の解決
+### Q2: E1 グループ削除時の配下名義の扱い → 解決済み（v1.1）
+spec §7/§8 で A案（配下名義ありは削除拒否）[確定]。実装・テスト済み。
 
-| No | 内容 | v1.1での扱い |
-|---|---|---|
-| Q2 | E1: グループ削除時の配下名義の扱い | **解決**。spec v1.1 §7/§8 で A案（削除拒否）[確定]。実装・テスト済み |
-| Q4 | 当落結果の入力動線が spec に無い | **解決**。spec v1.1 §5-7-2「/lots で result を更新できる」[確定]。当落画面・参戦詳細の両方に実装 |
+### Q4: 当落結果の入力動線 → 解決済み（v1.1）
+spec §5-7-2 で /lots からの result 更新が[確定]。当落画面・参戦詳細に実装。
 
-### Q3（継続）: 参戦記録の削除機能は spec 画面仕様に存在しない
+### Q3: 参戦・申込の削除規則 → 解決済み（2026-07-08・折衷案で確定）
+片倉確定。spec §7 に[確定]・テスト化必須で追記済み。
+- status=applied / 全pivot pending・lost（won 0件）/ 一般参戦 → 削除可（pivot・写真cascade＋ストレージ実体も削除・確認ダイアログ）
+- won付き（昇格済み）→ 削除不可。skipped変更で「行かなかった」を表現
+- 実装: `Attendance::canBeDeleted()` / `AttendanceController@destroy` / 参戦詳細ビュー
+- テスト: `AttendanceDeleteTest`（5件）
 
-- v1.1 spec §7 の削除拒否メッセージ「先に**名義を削除**または移動してください」により
-  **名義削除は spec が前提とする機能になった**と解釈（名義削除の残置は正当化）
-- **参戦記録の削除**は引き続き spec に記載なし。誤記帳の修正に必要なため残置継続
-- **人間への依頼**: 参戦削除の要否を spec に明記してください
+### Q5: HEIC 受付 → 解決済み（2026-07-08・A案=見送りで確定）
+片倉確定。写真は jpeg/png/webp のみ受付、heic は拒否。imagick+libheif によるHEIC対応はv1.2候補。
+spec §4/§6/§7 を heic 除外に更新済み。
+- 実装: `AttendanceController::validatedData()` の `mimes:jpeg,jpg,png,webp`
+- テスト: `PhotoTest::test_heicアップロードは拒否される`
 
-## 過去の記録（v1.0）
+### 破壊的DROP前の現物値（spec §10-1 記録義務・監査用）
+fc_memberships 全1件（id=1）: club_name=null / renewal_cycle=null /
+joined_month="2022-10" → joined_on="2022-10-01"（genba:verify-joined-on で機械検証済み）。
 
-- Q1: laravel-starter 未セットアップ → 解決済み（2026-07-08 starter化実施）
+### 参考: spec.md 実ファイル未反映の是正（2026-07-08）
+Q3/Q5 確定の連絡時、spec.md 実ファイルに更新が反映されていなかった（git上c3dbd4fと同一）。
+プロンプト本文に確定内容が明文で記載されていたため、確定テキストを spec.md §4/§6/§7 と
+変更履歴（v1.1.1）に転記して整合させた。独自判断ではなく確定事項の転記。

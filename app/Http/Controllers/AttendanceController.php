@@ -97,7 +97,12 @@ class AttendanceController extends Controller
 
     public function destroy(Attendance $attendance)
     {
-        // 添付写真のファイルも削除する
+        // won付き（昇格済み）は削除不可。当選履歴保全のため skipped 変更で対応（spec §7 Q3）
+        if (! $attendance->canBeDeleted()) {
+            return back()->with('error', '当選済みの記録は削除できません。「行かなかった」場合はステータスをスキップに変更してください');
+        }
+
+        // 添付写真のストレージ実体も削除（pivot・写真レコードはFKでcascade）
         foreach ($attendance->photos as $photo) {
             $this->photoService->delete($photo);
         }

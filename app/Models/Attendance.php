@@ -58,6 +58,16 @@ class Attendance extends Model
     }
 
     /**
+     * 削除可否（spec §7 Q3確定）:
+     * won のpivotが1件も無ければ削除可（status=applied / 全pending・lost / 一般参戦を含む）。
+     * won付き（昇格済み）は当選履歴保全のため削除不可 → skippedへの変更で対応。
+     */
+    public function canBeDeleted(): bool
+    {
+        return ! $this->fcMemberships()->wherePivot('result', 'won')->exists();
+    }
+
+    /**
      * 座席の自動合成（spec §5-8）: 「{block} {row}列 {number}番」空要素はスキップ。
      */
     public static function composeSeatRaw(?string $block, ?string $row, ?string $number): ?string

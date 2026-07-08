@@ -112,6 +112,24 @@ class PhotoTest extends TestCase
         $this->assertSame(0, $this->attendance->photos()->count());
     }
 
+    public function test_heicアップロードは拒否される(): void
+    {
+        // spec §7 Q5 A案: jpeg/png/webpのみ受付、heicは拒否
+        $this->actingAs($this->user);
+
+        $heic = (new FileFactory())->create('photo.heic', 500, 'image/heic');
+
+        $response = $this->put(route('attendances.update', $this->attendance), [
+            'event_name' => '公演',
+            'event_date' => '2026-06-01',
+            'status' => 'attended',
+            'photos' => [$heic],
+        ]);
+
+        $response->assertSessionHasErrors('photos.0');
+        $this->assertSame(0, $this->attendance->photos()->count());
+    }
+
     public function test_保存時にEXIFが除去される(): void
     {
         $this->actingAs($this->user);

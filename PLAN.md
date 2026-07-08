@@ -31,9 +31,14 @@
 - V1〜V3 を PHP 8.2.32 で全通過（生出力を REPORT.md に貼付）
 - REPORT.md / QUESTIONS.md / deploy_runbook.md 更新
 
-## 残件（人間判断待ち・QUESTIONS.md）
-- Q3: 参戦記録の削除機能が spec に未記載（残置中）
-- Q5: HEIC 受付除外（環境上 EXIF 除去を保証できないため安全側）
+### Phase G: Q3/Q5 確定反映（v1.1.1）✅
+- Q3 削除規則: `Attendance::canBeDeleted()`（won無しは削除可/won付き不可）+ 写真実体削除 + AttendanceDeleteTest（5件）
+- Q5 HEIC拒否: jpeg/png/webpのみ + PhotoTest heicテスト
+- spec.md §4/§6/§7・変更履歴を確定内容へ転記（実ファイル未反映だったため）
+- QUESTIONS.md 全件クローズ・空。テスト67件通過
+
+## 残件
+**なし。** 未決ゼロ・QUESTIONS.md 空。
 
 ## v1.0（初版）— 完了
 Fortify招待制 / 全テーブル / 全画面 / マルチテナント / セキュリティ修正

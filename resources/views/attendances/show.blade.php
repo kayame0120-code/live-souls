@@ -126,10 +126,17 @@
     @endif
 
     <div style="margin-top:24px;">
+        {{-- won付き（昇格済み）は削除不可。当選履歴保全（spec §7 Q3） --}}
+        @if($attendance->canBeDeleted())
         <form method="POST" action="{{ route('attendances.destroy', $attendance) }}"
-              onsubmit="return confirm('この参戦記録を削除しますか？')">
+              onsubmit="return confirm('この参戦記録を削除しますか？添付写真も削除されます。')">
             @csrf @method('DELETE')
             <button type="submit" class="btn btn-secondary btn-sm" style="color:#C7414F;">削除</button>
         </form>
+        @else
+        <p style="font-size:11px; color:var(--color-ink-sub); line-height:1.7;">
+            当選済みの記録は削除できません。行かなかった場合は編集画面でステータスを「スキップ」に変更してください。
+        </p>
+        @endif
     </div>
 </x-app-layout>
