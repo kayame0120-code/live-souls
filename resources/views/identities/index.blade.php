@@ -1,17 +1,29 @@
 <x-app-layout :hide-fab="true">
-    @if($memberships->isEmpty())
+    @if($memberships->isEmpty() && $groups->isEmpty())
         <div class="empty-state">
             まだ名義がありません<br>
             <a href="{{ route('identities.create') }}" class="btn btn-secondary btn-sm" style="margin-top:12px;">名義を追加</a>
         </div>
     @else
-        {{-- グループタブ束ね（idol_groupsベース・ユーザーが持つグループのみ） --}}
-        <div class="fc-tabs">
-            <a href="{{ route('identities.index') }}" class="fc-tab {{ !$currentGroupId ? 'on' : '' }}">すべて</a>
-            @foreach($groups as $group)
-            <a href="{{ route('identities.index', ['group' => $group->id]) }}"
-               class="fc-tab {{ $currentGroupId == $group->id ? 'on' : '' }}">{{ $group->name }}</a>
-            @endforeach
+        {{-- グループタブ + 右端に追加ボタン --}}
+        <div style="display:flex;align-items:center;gap:0;">
+            <div class="fc-tabs" style="flex:1;">
+                <a href="{{ route('identities.index') }}" class="fc-tab {{ !$currentGroupId ? 'on' : '' }}">すべて</a>
+                @foreach($groups as $group)
+                <a href="{{ route('identities.index', ['group' => $group->id]) }}"
+                   class="fc-tab {{ $currentGroupId == $group->id ? 'on' : '' }}">{{ $group->name }}</a>
+                @endforeach
+            </div>
+            <button type="button" class="fc-tab add" id="toggle-add-group" style="flex:none;">＋</button>
+        </div>
+
+        {{-- グループ追加フォーム（トグル） --}}
+        <div id="add-group-form" style="display:none;padding:8px 0;">
+            <form method="POST" action="{{ route('idol-groups.store') }}" style="display:flex;gap:8px;align-items:center;">
+                @csrf
+                <input class="f-input" type="text" name="name" placeholder="グループ名" required style="flex:1;font-size:12px;">
+                <button type="submit" class="btn btn-primary" style="white-space:nowrap;font-size:12px;padding:6px 12px;">追加</button>
+            </form>
         </div>
 
         @php
@@ -53,17 +65,23 @@
 
         <a href="{{ route('identities.create') }}" class="m-add">＋ 名義を追加</a>
 
-        <div class="d-block" style="margin-top:16px;padding:10px 14px;">
-            <div class="d-h">グループを追加</div>
-            <form method="POST" action="{{ route('idol-groups.store') }}" style="display:flex;gap:8px;align-items:flex-end;">
-                @csrf
-                <input class="f-input" type="text" name="name" placeholder="グループ名" required style="flex:1;">
-                <button type="submit" class="btn btn-primary" style="white-space:nowrap;">追加</button>
-            </form>
-        </div>
-
         @if($filtered->isNotEmpty())
         <p class="privacy-note">名義情報は暗号化してサーバーに保存されます。他のユーザーからは見えません。</p>
         @endif
     @endif
 </x-app-layout>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const btn = document.getElementById('toggle-add-group');
+    const form = document.getElementById('add-group-form');
+    if (btn && form) {
+        btn.addEventListener('click', function () {
+            form.style.display = form.style.display === 'none' ? '' : 'none';
+            if (form.style.display !== 'none') form.querySelector('input[name="name"]').focus();
+        });
+    }
+});
+</script>
+@endpush
