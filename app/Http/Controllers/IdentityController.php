@@ -63,6 +63,48 @@ class IdentityController extends Controller
             ->with('success', '名義を更新しました');
     }
 
+    public function duplicate(FcMembership $fcMembership)
+    {
+        $fcMembership->load('person');
+        $groups = IdentityGroup::all();
+
+        return view('identities.duplicate', compact('fcMembership', 'groups'));
+    }
+
+    public function storeDuplicate(Request $request, FcMembership $fcMembership)
+    {
+        $validated = $request->validate([
+            'group_id' => ['required', Rule::exists('identity_groups', 'id')->where('user_id', Auth::id())],
+            'artist_name' => ['required', 'string', 'max:255'],
+            'member_no' => ['nullable', 'string', 'max:255'],
+            'login_id' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'fc_password' => ['nullable', 'string', 'max:255'],
+            'joined_month_input' => ['nullable', 'regex:' . JoinedMonthConverter::FORMAT_PATTERN],
+            'group_member_id' => ['nullable', 'exists:group_members,id'],
+            'oshi_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+        ]);
+
+        $newMembership = FcMembership::create([
+            'user_id' => Auth::id(),
+            'person_id' => $fcMembership->person_id,
+            'group_id' => $validated['group_id'],
+            'artist_name' => $validated['artist_name'],
+            'member_no' => $validated['member_no'] ?? null,
+            'login_id' => $validated['login_id'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'password' => $validated['fc_password'] ?? null,
+            'joined_on' => isset($validated['joined_month_input'])
+                ? JoinedMonthConverter::toDate($validated['joined_month_input'])
+                : null,
+            'oshi_color' => $validated['oshi_color'] ?? null,
+            'group_member_id' => $validated['group_member_id'] ?? null,
+        ]);
+
+        return redirect()->route('identities.show', $newMembership)
+            ->with('success', '名義を複製しました');
+    }
+
     public function destroy(FcMembership $fcMembership)
     {
         $person = $fcMembership->person;
@@ -97,8 +139,8 @@ class IdentityController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'fc_password' => ['nullable', 'string', 'max:255'],
             'joined_month_input' => ['nullable', 'regex:' . JoinedMonthConverter::FORMAT_PATTERN],
-            // 担当色はプリセット11色（config/oshi_colors.php）のみ許可（spec §3）
-            'oshi_color' => ['nullable', Rule::in(array_values(config('oshi_colors')))],
+            'group_member_id' => ['nullable', 'exists:group_members,id'],
+            'oshi_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
         ]);
 
         $personData = [
@@ -120,6 +162,7 @@ class IdentityController extends Controller
                 ? JoinedMonthConverter::toDate($validated['joined_month_input'])
                 : null,
             'oshi_color' => $validated['oshi_color'] ?? null,
+            'group_member_id' => $validated['group_member_id'] ?? null,
         ];
 
         return [$personData, $membershipData];

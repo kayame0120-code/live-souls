@@ -32,6 +32,7 @@ class IdentityService
                 'password' => $membershipData['password'] ?? null,
                 'joined_on' => $membershipData['joined_on'] ?? null,
                 'oshi_color' => $membershipData['oshi_color'] ?? null,
+                'group_member_id' => $membershipData['group_member_id'] ?? null,
             ]);
         });
     }
@@ -55,6 +56,7 @@ class IdentityService
                 'email' => $membershipData['email'] ?? null,
                 'joined_on' => $membershipData['joined_on'] ?? null,
                 'oshi_color' => $membershipData['oshi_color'] ?? null,
+                'group_member_id' => $membershipData['group_member_id'] ?? null,
             ];
 
             // FCパスワードは入力があった場合のみ更新（空送信で既存値を消さない）

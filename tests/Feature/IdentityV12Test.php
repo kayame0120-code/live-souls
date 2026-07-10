@@ -66,7 +66,7 @@ class IdentityV12Test extends TestCase
         $response->assertDontSee('>secret@example.com<', false);
     }
 
-    public function test_oshi_colorはプリセット11色のみ許可される(): void
+    public function test_oshi_colorはHEX形式のみ許可される(): void
     {
         // プリセット内（赤）はOK
         $this->post(route('identities.store'), $this->storePayload([
@@ -74,10 +74,16 @@ class IdentityV12Test extends TestCase
         ]))->assertRedirect();
         $this->assertSame('#E60033', FcMembership::first()->oshi_color);
 
-        // プリセット外は拒否
+        // メンバーカラー由来のHEXもOK（v2.1: 担当メンバー選択で自動反映された色を受け入れる）
         $this->post(route('identities.store'), $this->storePayload([
             'person_name' => '次郎',
-            'oshi_color' => '#123456',
+            'oshi_color' => '#212121',
+        ]))->assertRedirect();
+
+        // 不正な形式は拒否
+        $this->post(route('identities.store'), $this->storePayload([
+            'person_name' => '三郎',
+            'oshi_color' => 'invalid',
         ]))->assertSessionHasErrors('oshi_color');
     }
 

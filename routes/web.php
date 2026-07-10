@@ -38,6 +38,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/identities/{fcMembership}', [IdentityController::class, 'show'])->name('identities.show');
     Route::get('/identities/{fcMembership}/edit', [IdentityController::class, 'edit'])->name('identities.edit');
     Route::put('/identities/{fcMembership}', [IdentityController::class, 'update'])->name('identities.update');
+    Route::get('/identities/{fcMembership}/duplicate', [IdentityController::class, 'duplicate'])->name('identities.duplicate');
+    Route::post('/identities/{fcMembership}/duplicate', [IdentityController::class, 'storeDuplicate'])->name('identities.store-duplicate');
     Route::delete('/identities/{fcMembership}', [IdentityController::class, 'destroy'])->name('identities.destroy');
 
     Route::resource('identity-groups', IdentityGroupController::class)->except(['show']);

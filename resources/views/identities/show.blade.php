@@ -126,6 +126,8 @@
         @endforelse
     </div>
 
+    <a href="{{ route('identities.duplicate', $fcMembership) }}" class="btn btn-primary" style="display:block;text-align:center;margin-bottom:12px;text-decoration:none;">この名義を複製する</a>
+
     <form method="POST" action="{{ route('identities.destroy', $fcMembership) }}"
           onsubmit="return confirm('この名義を削除しますか？')">
         @csrf @method('DELETE')

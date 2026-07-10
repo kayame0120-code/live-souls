@@ -24,7 +24,10 @@
                 <input class="f-input" type="text" id="label" name="label" value="{{ old('label', $fcMembership->person->label) }}" placeholder="例：母名義・ゆきちゃん共同">
             </div>
             <div class="f-field" style="margin-bottom:0;">
-                @include('partials.oshi-picker', ['selectedColor' => old('oshi_color', $fcMembership->oshi_color)])
+                @include('partials.member-picker', [
+                    'selectedGroupMemberId' => old('group_member_id', $fcMembership->group_member_id),
+                    'selectedColor' => old('oshi_color', $fcMembership->oshi_color),
+                ])
             </div>
         </div>
 
