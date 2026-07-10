@@ -111,11 +111,18 @@
         @endif
     </div>
 
-    {{-- 会場のビュー（見え方マッピング）への導線。360°(C)は対象外・通常の会場詳細へ --}}
+    {{-- 会場のビュー（見え方マッピング）への導線 --}}
     @if($attendance->venue)
     <a href="{{ route('venues.show', $attendance->venue) }}" class="venue-view-btn">
         <span>この会場のビューを見る</span>
         <small>{{ $attendance->venue->name }} ・ 見え方マッピング</small>
+    </a>
+    @endif
+
+    {{-- セットリスト（モック scr-event-detail 準拠） --}}
+    @if($attendance->event)
+    <a href="{{ route('setlists.show', $attendance->event) }}" class="link-row" style="display:flex;justify-content:space-between;align-items:center;text-decoration:none;color:inherit;">
+        <span>🎵 セットリスト</span><span class="lr-arrow">›</span>
     </a>
     @endif
 
