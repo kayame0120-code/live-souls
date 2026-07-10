@@ -120,8 +120,8 @@
     @endif
 
     {{-- セットリスト（モック scr-event-detail 準拠） --}}
-    @if($attendance->event)
-    <a href="{{ route('setlists.show', $attendance->event) }}" class="link-row" style="display:flex;justify-content:space-between;align-items:center;text-decoration:none;color:inherit;">
+    @if($attendance->event?->tour)
+    <a href="{{ route('setlists.show', $attendance->event->tour) }}" class="link-row" style="display:flex;justify-content:space-between;align-items:center;text-decoration:none;color:inherit;">
         <span>🎵 セットリスト</span><span class="lr-arrow">›</span>
     </a>
     @endif

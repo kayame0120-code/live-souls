@@ -39,7 +39,7 @@ class TourController extends Controller
     {
         $tour->load('deadlines');
         $events = $tour->events()
-            ->with(['venue', 'setlist'])
+            ->with(['venue'])
             ->orderBy('event_date')
             ->orderBy('start_time')
             ->get();

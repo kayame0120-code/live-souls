@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Setlist extends Model
 {
-    protected $fillable = ['event_id'];
+    protected $fillable = ['tour_id', 'label'];
 
-    public function event(): BelongsTo
+    public function tour(): BelongsTo
     {
-        return $this->belongsTo(Event::class);
+        return $this->belongsTo(Tour::class);
     }
 
     public function items(): HasMany

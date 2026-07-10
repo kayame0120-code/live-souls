@@ -72,11 +72,6 @@ class Event extends Model
         return $this->hasMany(Attendance::class);
     }
 
-    public function setlist(): \Illuminate\Database\Eloquent\Relations\HasOne
-    {
-        return $this->hasOne(\App\Models\Setlist::class);
-    }
-
     /** 削除可否: 紐づく参戦が1件でもあれば削除不可（venues/グループ削除と同型・spec §5） */
     public function canBeDeleted(): bool
     {

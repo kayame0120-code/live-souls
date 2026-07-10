@@ -76,12 +76,12 @@ Route::middleware('auth')->group(function () {
     Route::put('/events/{event}', [EventController::class, 'update'])->name('events.update');
     Route::delete('/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
 
-    // セットリスト（公演詳細から遷移・手動/AI一括）
-    Route::get('/events/{event}/setlist', [SetlistController::class, 'show'])->name('setlists.show');
-    Route::post('/events/{event}/setlist/items', [SetlistController::class, 'addItem'])->name('setlists.add-item');
-    Route::delete('/events/{event}/setlist/items/{item}', [SetlistController::class, 'destroyItem'])->name('setlists.destroy-item');
-    Route::post('/events/{event}/setlist/ai-parse', [SetlistController::class, 'aiParse'])->name('setlists.ai-parse');
-    Route::post('/events/{event}/setlist/bulk', [SetlistController::class, 'bulkStore'])->name('setlists.bulk-store');
+    // セットリスト（ツアー紐づけ・公演詳細から遷移）
+    Route::get('/tours/{tour}/setlists', [SetlistController::class, 'show'])->name('setlists.show');
+    Route::post('/tours/{tour}/setlists/items', [SetlistController::class, 'addItem'])->name('setlists.add-item');
+    Route::delete('/tours/{tour}/setlists/items/{item}', [SetlistController::class, 'destroyItem'])->name('setlists.destroy-item');
+    Route::post('/tours/{tour}/setlists/ai-parse', [SetlistController::class, 'aiParse'])->name('setlists.ai-parse');
+    Route::post('/tours/{tour}/setlists/bulk', [SetlistController::class, 'bulkStore'])->name('setlists.bulk-store');
 
     // 参戦写真（閲覧=全メンバー / 削除=投稿者のみ）
     Route::get('/photos/{photo}', [PhotoController::class, 'show'])->name('photos.show');

@@ -27,9 +27,6 @@
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
             <a href="{{ route('events.edit', $event) }}" class="sched-tag" style="text-decoration:none;font-size:11px;">編集</a>
-            @if($event->setlist)
-            <a href="{{ route('setlists.show', $event) }}" class="sched-tag" style="text-decoration:none;">セトリ</a>
-            @endif
             @if($event->canBeDeleted())
             <form method="POST" action="{{ route('events.destroy', $event) }}"
                   onsubmit="return confirm('この日程を削除しますか？')">
@@ -46,12 +43,9 @@
     @endforelse
 
     <div class="sec-label">この公演の記録</div>
-    @foreach($events as $event)
-    <a href="{{ route('setlists.show', $event) }}" class="link-row" style="display:flex;justify-content:space-between;align-items:center;text-decoration:none;color:inherit;">
-        <span>🎵 セットリスト — {{ $event->event_date->format('m.d') }} {{ $event->venue?->name ?? '' }}@if($event->event_label) {{ $event->event_label }}@endif</span>
-        <span class="lr-arrow">›</span>
+    <a href="{{ route('setlists.show', $tour) }}" class="link-row" style="display:flex;justify-content:space-between;align-items:center;text-decoration:none;color:inherit;">
+        <span>🎵 セットリスト</span><span class="lr-arrow">›</span>
     </a>
-    @endforeach
 
     {{-- ＋日程を追加（mockup: ツアー詳細側の m-add） --}}
     <a href="{{ route('events.create', $tour) }}" class="m-add">＋ 日程を追加</a>

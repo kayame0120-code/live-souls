@@ -26,6 +26,11 @@ class Tour extends Model
         return $this->hasMany(TourDeadline::class);
     }
 
+    public function setlists(): HasMany
+    {
+        return $this->hasMany(Setlist::class);
+    }
+
     /** 削除可否：紐づく events が1件でもあれば削除不可（events/venues 削除と同型・spec §5） */
     public function canBeDeleted(): bool
     {

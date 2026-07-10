@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\LlmService;
-use App\Models\Event;
 use App\Models\Setlist;
 use App\Models\SetlistItem;
+use App\Models\Tour;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,21 +15,25 @@ class SetlistController extends Controller
     {
     }
 
-    public function show(Event $event)
+    public function show(Tour $tour)
     {
-        $setlist = $event->setlist?->load('items');
+        $tour->load('setlists.items');
 
-        return view('setlists.show', compact('event', 'setlist'));
+        return view('setlists.show', compact('tour'));
     }
 
-    public function addItem(Request $request, Event $event)
+    public function addItem(Request $request, Tour $tour)
     {
         $validated = $request->validate([
+            'setlist_id' => ['nullable', 'exists:setlists,id'],
+            'label' => ['nullable', 'string', 'max:255'],
             'title' => ['required', 'string', 'max:255'],
             'display_label' => ['nullable', 'string', 'max:50'],
         ]);
 
-        $setlist = $event->setlist ?? Setlist::create(['event_id' => $event->id]);
+        $setlist = isset($validated['setlist_id'])
+            ? Setlist::find($validated['setlist_id'])
+            : $tour->setlists()->create(['label' => $validated['label'] ?? null]);
 
         $maxOrder = $setlist->items()->max('sort_order') ?? 0;
 
@@ -39,23 +43,23 @@ class SetlistController extends Controller
             'title' => $validated['title'],
         ]);
 
-        return redirect()->route('setlists.show', $event)
+        return redirect()->route('setlists.show', $tour)
             ->with('success', '曲を追加しました');
     }
 
-    public function destroyItem(Event $event, SetlistItem $item)
+    public function destroyItem(Tour $tour, SetlistItem $item)
     {
-        if ($item->setlist->event_id !== $event->id) {
+        if ($item->setlist->tour_id !== $tour->id) {
             abort(404);
         }
 
         $item->delete();
 
-        return redirect()->route('setlists.show', $event)
+        return redirect()->route('setlists.show', $tour)
             ->with('success', '曲を削除しました');
     }
 
-    public function aiParse(Request $request, Event $event)
+    public function aiParse(Request $request, Tour $tour)
     {
         $validated = $request->validate([
             'text' => ['required', 'string'],
@@ -67,32 +71,33 @@ class SetlistController extends Controller
             return back()->with('error', 'AI解析に失敗しました: ' . $e->getMessage());
         }
 
-        $setlist = $event->setlist?->load('items');
+        $tour->load('setlists.items');
         $aiItems = $result['items'] ?? [];
 
-        return view('setlists.show', compact('event', 'setlist', 'aiItems'));
+        return view('setlists.show', compact('tour', 'aiItems'));
     }
 
-    public function bulkStore(Request $request, Event $event)
+    public function bulkStore(Request $request, Tour $tour)
     {
         $validated = $request->validate([
+            'label' => ['nullable', 'string', 'max:255'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.title' => ['required', 'string', 'max:255'],
             'items.*.display_label' => ['nullable', 'string', 'max:50'],
             'items.*.include' => ['nullable'],
         ]);
 
-        $setlist = $event->setlist ?? Setlist::create(['event_id' => $event->id]);
-        $maxOrder = $setlist->items()->max('sort_order') ?? 0;
+        $setlist = $tour->setlists()->create(['label' => $validated['label'] ?? null]);
         $count = 0;
+        $order = 0;
 
-        DB::transaction(function () use ($validated, $setlist, &$maxOrder, &$count) {
+        DB::transaction(function () use ($validated, $setlist, &$order, &$count) {
             foreach ($validated['items'] as $item) {
                 if (empty($item['include'])) {
                     continue;
                 }
                 $setlist->items()->create([
-                    'sort_order' => ++$maxOrder,
+                    'sort_order' => ++$order,
                     'display_label' => $item['display_label'] ?? null,
                     'title' => $item['title'],
                 ]);
@@ -100,7 +105,7 @@ class SetlistController extends Controller
             }
         });
 
-        return redirect()->route('setlists.show', $event)
+        return redirect()->route('setlists.show', $tour)
             ->with('success', "{$count}曲を登録しました");
     }
 }
