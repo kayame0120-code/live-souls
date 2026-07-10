@@ -1,5 +1,56 @@
 # QUESTIONS.md — 現場手帖
 
+## v2.0 未決事項（spec_v2.0.md 7章・着手禁止）
+
+### QV20-1: `group_members`（担当メンバーマスタ）のカラム設計、既存`oshi_color`との関係
+
+- **spec根拠**: spec_v2.0.md §2.2・§7 No.1
+- **決めてほしいこと（片倉）**:
+  A: `oshi_color`を廃止し`group_members`のカラー1本化
+  B: `oshi_color`は名義ごとのカスタム上書きとして残す
+- **現状**: 実装禁止。テーブル設計・既存oshi_colorとの統合方法が未決。
+
+### QV20-2: `venues.arena_view_key`のマージ方法（360度ビューエンジンの取り込み手順）
+
+- **spec根拠**: spec_v2.0.md §3・§7 No.2
+- **実施済み**: `arena_view_key` カラムのマイグレーション追加（nullable string）は完了。
+- **残**: 360度ビュータブの実装・データ投入は未着手。arena-view一式（HTMLテンプレート＋key対応表）の投入が必要。
+
+### QV20-3: `setlists`/`setlist_items`の詳細カラム
+
+- **spec根拠**: spec_v2.0.md §3・§7 No.3
+- **方針**: events/tours型を踏襲する前提。設計フェーズにて確定。
+
+### QV20-4: AI一括登録の人間確認テーブルの詳細カラム
+
+- **spec根拠**: spec_v2.0.md §3・§7 No.4
+- **方針**: 既存`events.import`系を踏襲する前提。設計フェーズにて確定。
+
+### QV20-5: 名義複製画面の詳細UI
+
+- **spec根拠**: spec_v2.0.md §5・§7 No.5
+- **データ設計は確定**: 既存`person`を選び、別`identity_group`配下に新規`fc_membership`を作成。個人情報の再入力なし（`persons`を重複させず参照）。
+- **ラフ案（提案）**: 既存の名義登録画面（`identities/create`）を流用し、以下の変更を加える:
+  1. 「複製元の名義」セレクトを最上部に追加。選択するとperson情報（名前・生年月日・電話・住所）がプリセットされ読み取り専用に
+  2. グループ選択は通常通り（複製先のグループを選ぶ）
+  3. FC固有情報（artist_name, member_no, login_id, email, password, joined_on, oshi_color）は新規入力
+  4. 保存時は既存personのIDを参照して新規fc_membershipを作成
+- **決めてほしいこと（片倉）**: 上記ラフ案の方向性でOKか、別アプローチ（モーダル等）がよいか。
+
+### QV20-6: Ollama本番投入の可否（Step1前例確認の結果）
+
+- **spec根拠**: cc_instructions_v2.0.md §5
+- **Flyマシン現行スペック**: 1GB RAM / shared CPU 1コア / nrtリージョン（fly.toml確認済み）
+- **評価**: 1B〜3Bクラスのモデル（tinyllama, phi-3-mini等）は最低2GB以上のRAMが必要。現行1GBではWebアプリ（Laravel）と同居させると確実にOOMになる。
+- **選択肢**:
+  A: Flyマシンのメモリを2GB以上に増強（月額コスト増・shared-cpu-1xで$5.22→$10.44程度）
+  B: Ollama用の別Flyマシンを立て、API経由で呼び出す（分離・独立スケール可能）
+  C: ローカル（開発時のみ）Ollama + 本番はクラウドLLM API（OpenAI等）にフォールバック
+- **決めてほしいこと（片倉）**: 実測の前にまず方針を選定。A/B/Cのいずれで進めるか。
+  実測はその方針に基づいた環境で行う。
+
+---
+
 ## 未解決・保留（安全側で仮置き中）
 
 ### QV13-1 ✅クローズ: 開演の源は events.start_time に一本化（片倉指示・2026-07-09）
