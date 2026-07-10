@@ -59,6 +59,8 @@ class EventController extends Controller
             'venue_id' => ['nullable', 'exists:venues,id'],
             'venue_name' => ['nullable', 'string', 'max:255'],
             'venue_address' => ['nullable', 'string', 'max:255'],
+            'application_deadline' => ['nullable', 'date'],
+            'announce_date' => ['nullable', 'date'],
             'confirm_duplicate' => ['nullable', 'boolean'],
         ], [
             'event_date.required' => '日付を入力してください',
@@ -68,7 +70,6 @@ class EventController extends Controller
         $venueId = $this->service->resolveVenueId($validated);
         $startTime = $validated['start_time'] ?? null;
 
-        // 重複判定は 会場×日×開演（ツアーをまたいでも対象・spec §5）。ブロックはしない
         $dups = $this->service->findDuplicates($venueId, $validated['event_date'], $startTime);
         if ($dups->isNotEmpty() && empty($validated['confirm_duplicate'])) {
             return back()
@@ -76,7 +77,16 @@ class EventController extends Controller
                 ->with('duplicate_warning', '同じ会場・同じ日付・同じ開演の日程が既にあります（昼夜2公演なら開演時間を変えて続行）。');
         }
 
-        $this->service->create($tour->id, $validated['event_label'] ?? null, $validated['event_date'], $startTime, $venueId);
+        $event = $this->service->create(
+            $tour->id, $validated['event_label'] ?? null, $validated['event_date'], $startTime, $venueId
+        );
+
+        if (! empty($validated['application_deadline'])) {
+            $event->update(['application_deadline' => $validated['application_deadline']]);
+        }
+        if (! empty($validated['announce_date'])) {
+            $event->update(['announce_date' => $validated['announce_date']]);
+        }
 
         return redirect()->route('tours.show', $tour)
             ->with('success', '日程を登録しました');

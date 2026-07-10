@@ -35,6 +35,18 @@
 
         @include('partials.venue-select')
 
+        <div class="f-field">
+            <label for="application_deadline">申込締切 <span class="opt">（任意）</span></label>
+            <input class="f-input" type="datetime-local" id="application_deadline" name="application_deadline"
+                   value="{{ old('application_deadline') }}">
+        </div>
+
+        <div class="f-field">
+            <label for="announce_date">当落発表日 <span class="opt">（任意）</span></label>
+            <input class="f-input" type="date" id="announce_date" name="announce_date"
+                   value="{{ old('announce_date') }}">
+        </div>
+
         @if(session('duplicate_warning'))
         <input type="hidden" name="confirm_duplicate" value="1">
         <button type="submit" class="btn btn-primary" style="margin-top:18px;">重複を承知で登録する</button>

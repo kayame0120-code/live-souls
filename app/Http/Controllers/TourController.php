@@ -36,7 +36,7 @@ class TourController extends Controller
     public function show(Tour $tour)
     {
         $events = $tour->events()
-            ->with('venue')
+            ->with(['venue', 'setlist'])
             ->orderBy('event_date')
             ->orderBy('start_time')
             ->get();

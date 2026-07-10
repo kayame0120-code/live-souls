@@ -97,6 +97,28 @@
   }
   .dot{width:8px;height:8px;border-radius:50%;background:var(--oshi);flex:none}
 
+  /* 次の現場カード内：チケット確認の一言（spec 4.3・表示のみ） */
+  .ticket-note{
+    display:flex;align-items:center;gap:7px;margin-top:12px;
+    padding:9px 12px;border-radius:10px;
+    background:var(--paper);border:1px dashed var(--keisen-strong);
+    font-size:11px;color:var(--ink-sub);line-height:1.5;
+  }
+  .ticket-note b{color:var(--ink);font-weight:700}
+
+  /* ホーム：更新期間の名義カード（spec 4.2・isInRenewalWindow） */
+  .renew-card{
+    background:color-mix(in srgb, var(--oshi) 8%, #fff);
+    border:2px solid var(--oshi);border-radius:var(--radius);
+    padding:15px 18px;margin-bottom:12px;
+  }
+  .renew-top{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .renew-swatch{width:13px;height:13px;border-radius:50%;background:var(--oshi);border:1px solid rgba(0,0,0,.12);flex:none}
+  .renew-name{font-size:14px;font-weight:700}
+  .renew-name small{font-size:10px;color:var(--ink-sub);font-weight:500;margin-left:6px}
+  .renew-body{font-size:11.5px;color:var(--ink-sub);line-height:1.6}
+  .renew-body b{color:var(--ink);font-weight:700;font-feature-settings:"tnum"}
+
   /* ---- 「参戦した？」確認（公演日経過・v1.2追加） ---- */
   .confirm-card{
     background:#FBF7EE;border:1px solid #EADFC7;
@@ -341,6 +363,41 @@
     content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     color:#fff;font-size:13px;font-weight:700;text-shadow:0 0 3px rgba(0,0,0,.5);
   }
+
+  /* 公式グループ→メンバー選択（担当色を自動反映） */
+  .member-picker{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0}
+  .member-chip{
+    display:inline-flex;align-items:center;gap:7px;cursor:pointer;
+    font-family:inherit;font-size:12px;font-weight:500;color:var(--ink);
+    background:var(--card);border:1px solid var(--keisen-strong);border-radius:999px;
+    padding:6px 13px 6px 8px;
+  }
+  .member-chip .mc-dot{
+    width:15px;height:15px;border-radius:50%;flex:none;
+    box-shadow:0 0 0 1px rgba(0,0,0,.12) inset;
+  }
+  .member-chip.sel{border-color:var(--ink);background:var(--ink);color:#fff}
+  /* 自動で入った担当色のプレビュー */
+  .auto-color{
+    display:flex;align-items:center;gap:10px;margin-top:12px;
+    padding:11px 14px;border-radius:10px;background:var(--paper);
+    border:1px solid var(--keisen);
+  }
+  .auto-color .ac-dot{
+    width:22px;height:22px;border-radius:50%;flex:none;
+    box-shadow:0 0 0 1px rgba(0,0,0,.15) inset;
+  }
+  .auto-color .ac-text{font-size:12px;color:var(--ink-sub);line-height:1.4}
+  .auto-color .ac-text b{color:var(--ink);font-weight:700}
+  .auto-color .ac-override{
+    margin-left:auto;font-family:inherit;font-size:11px;font-weight:700;
+    color:var(--ink-sub);background:none;border:none;cursor:pointer;text-decoration:underline;
+    flex:none;
+  }
+  /* 上書き用スウォッチ（初期は隠す） */
+  .override-picker{display:none;margin-top:12px}
+  .override-picker.open{display:block}
+  .override-picker .op-label{font-size:10.5px;color:var(--ink-sub);margin-bottom:8px}
   /* 保存/キャンセル固定バー */
   .form-bar{
     position:fixed;bottom:0;left:50%;transform:translateX(-50%);
@@ -421,6 +478,31 @@
   .tour-card .tc-sub{font-size:11px;color:var(--ink-sub);margin-top:4px;letter-spacing:.04em}
   .tour-card .tc-arrow{font-size:18px;color:var(--ink-sub);flex:none}
 
+  /* 申込締切バッジ（日時を大きく／サーバー時刻超過で発表待ちへ自動切替） */
+  .deadline{
+    display:flex;align-items:center;gap:10px;
+    border-radius:10px;padding:11px 14px;margin-top:10px;
+    background:color-mix(in srgb, var(--oshi) 8%, #fff);
+    border:1px solid color-mix(in srgb, var(--oshi) 35%, var(--keisen));
+  }
+  .deadline .dl-label{font-size:10px;font-weight:700;color:var(--ink-sub);letter-spacing:.12em;flex:none}
+  .deadline .dl-datetime{
+    font-size:20px;font-weight:700;line-height:1;color:var(--oshi);
+    letter-spacing:.01em;font-feature-settings:"tnum";margin-left:auto;
+  }
+  .deadline .dl-datetime small{font-size:12px;font-weight:700;margin-left:2px}
+  /* 締切超過＝発表待ち（グレー基調・発表日を表示） */
+  .deadline.closed{background:var(--paper);border-color:var(--keisen-strong)}
+  .deadline.closed .dl-datetime{color:var(--ink-sub)}
+  .deadline.closed .dl-label{color:var(--ink-sub)}
+  /* 当落一覧カード内の小型締切（インライン） */
+  .tc-deadline{
+    display:inline-flex;align-items:baseline;gap:5px;margin-top:8px;
+    font-size:11px;color:var(--ink-sub);
+  }
+  .tc-deadline b{font-size:16px;font-weight:700;color:var(--oshi);line-height:1}
+  .tc-deadline.closed b{color:var(--ink-sub)}
+
   /* 公演詳細：日程行 */
   .sched-row{
     display:flex;align-items:baseline;gap:14px;
@@ -440,6 +522,107 @@
     border:1px solid var(--keisen-strong);color:var(--ink-sub);
   }
   .sched-tag.done{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* 会場詳細：内部タブ（見え方マッピング / 360度ビュー） */
+  .subtabs{display:flex;gap:8px;margin-bottom:16px}
+  .subtab{
+    flex:1;font-family:inherit;cursor:pointer;text-align:center;
+    font-size:12px;font-weight:700;letter-spacing:.04em;
+    padding:9px 0;border-radius:10px;
+    border:1px solid var(--keisen-strong);background:var(--card);color:var(--ink-sub);
+  }
+  .subtab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .subpane{display:none}
+  .subpane.on{display:block}
+  /* 360度ビュー：資産連携プレースホルダ（マージ方法は未決） */
+  .view360{
+    aspect-ratio:16/10;border-radius:12px;
+    background:linear-gradient(135deg,#2A2C33,#3D4049);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    color:rgba(255,255,255,.85);text-align:center;padding:20px;
+  }
+  .view360 .v3-ico{font-size:30px}
+  .view360 .v3-main{font-size:13px;font-weight:700;letter-spacing:.06em}
+  .view360 .v3-sub{font-size:10.5px;color:rgba(255,255,255,.55);line-height:1.6}
+
+  /* 公演詳細の記録リンク行 */
+  .link-row{
+    width:100%;font-family:inherit;cursor:pointer;
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--card);border:1px solid var(--keisen);border-radius:12px;
+    padding:15px 18px;margin-bottom:10px;
+    font-size:13px;font-weight:700;color:var(--ink);letter-spacing:.04em;
+  }
+  .link-row .lr-arrow{color:var(--ink-sub);font-size:18px}
+
+  /* AI一括登録（骨組み・画面詳細は未決） */
+  .ai-lead{
+    font-size:11.5px;color:var(--ink-sub);line-height:1.7;margin-bottom:14px;
+    padding:12px 14px;background:var(--card);border:1px solid var(--keisen);border-radius:10px;
+  }
+  .ai-paste{
+    width:100%;font-family:inherit;font-size:13px;color:var(--ink);line-height:1.6;
+    background:var(--card);border:1px solid var(--keisen-strong);border-radius:10px;
+    padding:13px;min-height:120px;resize:vertical;margin-bottom:12px;
+  }
+  .ai-paste:focus{outline:2px solid var(--oshi);outline-offset:1px;border-color:transparent}
+  .ai-run{
+    width:100%;font-family:inherit;font-size:13px;font-weight:700;letter-spacing:.08em;
+    background:var(--ink);color:#fff;border:none;border-radius:10px;padding:13px;cursor:pointer;
+    margin-bottom:20px;
+  }
+  /* 人間確認テーブル（events.import系踏襲・骨組み） */
+  .confirm-table{
+    background:var(--card);border:1px solid var(--keisen);border-radius:12px;overflow:hidden;
+  }
+  .ct-row{display:flex;gap:10px;padding:12px 14px;border-bottom:1px solid var(--keisen);align-items:baseline}
+  .ct-row:last-child{border-bottom:none}
+  .ct-date{font-size:11px;font-weight:700;color:var(--oshi);white-space:nowrap;flex:none;min-width:52px;font-feature-settings:"tnum"}
+  .ct-body{flex:1;min-width:0}
+  .ct-name{font-size:12.5px;font-weight:500;line-height:1.4}
+  .ct-venue{font-size:10.5px;color:var(--ink-sub);margin-top:2px}
+  .ct-check{flex:none;font-size:16px;color:#00A960}
+
+  /* セットリスト（骨組み・カラム設計は未決） */
+  .set-item{
+    display:flex;gap:12px;align-items:baseline;
+    padding:11px 2px;border-bottom:1px solid var(--keisen);font-size:13px;
+  }
+  .set-no{font-size:11px;font-weight:700;color:var(--ink-sub);min-width:22px;font-feature-settings:"tnum"}
+  .set-title{flex:1;font-weight:500}
+  .set-add{
+    width:100%;border:1px dashed var(--keisen-strong);background:var(--card);
+    border-radius:10px;padding:12px;color:var(--ink-sub);cursor:pointer;
+    font-family:inherit;font-size:12px;font-weight:500;letter-spacing:.06em;margin-top:12px;
+  }
+
+  /* 名義複製ボタン（別FCで同一人物の名義を作る） */
+  .dup-btn{
+    width:100%;font-family:inherit;cursor:pointer;text-align:left;
+    background:var(--card);border:1px dashed var(--keisen-strong);border-radius:var(--radius);
+    padding:15px 18px;display:flex;flex-direction:column;gap:3px;margin-top:4px;
+  }
+  .dup-btn span{font-size:13px;font-weight:700;color:var(--ink);letter-spacing:.04em}
+  .dup-btn small{font-size:10.5px;color:var(--ink-sub);letter-spacing:.02em}
+
+  /* 複製画面：引き継ぎ済み個人情報カード（入力スキップの明示） */
+  .inherit-card{
+    background:color-mix(in srgb, #00A960 6%, #fff);
+    border:1px solid color-mix(in srgb, #00A960 30%, var(--keisen));
+    border-radius:var(--radius);padding:16px 18px;margin-bottom:14px;
+  }
+  .inherit-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .inherit-badge{
+    font-size:10px;font-weight:700;letter-spacing:.06em;
+    background:#00A960;color:#fff;padding:3px 9px;border-radius:999px;flex:none;
+  }
+  .inherit-who{font-size:13px;font-weight:700}
+  .inherit-list{font-size:12px;color:var(--ink-sub);line-height:1.9}
+  .inherit-list b{color:var(--ink);font-weight:500}
+  .inherit-note{
+    font-size:10.5px;color:var(--ink-sub);line-height:1.6;margin-top:10px;
+    padding-top:10px;border-top:1px dashed color-mix(in srgb, #00A960 25%, var(--keisen));
+  }
 
   /* ---- 記帳ボタン ---- */
   .fab{
@@ -487,6 +670,7 @@
           <span>開演 <b>17:00</b></span>
         </div>
         <span class="meigi-chip"><span class="dot" style="--oshi:#8957A1"></span>紫の名義（自名義）で入場</span>
+        <div class="ticket-note">🎫 <span><b>チケット確認はお済みですか？</b> 開演が近づいています</span></div>
       </div>
 
       <!-- 公演日を過ぎた予定の「参戦した？」確認（v1.2追加） -->
@@ -499,6 +683,28 @@
           <button class="btn-attended">参戦した</button>
           <button class="btn-skipped">行けなかった</button>
         </div>
+      </div>
+
+      <!-- 更新期間に入った名義（spec 4.2・isInRenewalWindow） -->
+      <div class="sec-label">申込締切</div>
+      <div class="tour-card" data-detail="scr-lot-detail" style="--oshi:#8957A1;flex-direction:column;align-items:stretch;gap:0;cursor:pointer">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div class="tc-body">
+            <div class="tc-name">LUMIÈRE「Prism of Night」京セラドーム</div>
+            <div class="tc-sub">08.23（土）公演</div>
+          </div>
+          <span class="tc-arrow">›</span>
+        </div>
+        <div class="deadline" style="--oshi:#8957A1" data-deadline="2026-07-20T12:00:00" data-announce="2026-07-28"></div>
+      </div>
+
+      <div class="sec-label">更新期間の名義</div>
+      <div class="renew-card" style="--oshi:#8957A1">
+        <div class="renew-top">
+          <span class="renew-swatch"></span>
+          <div class="renew-name">片倉 菖<small>LUMIÈRE FC・自名義</small></div>
+        </div>
+        <div class="renew-body">更新受付中 <b>2026.09.02 – 10.31</b> ／ 有効期限 <b>2026.10.31</b></div>
       </div>
 
       <div class="sec-label">積み上げ</div>
@@ -612,20 +818,26 @@
     <section class="screen" id="scr-lot">
       <div class="sec-label">申込中の公演（ツアー）</div>
 
-      <div class="tour-card" data-detail="scr-lot-detail">
-        <div class="tc-body">
-          <div class="tc-name">LUMIÈRE「Prism of Night」</div>
-          <div class="tc-sub">当落待ちあり</div>
+      <div class="tour-card" data-detail="scr-lot-detail" style="--oshi:#8957A1;flex-direction:column;align-items:stretch;gap:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div class="tc-body">
+            <div class="tc-name">LUMIÈRE「Prism of Night」</div>
+            <div class="tc-sub lot-status">申込受付中</div>
+          </div>
+          <span class="tc-arrow">›</span>
         </div>
-        <span class="tc-arrow">›</span>
+        <div class="deadline" style="--oshi:#8957A1" data-deadline="2026-07-16T18:00:00" data-announce="2026-07-24"></div>
       </div>
 
-      <div class="tour-card" data-detail="scr-lot-detail">
-        <div class="tc-body">
-          <div class="tc-name">8PEACE「BLUE HOUR」</div>
-          <div class="tc-sub">発表済</div>
+      <div class="tour-card" data-detail="scr-lot-detail" style="flex-direction:column;align-items:stretch;gap:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div class="tc-body">
+            <div class="tc-name">8PEACE「BLUE HOUR」</div>
+            <div class="tc-sub lot-status">発表済</div>
+          </div>
+          <span class="tc-arrow">›</span>
         </div>
-        <span class="tc-arrow">›</span>
+        <div class="deadline" data-deadline="2026-06-02T23:59:00" data-announce="2026-06-10"></div>
       </div>
     </section>
 
@@ -636,6 +848,18 @@
       <div class="venue-hero">
         <div class="vh-name">LUMIÈRE「Prism of Night」</div>
         <div class="vh-sub">この公演への申込と当落</div>
+      </div>
+
+      <div class="sec-label">申込・締切</div>
+
+      <div class="lot" style="--oshi:#8957A1">
+        <div class="lot-head">
+          <div>
+            <div class="lot-title">京セラドーム大阪</div>
+            <div class="lot-sub">08.23（土）公演</div>
+          </div>
+        </div>
+        <div class="deadline" style="--oshi:#8957A1;margin-top:12px" data-deadline="2026-07-20T12:00:00" data-announce="2026-07-28"></div>
       </div>
 
       <div class="sec-label">当落待ち</div>
@@ -704,7 +928,7 @@
       </div>
       <div class="ev-actions">
         <button class="ev-new">＋ 公演を追加</button>
-        <button class="ev-import">一覧を貼って一括登録</button>
+        <button class="ev-import" data-detail="scr-ai-import">一覧を貼って一括登録</button>
       </div>
 
       <div class="sec-label">公演（ツアー）</div>
@@ -780,6 +1004,11 @@
         </div>
         <span class="sched-tag">予定</span>
       </div>
+
+      <div class="sec-label">この公演の記録</div>
+      <button class="link-row" data-detail="scr-setlist">
+        <span>🎵 セットリスト</span><span class="lr-arrow">›</span>
+      </button>
     </section>
 
     <!-- ================= 参戦詳細 ================= -->
@@ -796,6 +1025,7 @@
         <div class="d-h">公演情報（共有マスタ）</div>
         <div class="d-row"><span class="k">会場</span><span class="v">大阪城ホール</span></div>
         <div class="d-row"><span class="k">最寄</span><span class="v">大阪環状線 大阪城公園駅</span></div>
+        <div class="d-row"><span class="k">開場</span><span class="v mono">16:00</span></div>
         <div class="d-row"><span class="k">開演</span><span class="v mono">17:00</span></div>
       </div>
 
@@ -923,6 +1153,11 @@
           <span class="ar-st lost">落選</span>
         </div>
       </div>
+
+      <button class="dup-btn" data-detail="scr-meigi-dup">
+        <span>＋ 別のFCでこの人の名義を作る</span>
+        <small>個人情報の再入力は不要（片倉 菖さんの情報を引き継ぎ）</small>
+      </button>
     </section>
 
     <!-- ================= 会場詳細（見え方マッピング） ================= -->
@@ -940,29 +1175,42 @@
         <div class="d-row"><span class="k">交通費</span><span class="v mono">往復 ¥29,800</span></div>
       </div>
 
-      <div class="sec-label">見え方マッピング（メンバー全員の記録）</div>
+      <div class="subtabs">
+        <button class="subtab on" data-pane="pane-photos">見え方マッピング</button>
+        <button class="subtab" data-pane="pane-360">360度ビュー</button>
+      </div>
 
-      <div class="view-tile">
-        <div class="view-photo">📷 スタンド上手からの眺め</div>
-        <div class="view-cap">
-          <span class="view-seat">スタンド上手 12列 41番</span>
-          <span class="view-by">by 菖（自名義）</span>
+      <div class="subpane on" id="pane-photos">
+        <div class="view-tile">
+          <div class="view-photo">📷 スタンド上手からの眺め</div>
+          <div class="view-cap">
+            <span class="view-seat">スタンド上手 12列 41番</span>
+            <span class="view-by">by 菖（自名義）</span>
+          </div>
+        </div>
+
+        <div class="view-tile">
+          <div class="view-photo">📷 アリーナ中央からの眺め</div>
+          <div class="view-cap">
+            <span class="view-seat">アリーナ C3ブロック</span>
+            <span class="view-by">by ゆきちゃん</span>
+          </div>
+        </div>
+
+        <div class="view-tile">
+          <div class="view-photo">📷 スタンド下手からの眺め</div>
+          <div class="view-cap">
+            <span class="view-seat">スタンド下手 8列</span>
+            <span class="view-by">by たけ</span>
+          </div>
         </div>
       </div>
 
-      <div class="view-tile">
-        <div class="view-photo">📷 アリーナ中央からの眺め</div>
-        <div class="view-cap">
-          <span class="view-seat">アリーナ C3ブロック</span>
-          <span class="view-by">by ゆきちゃん</span>
-        </div>
-      </div>
-
-      <div class="view-tile">
-        <div class="view-photo">📷 スタンド下手からの眺め</div>
-        <div class="view-cap">
-          <span class="view-seat">スタンド下手 8列</span>
-          <span class="view-by">by たけ</span>
+      <div class="subpane" id="pane-360">
+        <div class="view360">
+          <div class="v3-ico">🌐</div>
+          <div class="v3-main">360度ビューを開く</div>
+          <div class="v3-sub">この会場は360度ビューに対応しています<br>（座席を選ぶと見え方を再現）</div>
         </div>
       </div>
     </section>
@@ -974,35 +1222,43 @@
       <div class="d-block">
         <div class="d-h">名義の基本</div>
         <div class="f-field">
-          <label>FC（グループ）</label>
-          <select class="f-input">
-            <option>LUMIÈRE FC</option>
-            <option>8PEACE FC</option>
+          <label>グループ</label>
+          <select class="f-input group-select">
+            <option value="">選択してください</option>
+            <option value="snowman">Snow Man</option>
+            <option value="sixtones">SixTONES</option>
+            <option value="naniwa" selected>なにわ男子</option>
+            <option value="timelesz">timelesz</option>
           </select>
         </div>
         <div class="f-field">
-          <label>担当アーティスト名</label>
-          <input class="f-input" type="text" value="LUMIÈRE" placeholder="担当を入力">
+          <label>担当メンバー</label>
+          <div class="member-picker"></div>
+          <div class="auto-color" style="display:none">
+            <span class="ac-dot"></span>
+            <div class="ac-text">担当色が自動で入りました<br><b class="ac-name">—</b></div>
+            <button class="ac-override">手動で変える</button>
+          </div>
+          <div class="override-picker">
+            <div class="op-label">公式カラーを使わず、自由に色を選ぶ：</div>
+            <div class="swatch-picker">
+              <span class="swatch-opt" style="background:#E60033"></span>
+              <span class="swatch-opt" style="background:#F6851F"></span>
+              <span class="swatch-opt" style="background:#F2C500"></span>
+              <span class="swatch-opt" style="background:#8FC31F"></span>
+              <span class="swatch-opt" style="background:#00A960"></span>
+              <span class="swatch-opt" style="background:#00AFEC"></span>
+              <span class="swatch-opt" style="background:#1D6EC9"></span>
+              <span class="swatch-opt" style="background:#8957A1"></span>
+              <span class="swatch-opt" style="background:#EE87B4"></span>
+              <span class="swatch-opt" style="background:#FFFFFF"></span>
+              <span class="swatch-opt" style="background:#2B2B2B"></span>
+            </div>
+          </div>
         </div>
-        <div class="f-field">
+        <div class="f-field" style="margin-bottom:0">
           <label>名義の呼び名 <span class="opt">（任意）</span></label>
           <input class="f-input" type="text" value="自名義" placeholder="例：母名義・ゆきちゃん共同">
-        </div>
-        <div class="f-field">
-          <label>担当色</label>
-          <div class="swatch-picker">
-            <span class="swatch-opt" style="background:#E60033"></span>
-            <span class="swatch-opt" style="background:#F6851F"></span>
-            <span class="swatch-opt" style="background:#F2C500"></span>
-            <span class="swatch-opt" style="background:#8FC31F"></span>
-            <span class="swatch-opt" style="background:#00A960"></span>
-            <span class="swatch-opt" style="background:#00AFEC"></span>
-            <span class="swatch-opt" style="background:#1D6EC9"></span>
-            <span class="swatch-opt sel" style="background:#8957A1"></span>
-            <span class="swatch-opt" style="background:#EE87B4"></span>
-            <span class="swatch-opt" style="background:#FFFFFF"></span>
-            <span class="swatch-opt" style="background:#2B2B2B"></span>
-          </div>
         </div>
       </div>
 
@@ -1055,6 +1311,187 @@
 
       <button class="f-danger" data-back="scr-meigi">この名義を削除する</button>
     </section>
+
+    <!-- ================= セットリスト（骨組み・カラム未決） ================= -->
+    <section class="screen" id="scr-setlist">
+      <button class="detail-back" data-back="scr-event-detail">‹ 公演詳細へ戻る</button>
+
+      <div class="venue-hero">
+        <div class="vh-name">セットリスト</div>
+        <div class="vh-sub">LUMIÈRE「Prism of Night」横浜アリーナ 07.25</div>
+      </div>
+
+      <div class="ev-actions" style="margin-bottom:16px">
+        <button class="ev-import" data-detail="scr-ai-setlist">🤖 セトリを貼って一括登録</button>
+      </div>
+
+      <div class="d-block">
+        <div class="set-item"><span class="set-no">01</span><span class="set-title">Prism of Night</span></div>
+        <div class="set-item"><span class="set-no">02</span><span class="set-title">夜明けのAurora</span></div>
+        <div class="set-item"><span class="set-no">03</span><span class="set-title">Starlight Parade</span></div>
+        <div class="set-item"><span class="set-no">EN</span><span class="set-title">また会う日まで</span></div>
+        <button class="set-add">＋ 曲を追加</button>
+      </div>
+    </section>
+
+    <!-- ================= AI一括登録（骨組み・画面詳細は未決） ================= -->
+    <section class="screen" id="scr-ai-import">
+      <button class="detail-back" data-back="scr-event">‹ 公演一覧へ戻る</button>
+
+      <div class="venue-hero">
+        <div class="vh-name">公演をまとめて登録</div>
+        <div class="vh-sub">公式サイト・SNSの公演スケジュールを貼り付け</div>
+      </div>
+
+      <div class="ai-lead">
+        コピーした公演スケジュール（日付・会場・開演時間）を貼り付けると自動で読み取ります。登録前に必ず内容を確認できます。
+      </div>
+
+      <textarea class="ai-paste" placeholder="例）7/25(土) 横浜アリーナ 開演17:00 …"></textarea>
+      <button class="ai-run">読み取る</button>
+
+      <div class="sec-label">確認して登録（自動読み取り結果）</div>
+      <div class="confirm-table">
+        <div class="ct-row">
+          <div class="ct-date">07.25<br>（土）</div>
+          <div class="ct-body">
+            <div class="ct-name">LUMIÈRE「Prism of Night」</div>
+            <div class="ct-venue">横浜アリーナ ・ 開演 17:00</div>
+          </div>
+          <span class="ct-check">✓</span>
+        </div>
+        <div class="ct-row">
+          <div class="ct-date">08.09<br>（土）</div>
+          <div class="ct-body">
+            <div class="ct-name">LUMIÈRE「Prism of Night」東京ドーム 昼</div>
+            <div class="ct-venue">東京ドーム ・ 開演 14:00</div>
+          </div>
+          <span class="ct-check">✓</span>
+        </div>
+        <div class="ct-row">
+          <div class="ct-date">08.09<br>（土）</div>
+          <div class="ct-body">
+            <div class="ct-name">LUMIÈRE「Prism of Night」東京ドーム 夜</div>
+            <div class="ct-venue">東京ドーム ・ 開演 18:00</div>
+          </div>
+          <span class="ct-check">✓</span>
+        </div>
+      </div>
+
+      <button class="ai-run" style="margin-top:16px" data-back="scr-event">確認した3件を登録</button>
+    </section>
+
+    <!-- ================= AIセトリ一括登録（骨組み・画面詳細は未決） ================= -->
+    <section class="screen" id="scr-ai-setlist">
+      <button class="detail-back" data-back="scr-setlist">‹ セットリストへ戻る</button>
+
+      <div class="venue-hero">
+        <div class="vh-name">セトリをまとめて登録</div>
+        <div class="vh-sub">LUMIÈRE「Prism of Night」横浜アリーナ 07.25</div>
+      </div>
+
+      <div class="ai-lead">
+        SNSやレポートからコピーしたセットリスト（曲名の並び）を貼り付けると、曲順に読み取ります。登録前に必ず内容を確認できます。
+      </div>
+
+      <textarea class="ai-paste" placeholder="例）1. Prism of Night / 2. 夜明けのAurora / …"></textarea>
+      <button class="ai-run">読み取る</button>
+
+      <div class="sec-label">確認して登録（自動読み取り結果）</div>
+      <div class="confirm-table">
+        <div class="ct-row"><div class="ct-date">01</div><div class="ct-body"><div class="ct-name">Prism of Night</div></div><span class="ct-check">✓</span></div>
+        <div class="ct-row"><div class="ct-date">02</div><div class="ct-body"><div class="ct-name">夜明けのAurora</div></div><span class="ct-check">✓</span></div>
+        <div class="ct-row"><div class="ct-date">03</div><div class="ct-body"><div class="ct-name">Starlight Parade</div></div><span class="ct-check">✓</span></div>
+        <div class="ct-row"><div class="ct-date">EN</div><div class="ct-body"><div class="ct-name">また会う日まで</div></div><span class="ct-check">✓</span></div>
+      </div>
+
+      <button class="ai-run" style="margin-top:16px" data-back="scr-setlist">確認した4曲を登録</button>
+    </section>
+
+    <!-- ================= 名義複製（個人情報スキップ・§5未決を決めるための画面案） ================= -->
+    <section class="screen" id="scr-meigi-dup" style="padding-bottom:96px">
+      <button class="detail-back" data-back="scr-meigi-detail">‹ 複製をやめる</button>
+
+      <div class="inherit-card">
+        <div class="inherit-head">
+          <span class="inherit-badge">入力不要</span>
+          <span class="inherit-who">片倉 菖 さんの情報を引き継ぎます</span>
+        </div>
+        <div class="inherit-list">
+          住所 <b>登録済み</b>　／　電話 <b>登録済み</b><br>
+          メール <b>登録済み</b>　／　誕生日 <b>1998.05.12（28歳）</b>
+        </div>
+        <div class="inherit-note">この人はすでに登録済みです。個人情報は共有され、別のFCの名義を作るときも入力し直す必要はありません。</div>
+      </div>
+
+      <div class="d-block">
+        <div class="d-h">この名義の情報だけ入力</div>
+        <div class="f-field">
+          <label>グループ</label>
+          <select class="f-input group-select">
+            <option value="">選択してください</option>
+            <option value="snowman">Snow Man</option>
+            <option value="sixtones">SixTONES</option>
+            <option value="naniwa">なにわ男子</option>
+            <option value="timelesz">timelesz</option>
+          </select>
+        </div>
+        <div class="f-field">
+          <label>担当メンバー</label>
+          <div class="member-picker"></div>
+          <div class="auto-color" style="display:none">
+            <span class="ac-dot"></span>
+            <div class="ac-text">担当色が自動で入りました<br><b class="ac-name">—</b></div>
+            <button class="ac-override">手動で変える</button>
+          </div>
+          <div class="override-picker">
+            <div class="op-label">公式カラーを使わず、自由に色を選ぶ：</div>
+            <div class="swatch-picker">
+              <span class="swatch-opt" style="background:#E60033"></span>
+              <span class="swatch-opt" style="background:#F6851F"></span>
+              <span class="swatch-opt" style="background:#F2C500"></span>
+              <span class="swatch-opt" style="background:#8FC31F"></span>
+              <span class="swatch-opt" style="background:#00A960"></span>
+              <span class="swatch-opt" style="background:#00AFEC"></span>
+              <span class="swatch-opt" style="background:#1D6EC9"></span>
+              <span class="swatch-opt" style="background:#8957A1"></span>
+              <span class="swatch-opt" style="background:#EE87B4"></span>
+              <span class="swatch-opt" style="background:#FFFFFF"></span>
+              <span class="swatch-opt" style="background:#2B2B2B"></span>
+            </div>
+          </div>
+        </div>
+        <div class="f-field" style="margin-bottom:0">
+          <label>名義の呼び名 <span class="opt">（任意）</span></label>
+          <input class="f-input" type="text" placeholder="例：8PEACE名義">
+        </div>
+      </div>
+
+      <div class="d-block">
+        <div class="d-h">ログイン情報</div>
+        <div class="f-field">
+          <label>会員番号</label>
+          <input class="f-input" type="text" placeholder="会員番号">
+        </div>
+        <div class="f-field">
+          <label>パスワード</label>
+          <input class="f-input" type="password" placeholder="パスワード">
+        </div>
+        <div class="f-field">
+          <label>ID <span class="opt">（任意・メアドとは別）</span></label>
+          <input class="f-input" type="text" placeholder="ログインIDがあれば入力">
+        </div>
+      </div>
+
+      <div class="d-block">
+        <div class="d-h">入会日</div>
+        <div class="f-field" style="margin-bottom:0">
+          <label>入会年月</label>
+          <input class="f-input" type="month">
+          <div class="f-hint">有効期限・更新受付期間はこの日付から自動計算されます。</div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <div class="form-bar" id="formBar" style="display:none">
@@ -1071,15 +1508,15 @@
   const fab = document.getElementById('fab');
   const main = document.querySelector('main');
   // FAB非表示にする画面（機微情報・共有マスタ・詳細・編集には記録動線を混ぜない）
-  const noFab = ['scr-meigi','scr-event','scr-lot','scr-att-detail','scr-meigi-detail','scr-venue-detail','scr-meigi-edit','scr-event-detail','scr-lot-detail'];
+  const noFab = ['scr-meigi','scr-event','scr-lot','scr-att-detail','scr-meigi-detail','scr-venue-detail','scr-meigi-edit','scr-meigi-dup','scr-event-detail','scr-lot-detail','scr-setlist','scr-ai-import','scr-ai-setlist'];
   const formBar = document.getElementById('formBar');
 
   function show(id){
     screens.forEach(s=>s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    const isEdit = (id === 'scr-meigi-edit');
-    fab.style.display = (noFab.includes(id) || isEdit) ? 'none' : 'block';
-    formBar.style.display = isEdit ? 'flex' : 'none';
+    const isForm = (id === 'scr-meigi-edit' || id === 'scr-meigi-dup');
+    fab.style.display = (noFab.includes(id) || isForm) ? 'none' : 'block';
+    formBar.style.display = isForm ? 'flex' : 'none';
     main.scrollTo(0,0);
   }
 
@@ -1102,7 +1539,7 @@
     el.addEventListener('click',()=> show(el.dataset.back));
   });
 
-  // 担当色スウォッチ：単一選択
+  // 担当色スウォッチ（上書き用）：単一選択＋自動色プレビューを解除
   document.querySelectorAll('.swatch-picker').forEach(picker=>{
     picker.querySelectorAll('.swatch-opt').forEach(opt=>{
       opt.addEventListener('click',()=>{
@@ -1112,9 +1549,118 @@
     });
   });
 
+  // ===== 公式グループ→メンバー選択→担当色を自動反映（member-colors v0.2由来・代表4グループ） =====
+  const MEMBERS = {
+    snowman: {name:'Snow Man', list:[
+      ['岩本照','#FCE000'],['深澤辰哉','#8E44AD'],['渡辺翔太','#0068B7'],
+      ['阿部亮平','#00A651'],['宮舘涼太','#E60027'],['佐久間大介','#F06EAA'],
+      ['向井康二','#F08300'],['目黒蓮','#1A1A1A'],['ラウール','#F5F5F5'],
+    ]},
+    sixtones: {name:'SixTONES', list:[
+      ['ジェシー','#E60027'],['京本大我','#F06EAA'],['髙地優吾','#FCE000'],
+      ['田中樹','#0068B7'],['松村北斗','#1A1A1A'],['森本慎太郎','#00A651'],
+    ]},
+    naniwa: {name:'なにわ男子', list:[
+      ['西畑大吾','#E60027'],['大西流星','#F08300'],['道枝駿佑','#F06EAA'],
+      ['高橋恭平','#8E44AD'],['長尾謙杜','#FCE000'],['藤原丈一郎','#0068B7'],
+      ['大橋和也','#00A651'],
+    ]},
+    timelesz: {name:'timelesz', list:[
+      ['佐藤勝利','#E60027'],['松島聡','#00A651'],['菊池風磨','#8E44AD'],
+      ['寺西拓人','#4FC3F7'],['原嘉孝','#A0D468'],['橋本将生','#F06EAA'],
+      ['猪俣周杜','#FCE000'],['篠塚大輝','#F5F5F5'],
+    ]},
+  };
+
+  function setupOfficialPicker(scope){
+    const sel = scope.querySelector('.group-select');
+    const picker = scope.querySelector('.member-picker');
+    const auto = scope.querySelector('.auto-color');
+    if(!sel || !picker) return;
+
+    function renderMembers(gid){
+      picker.innerHTML = '';
+      auto.style.display = 'none';
+      const g = MEMBERS[gid];
+      if(!g) return;
+      g.list.forEach(([mname,hex])=>{
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'member-chip';
+        chip.innerHTML = `<span class="mc-dot" style="background:${hex}"></span>${mname}`;
+        chip.addEventListener('click',()=>{
+          picker.querySelectorAll('.member-chip').forEach(c=>c.classList.remove('sel'));
+          chip.classList.add('sel');
+          // 担当色を自動反映
+          auto.style.display = 'flex';
+          auto.querySelector('.ac-dot').style.background = hex;
+          auto.querySelector('.ac-name').textContent = `${mname}（${hex}）`;
+          // 上書きスウォッチは畳む
+          scope.querySelector('.override-picker').classList.remove('open');
+        });
+        picker.appendChild(chip);
+      });
+    }
+
+    sel.addEventListener('change',()=> renderMembers(sel.value));
+    if(sel.value) renderMembers(sel.value);   // 初期選択済みなら描画
+
+    // 「手動で変える」→ 上書きスウォッチを開く
+    const ovBtn = scope.querySelector('.ac-override');
+    if(ovBtn){
+      ovBtn.addEventListener('click',()=>{
+        scope.querySelector('.override-picker').classList.add('open');
+      });
+    }
+  }
+  document.querySelectorAll('#scr-meigi-edit, #scr-meigi-dup').forEach(setupOfficialPicker);
+
+  // 会場詳細の内部タブ（見え方マッピング / 360度ビュー）
+  document.querySelectorAll('.subtab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      const scope = tab.closest('section');
+      scope.querySelectorAll('.subtab').forEach(t=>t.classList.remove('on'));
+      scope.querySelectorAll('.subpane').forEach(p=>p.classList.remove('on'));
+      tab.classList.add('on');
+      scope.querySelector('#'+tab.dataset.pane).classList.add('on');
+    });
+  });
+
   // 当落セレクト：選択に応じて見た目を切り替え
   document.querySelectorAll('.lot-select').forEach(sel=>{
     sel.addEventListener('change',e=>{ e.target.dataset.v = e.target.value; });
+  });
+
+  // ===== 申込締切の表示（サーバー時刻と比較して締切前/発表待ちを自動切替） =====
+  // 本番では NOW を new Date()（=サーバー時刻）にする。モックはヘッダ日付基準で固定。
+  const NOW = new Date('2026-07-08T10:00:00');
+  const WD = ['日','月','火','水','木','金','土'];
+  const md = d => `${d.getMonth()+1}/${d.getDate()}`;
+  const hm = d => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+
+  document.querySelectorAll('.deadline[data-deadline]').forEach(el=>{
+    const dl = new Date(el.dataset.deadline);
+    const past = NOW >= dl;
+    if(!past){
+      // 締切前：申込締切 6/23(火) 12:00 を大きく
+      el.classList.remove('closed');
+      el.innerHTML =
+        `<span class="dl-label">申込締切</span>`+
+        `<span class="dl-datetime">${md(dl)}(${WD[dl.getDay()]}) <small>${hm(dl)}</small></span>`;
+    }else{
+      // 締切超過：発表待ちへ切替。発表日を表示
+      el.classList.add('closed');
+      const an = el.dataset.announce ? new Date(el.dataset.announce) : null;
+      el.innerHTML =
+        `<span class="dl-label">締切</span>`+
+        `<span class="dl-datetime">${an ? '発表 '+md(an)+'('+WD[an.getDay()]+')' : '申込締切'}</span>`;
+      // 同じカード内の状態文言も「発表待ち」に切替
+      const card = el.closest('.tour-card');
+      if(card){
+        const st = card.querySelector('.lot-status');
+        if(st && st.textContent.trim()==='申込受付中') st.textContent = '発表待ち';
+      }
+    }
   });
 </script>
 </body>

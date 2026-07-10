@@ -24,6 +24,7 @@ class FcMembership extends Model
         'password',
         'joined_on',
         'oshi_color',
+        'group_member_id',
     ];
 
     protected function casts(): array
@@ -49,6 +50,11 @@ class FcMembership extends Model
     public function group(): BelongsTo
     {
         return $this->belongsTo(IdentityGroup::class, 'group_id');
+    }
+
+    public function groupMember(): BelongsTo
+    {
+        return $this->belongsTo(GroupMember::class);
     }
 
     public function attendances(): BelongsToMany
