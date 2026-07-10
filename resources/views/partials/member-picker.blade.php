@@ -1,5 +1,5 @@
-{{-- 担当メンバー選択（spec §2.2・§4.5）
-     ①アイドルグループ選択→②公式メンバーが色付きチップで並ぶ→③選択で担当色自動反映→④手動上書き可
+{{-- 担当グループ・メンバー選択（spec §2.2・§4.5）
+     ①アイドルグループ選択→②公式メンバーが色付きチップで並ぶ→③選択で担当色・artist_name自動反映→④手動色上書き可
      $selectedGroupMemberId / $selectedColor を受け取る --}}
 @php
     $selectedGroupMemberId = $selectedGroupMemberId ?? old('group_member_id');
@@ -11,18 +11,24 @@
 
 <input type="hidden" name="group_member_id" id="group_member_id" value="{{ $selectedGroupMemberId }}">
 <input type="hidden" name="oshi_color" id="oshi_color" value="{{ $selectedColor }}">
+<input type="hidden" name="artist_name" id="artist_name" value="{{ old('artist_name', $currentMember?->name ?? '') }}">
 
 <div class="f-field">
-    <label for="idol_group_select">担当グループ <span class="opt">（任意）</span></label>
-    <select class="f-input" id="idol_group_select">
+    <label for="idol_group_select">担当グループ</label>
+    <select class="f-input @error('group_member_id') is-invalid @enderror" id="idol_group_select">
         <option value="">選択してください</option>
         @foreach($idolGroups as $ig)
         <option value="{{ $ig->id }}" {{ (int)$currentIdolGroupId === $ig->id ? 'selected' : '' }}>{{ $ig->name }}{{ $ig->status ? "（{$ig->status}）" : '' }}</option>
         @endforeach
     </select>
+    @error('group_member_id')<div class="form-error">担当メンバーを選択してください</div>@enderror
 </div>
 
 <div id="member-chips" class="swatch-picker" style="flex-wrap:wrap;gap:8px;margin-bottom:12px;{{ $currentIdolGroupId ? '' : 'display:none;' }}">
+</div>
+
+<div id="selected-member-display" style="margin-bottom:12px;font-size:13px;{{ $currentMember ? '' : 'display:none;' }}">
+    担当: <strong id="selected-member-name">{{ $currentMember?->name ?? '' }}</strong>
 </div>
 
 <div id="manual-color-section" style="{{ $selectedColor && !$selectedGroupMemberId ? '' : 'display:none;' }}">
@@ -52,6 +58,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const chipsWrap = document.getElementById('member-chips');
     const hiddenMember = document.getElementById('group_member_id');
     const hiddenColor = document.getElementById('oshi_color');
+    const hiddenArtist = document.getElementById('artist_name');
+    const memberDisplay = document.getElementById('selected-member-display');
+    const memberNameEl = document.getElementById('selected-member-name');
     const manualSection = document.getElementById('manual-color-section');
     const toggleBtn = document.getElementById('toggle-manual-color');
     const picker = document.getElementById('oshi-picker');
@@ -79,7 +88,10 @@ document.addEventListener('DOMContentLoaded', function () {
             chip.addEventListener('click', () => {
                 selectedMemberId = m.id;
                 hiddenMember.value = m.id;
+                hiddenArtist.value = m.name;
                 if (m.color_hex) { hiddenColor.value = m.color_hex; }
+                memberNameEl.textContent = m.name;
+                memberDisplay.style.display = '';
                 manualSection.style.display = 'none';
                 picker.querySelectorAll('.swatch-opt').forEach(x => x.classList.remove('sel'));
                 renderMembers(groupId);
@@ -91,6 +103,8 @@ document.addEventListener('DOMContentLoaded', function () {
     select.addEventListener('change', function () {
         selectedMemberId = null;
         hiddenMember.value = '';
+        hiddenArtist.value = '';
+        memberDisplay.style.display = 'none';
         renderMembers(this.value);
     });
 

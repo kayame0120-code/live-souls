@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\FcMembership;
+use App\Models\GroupMember;
+use App\Models\IdolGroup;
 use App\Models\IdentityGroup;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,6 +22,7 @@ class IdentityV12Test extends TestCase
 
     private User $user;
     private IdentityGroup $group;
+    private GroupMember $member;
 
     protected function setUp(): void
     {
@@ -27,6 +30,11 @@ class IdentityV12Test extends TestCase
         $this->user = User::factory()->create();
         $this->actingAs($this->user);
         $this->group = IdentityGroup::create(['user_id' => $this->user->id, 'name' => 'FC']);
+        $ig = IdolGroup::create(['name' => 'テストグループ']);
+        $this->member = GroupMember::create([
+            'idol_group_id' => $ig->id, 'name' => 'テストメンバー',
+            'color_name' => '赤', 'color_hex' => '#E53935', 'source_type' => '公式', 'sort_order' => 1,
+        ]);
     }
 
     private function storePayload(array $override = []): array
@@ -34,7 +42,7 @@ class IdentityV12Test extends TestCase
         return array_merge([
             'person_name' => '太郎',
             'group_id' => $this->group->id,
-            'artist_name' => 'A',
+            'group_member_id' => $this->member->id,
         ], $override);
     }
 

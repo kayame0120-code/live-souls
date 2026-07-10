@@ -37,11 +37,6 @@
                 </select>
                 @error('group_id')<div class="form-error">{{ $message }}</div>@enderror
             </div>
-            <div class="f-field">
-                <label for="artist_name">担当アーティスト名</label>
-                <input class="f-input @error('artist_name') is-invalid @enderror" type="text" id="artist_name" name="artist_name" value="{{ old('artist_name') }}" required placeholder="担当を入力">
-                @error('artist_name')<div class="form-error">{{ $message }}</div>@enderror
-            </div>
             <div class="f-field" style="margin-bottom:0;">
                 @include('partials.member-picker', ['selectedGroupMemberId' => old('group_member_id'), 'selectedColor' => old('oshi_color')])
             </div>

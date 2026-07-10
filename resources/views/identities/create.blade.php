@@ -18,11 +18,6 @@
                 @error('group_id')<div class="form-error">{{ $message }}</div>@enderror
             </div>
             <div class="f-field">
-                <label for="artist_name">担当アーティスト名</label>
-                <input class="f-input @error('artist_name') is-invalid @enderror" type="text" id="artist_name" name="artist_name" value="{{ old('artist_name') }}" required placeholder="担当を入力">
-                @error('artist_name')<div class="form-error">{{ $message }}</div>@enderror
-            </div>
-            <div class="f-field">
                 <label for="label">名義の呼び名 <span class="opt">（任意）</span></label>
                 <input class="f-input" type="text" id="label" name="label" value="{{ old('label') }}" placeholder="例：母名義・ゆきちゃん共同">
             </div>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FcMembership;
+use App\Models\GroupMember;
 use App\Models\IdentityGroup;
 use App\Services\IdentityService;
 use App\Support\JoinedMonthConverter;
@@ -75,21 +76,24 @@ class IdentityController extends Controller
     {
         $validated = $request->validate([
             'group_id' => ['required', Rule::exists('identity_groups', 'id')->where('user_id', Auth::id())],
-            'artist_name' => ['required', 'string', 'max:255'],
+            'group_member_id' => ['required', 'exists:group_members,id'],
             'member_no' => ['nullable', 'string', 'max:255'],
             'login_id' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'fc_password' => ['nullable', 'string', 'max:255'],
             'joined_month_input' => ['nullable', 'regex:' . JoinedMonthConverter::FORMAT_PATTERN],
-            'group_member_id' => ['nullable', 'exists:group_members,id'],
             'oshi_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+        ], [
+            'group_member_id.required' => '担当メンバーを選択してください',
         ]);
+
+        $member = GroupMember::find($validated['group_member_id']);
 
         $newMembership = FcMembership::create([
             'user_id' => Auth::id(),
             'person_id' => $fcMembership->person_id,
             'group_id' => $validated['group_id'],
-            'artist_name' => $validated['artist_name'],
+            'artist_name' => $member->name,
             'member_no' => $validated['member_no'] ?? null,
             'login_id' => $validated['login_id'] ?? null,
             'email' => $validated['email'] ?? null,
@@ -133,15 +137,20 @@ class IdentityController extends Controller
             'address' => ['nullable', 'string', 'max:255'],
             'label' => ['nullable', 'string', 'max:255'],
             'group_id' => ['required', Rule::exists('identity_groups', 'id')->where('user_id', Auth::id())],
-            'artist_name' => ['required', 'string', 'max:255'],
+            'group_member_id' => ['required', 'exists:group_members,id'],
+            'artist_name' => ['nullable', 'string', 'max:255'],
             'member_no' => ['nullable', 'string', 'max:255'],
             'login_id' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'fc_password' => ['nullable', 'string', 'max:255'],
             'joined_month_input' => ['nullable', 'regex:' . JoinedMonthConverter::FORMAT_PATTERN],
-            'group_member_id' => ['nullable', 'exists:group_members,id'],
             'oshi_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+        ], [
+            'group_member_id.required' => '担当メンバーを選択してください',
         ]);
+
+        $member = GroupMember::find($validated['group_member_id']);
+        $artistName = $member->name;
 
         $personData = [
             'name' => $validated['person_name'],
@@ -153,7 +162,7 @@ class IdentityController extends Controller
 
         $membershipData = [
             'group_id' => $validated['group_id'],
-            'artist_name' => $validated['artist_name'],
+            'artist_name' => $artistName,
             'member_no' => $validated['member_no'] ?? null,
             'login_id' => $validated['login_id'] ?? null,
             'email' => $validated['email'] ?? null,
