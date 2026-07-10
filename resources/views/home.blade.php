@@ -73,20 +73,23 @@
     @if($renewalMemberships->isNotEmpty())
     <div class="sec-label">更新期間の名義</div>
     @foreach($renewalMemberships as $membership)
-        @php $expiry = $membership->expiryDate(); @endphp
-        <div class="card" style="padding:12px 14px; margin-bottom:8px; border-left:3px solid {{ $membership->oshi_color ?? '#C7414F' }};">
-            <div style="font-size:13px; font-weight:600; color:var(--color-ink);">
-                <span class="dot" style="--oshi-color: {{ $membership->oshi_color ?? '#C7414F' }}"></span>
-                {{ $membership->displayName() }}
-            </div>
-            <div style="font-size:11px; color:var(--color-ink-sub); margin-top:4px;">
-                {{ $membership->group?->name }}
-                @if($expiry)・期限 {{ $expiry->format('Y.m.d') }}@endif
-            </div>
-            <form method="POST" action="{{ route('renewals.dismiss', $membership) }}" style="margin-top:6px;">
+        @php
+            $expiry = $membership->expiryDate();
+            $renewStart = $membership->renewalWindowStart();
+            $oshi = $membership->oshi_color ?? '#C7414F';
+        @endphp
+        <div class="renew-card" style="--oshi-color: {{ $oshi }};position:relative;">
+            <form method="POST" action="{{ route('renewals.dismiss', $membership) }}" style="position:absolute;top:10px;right:12px;">
                 @csrf
-                <button type="submit" class="copy-btn" style="font-size:11px;padding:3px 10px;">更新済み</button>
+                <button type="submit" class="copy-btn" style="font-size:10px;padding:2px 8px;">更新済み</button>
             </form>
+            <div class="renew-top">
+                <span class="renew-swatch"></span>
+                <div class="renew-name">{{ $membership->person->name }}@if($membership->person->label)<small>{{ $membership->group?->name }}・{{ $membership->person->label }}</small>@else<small>{{ $membership->group?->name }}</small>@endif</div>
+            </div>
+            <div class="renew-body">
+                更新受付中 <b>{{ $renewStart?->format('Y.m.d') }} – {{ $expiry?->format('m.d') }}</b> ／ 有効期限 <b>{{ $expiry?->format('Y.m.d') }}</b>
+            </div>
         </div>
     @endforeach
     @endif

@@ -80,40 +80,26 @@ class LotController extends Controller
         return view('lots.create', compact('memberships', 'tours'));
     }
 
-    /**
-     * 申込登録: attendances(status=applied) + pivot(result=pending)。
-     * v1.5: 当落ステータスは作成時に選ばせない（pending 自動生成）。名義は1つ以上必須。
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'event_id' => ['required', 'exists:events,id'],
-            'identity_ids' => ['required', 'array', 'min:1'],
-            'identity_ids.*' => [Rule::exists('fc_memberships', 'id')->where('user_id', Auth::id())],
-            'companion' => ['nullable', 'string', 'max:255'],
-            'non_member' => ['nullable'],
-            'other_attendee' => ['nullable'],
-            'other_name' => ['nullable', 'string', 'max:255'],
+            'identity_id' => ['required', Rule::exists('fc_memberships', 'id')->where('user_id', Auth::id())],
+            'companion_id' => ['nullable', Rule::exists('fc_memberships', 'id')->where('user_id', Auth::id())],
         ], [
             'event_id.required' => '日程を選択してください',
-            'identity_ids.required' => '申込名義を選択してください',
-            'identity_ids.min' => '申込名義を選択してください',
+            'identity_id.required' => '申込名義を選択してください',
         ]);
 
-        $companionParts = [];
-        if (! empty($validated['companion'])) {
-            $companionParts[] = $validated['companion'];
-        }
-        if (! empty($validated['non_member'])) {
-            $companionParts[] = '非会員';
-        }
-        if (! empty($validated['other_attendee']) && ! empty($validated['other_name'])) {
-            $companionParts[] = $validated['other_name'];
+        $companion = null;
+        if (! empty($validated['companion_id'])) {
+            $m = FcMembership::find($validated['companion_id']);
+            $companion = $m?->displayName();
         }
 
         $this->attendanceService->create(
-            ['event_id' => $validated['event_id'], 'status' => 'applied', 'companion' => implode('・', $companionParts) ?: null],
-            $validated['identity_ids'],
+            ['event_id' => $validated['event_id'], 'status' => 'applied', 'companion' => $companion],
+            [$validated['identity_id']],
         );
 
         return redirect()->route('lots.index')

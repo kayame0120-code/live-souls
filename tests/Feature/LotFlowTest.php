@@ -44,7 +44,7 @@ class LotFlowTest extends TestCase
 
         $this->post(route('lots.store'), [
             'event_id' => $event->id,
-            'identity_ids' => [$this->membership->id],
+            'identity_id' => $this->membership->id,
         ])->assertRedirect(route('lots.index'));
 
         $this->assertDatabaseHas('attendances', [
@@ -63,8 +63,7 @@ class LotFlowTest extends TestCase
 
         $this->post(route('lots.store'), [
             'event_id' => $event->id,
-            'identity_ids' => [],
-        ])->assertSessionHasErrors(['identity_ids' => '申込名義を選択してください']);
+        ])->assertSessionHasErrors('identity_id');
     }
 
     public function test_won1件でappliedからplannedに自動昇格(): void

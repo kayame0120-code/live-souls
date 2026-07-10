@@ -72,7 +72,7 @@ class TourHierarchyTest extends TestCase
         // フォームは event_id + 名義のみ。result は送らない
         $this->post(route('lots.store'), [
             'event_id' => $event->id,
-            'identity_ids' => [$membership->id],
+            'identity_id' => $membership->id,
         ])->assertRedirect(route('lots.index'));
 
         $attendance = Attendance::withoutGlobalScopes()->where('event_id', $event->id)->first();
