@@ -35,6 +35,7 @@ class FcMembership extends Model
             'email' => 'encrypted',
             'password' => 'encrypted',
             'joined_on' => 'date',
+            'renewal_dismissed_at' => 'datetime',
         ];
     }
 
