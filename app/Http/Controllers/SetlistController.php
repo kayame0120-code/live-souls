@@ -32,7 +32,7 @@ class SetlistController extends Controller
         ]);
 
         $setlist = isset($validated['setlist_id'])
-            ? Setlist::find($validated['setlist_id'])
+            ? $tour->setlists()->findOrFail($validated['setlist_id'])
             : $tour->setlists()->create(['label' => $validated['label'] ?? null]);
 
         $maxOrder = $setlist->items()->max('sort_order') ?? 0;
