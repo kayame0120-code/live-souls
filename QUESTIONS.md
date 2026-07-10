@@ -1,48 +1,24 @@
 # QUESTIONS.md — 現場手帖
 
-## v2.0 未決事項（spec_v2.0.md 7章・着手禁止）
+## v2.1 残件（2026-07-11）
 
-### QV20-1: `group_members`（担当メンバーマスタ）のカラム設計、既存`oshi_color`との関係
+### QV20-2: `venues.arena_view_key`のマージ方法
 
-- **spec根拠**: spec_v2.0.md §2.2・§7 No.1
-- **決めてほしいこと（片倉）**:
-  A: `oshi_color`を廃止し`group_members`のカラー1本化
-  B: `oshi_color`は名義ごとのカスタム上書きとして残す
-- **現状**: 実装禁止。テーブル設計・既存oshi_colorとの統合方法が未決。
+- **spec根拠**: spec v2.4 §7 No.1 / §9 Deploy2
+- **方針確定**: arena-viewエンジン(v3)完成後に別ブランチで統合。Deploy1にはカラムのみ含める（実害なし）。
+- **残**: 360度ビュータブUI（プレースホルダー）はDeploy1に含めてよいが、実データ連携はDeploy2。
 
-### QV20-2: `venues.arena_view_key`のマージ方法（360度ビューエンジンの取り込み手順）
+---
 
-- **spec根拠**: spec_v2.0.md §3・§7 No.2
-- **実施済み**: `arena_view_key` カラムのマイグレーション追加（nullable string）は完了。
-- **残**: 360度ビュータブの実装・データ投入は未着手。arena-view一式（HTMLテンプレート＋key対応表）の投入が必要。
+## v2.1 で解決済み（v2.0 未決からの昇格）
 
-### QV20-3: `setlists`/`setlist_items`の詳細カラム
-
-- **spec根拠**: spec_v2.0.md §3・§7 No.3
-- **方針**: events/tours型を踏襲する前提。設計フェーズにて確定。
-
-### QV20-4: AI一括登録の人間確認テーブルの詳細カラム
-
-- **spec根拠**: spec_v2.0.md §3・§7 No.4
-- **方針**: 既存`events.import`系を踏襲する前提。設計フェーズにて確定。
-
-### QV20-5: 名義複製画面の詳細UI
-
-- **spec根拠**: spec_v2.0.md §5・§7 No.5
-- **データ設計は確定**: 既存`person`を選び、別`identity_group`配下に新規`fc_membership`を作成。個人情報の再入力なし（`persons`を重複させず参照）。
-- **ラフ案（提案）**: 既存の名義登録画面（`identities/create`）を流用し、以下の変更を加える:
-  1. 「複製元の名義」セレクトを最上部に追加。選択するとperson情報（名前・生年月日・電話・住所）がプリセットされ読み取り専用に
-  2. グループ選択は通常通り（複製先のグループを選ぶ）
-  3. FC固有情報（artist_name, member_no, login_id, email, password, joined_on, oshi_color）は新規入力
-  4. 保存時は既存personのIDを参照して新規fc_membershipを作成
-- **決めてほしいこと（片倉）**: 上記ラフ案の方向性でOKか、別アプローチ（モーダル等）がよいか。
-
-### QV20-6 ✅決定: Ollama本番同居は不可→C案（ローカルOllama / 本番クラウドLLM）（2026-07-10）
-
-- **Flyマシン現行スペック**: 1GB RAM / shared CPU 1コア。Ollama同居はOOM確実。
-- **片倉判断**: Fly.ioへの追加課金はなし → **C案で確定**。
-- **実装方針**: `LlmService`インターフェースで抽象化。`LLM_DRIVER`環境変数で`ollama`（ローカル）/`openai`（本番）を切替。
-- **残**: 本番用のAPIキー（`OPENAI_API_KEY`）は人間が`.env`にセット。
+| No | 内容 | 解決 |
+|---|---|---|
+| QV20-1 | group_membersカラム設計・oshi_colorとの関係 | spec v2.3/v2.4で確定。B案（oshi_colorは自動反映＋手動上書き可）で実装済み |
+| QV20-3 | setlists/setlist_items設計 | spec v2.2でカラム確定。実装済み |
+| QV20-4 | AI一括登録確認方式 | spec v2.2で「DBテーブルなし・ステートレス」に確定。実装済み |
+| QV20-5 | 名義複製UI | spec v2.1でHANDOFF§3.2承認。名義詳細→複製画面で実装済み |
+| QV20-6 | Ollama本番投入可否 | C案確定。LlmService抽象化＋LLM_DRIVER切替で実装済み |
 
 ---
 

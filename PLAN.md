@@ -1,27 +1,44 @@
 # PLAN.md — 現場手帖
 
-## v2.0 改修（2026-07-10）
+## v2.1 改修（2026-07-11）
 
-spec_v2.0.md / cc_instructions_v2.0.md に基づく改修。既存コードは変更せず、新機能追加のみ。
+spec v2.4 / cc_instructions_v2.1.md に基づく改修。v2.0完了済み・マイグレーション/モデル骨格は投入済み。
 
-### すぐ着手（依存なし・指示書§2）
-- **T1 ホーム:更新通知カード** — HomeService に getRenewalMemberships() 追加、home.blade に「更新期間の名義」カード表示。テスト付き
-- **T2 参戦詳細:開場時間表示** — attendances/show.blade に open_time を表示追加（既存フィールド）
-- **T3 ホーム:チケット確認通知** — HomeService に getTicketReminders() 追加、「確認が必要」に「チケット確認はお済みですか？」表示。テスト付き
-- **T4 QV13-1 反映確認** — events.start_time 優先が全画面で守られているか調査。差分があれば修正
+### §3.1 idol_groups / group_members シーダー
+- **T1** StartoSeeder 実装（docs/member-colors_STARTO_v0.1.md → idol_groups + group_members）
+  - 色名→HEX変換（CC裁量）、NEWSはspec v2.4 §3.2 訂正表（単色）を使用
+  - テスト: 全グループ投入確認 + NEWS単色確認
 
-### 先行マイグレーション（指示書§4）
-- **T5 venues.arena_view_key** — nullable string カラム追加（マイグレーションのみ・利用側は未決）
+### §3.2 events 締切カラム活用
+- **T2** 公演編集画面（events.edit）新設 — 締切/発表日の手入力・更新経路
+  - 当落カード（_lot-card）に締切・発表日を表示
 
-### 未決→QUESTIONS.md（指示書§3,§4）
-- **T6 QUESTIONS.md更新** — spec 7章の未決5件 + 名義複製ラフ案 + Ollama Step1調査結果を記録
+### §3.3 setlists 手動登録
+- **T3** セットリスト画面の仕上げ（並べ替え・tours/show からのセトリ導線確認）
 
-### Ollama基盤（指示書§5）
-- **T7 Ollama Step1: 前例確認** — Flyマシンスペック・メモリ使用量の確認と報告
+### §4 名義複製 + 担当メンバー選択
+- **T4** 担当メンバー選択UI（partials/member-picker）— idol_group→member chips→色自動反映→手動上書き
+  - create/edit/duplicate フォームに統合
+- **T5** 名義複製（identities.duplicate）— person引き継ぎ・FC固有のみ入力
+  - テスト: persons重複なし・group_member_id/oshi_color紐づき
+
+### §5 AI一括登録（LlmService移行）
+- **T6** LlmService に parseDeadlines() 追加
+- **T7** 公演AI一括登録（EventImportParser→LlmService置換）— 確認画面はステートレス維持
+- **T8** EventImportParser / EventImportParserTest 削除（T7動作確認後）
+- **T9** セットリストAI一括登録 — 公演詳細→セトリ画面「セトリを貼って一括登録」
+- **T10** 当落締切AI一括登録 — 会場+日付でevents自動マッチ・手動選択フォールバック
 
 ### 検証・成果物
 - V1 migrate / V2 /up 200 / V3 test 全通過
 - QUESTIONS.md / REPORT.md 更新
+
+---
+
+## v2.0 改修（2026-07-10）— 完了
+
+spec_v2.0.md / cc_instructions_v2.0.md に基づく改修。既存コードは変更せず、新機能追加のみ。
+- T1〜T7 完了。118テスト全通過。LlmService基盤(Step1-3)完了
 
 ---
 
