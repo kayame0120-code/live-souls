@@ -53,6 +53,15 @@
 
         <a href="{{ route('identities.create') }}" class="m-add">＋ 名義を追加</a>
 
+        <div class="d-block" style="margin-top:16px;padding:10px 14px;">
+            <div class="d-h">グループを追加</div>
+            <form method="POST" action="{{ route('idol-groups.store') }}" style="display:flex;gap:8px;align-items:flex-end;">
+                @csrf
+                <input class="f-input" type="text" name="name" placeholder="グループ名" required style="flex:1;">
+                <button type="submit" class="btn btn-primary" style="white-space:nowrap;">追加</button>
+            </form>
+        </div>
+
         @if($filtered->isNotEmpty())
         <p class="privacy-note">名義情報は暗号化してサーバーに保存されます。他のユーザーからは見えません。</p>
         @endif

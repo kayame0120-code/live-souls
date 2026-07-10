@@ -25,6 +25,7 @@ class FcMembership extends Model
         'joined_on',
         'oshi_color',
         'group_member_id',
+        'renewal_dismissed_at',
     ];
 
     protected function casts(): array

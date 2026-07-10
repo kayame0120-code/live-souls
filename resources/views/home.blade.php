@@ -80,9 +80,13 @@
                 {{ $membership->displayName() }}
             </div>
             <div style="font-size:11px; color:var(--color-ink-sub); margin-top:4px;">
-                {{ $membership->artist_name }}
+                {{ $membership->group?->name }}
                 @if($expiry)・期限 {{ $expiry->format('Y.m.d') }}@endif
             </div>
+            <form method="POST" action="{{ route('renewals.dismiss', $membership) }}" style="margin-top:6px;">
+                @csrf
+                <button type="submit" class="copy-btn" style="font-size:11px;padding:3px 10px;">更新済み</button>
+            </form>
         </div>
     @endforeach
     @endif

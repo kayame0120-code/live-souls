@@ -52,17 +52,30 @@
     <div class="sec-label">申込締切・当落発表日</div>
     @foreach($tour->deadlines as $dl)
     <div class="d-block" style="margin-bottom:6px;padding:8px 12px;">
-        <div style="font-size:12px;">
-            @if($dl->label)<strong>{{ $dl->label }}</strong> — @endif
-            @if($dl->application_deadline)
-            <span style="color:{{ $dl->isDeadlinePassed() ? 'var(--color-ink-sub)' : '#C7414F' }}">
-                締切 {{ $dl->application_deadline->format('m.d H:i') }}{{ $dl->isDeadlinePassed() ? '（締切済）' : '' }}
-            </span>
-            @endif
-            @if($dl->announce_date)
-            <span>・発表 {{ $dl->announce_date->format('m.d') }}</span>
-            @endif
-        </div>
+        <form method="POST" action="{{ route('tours.update-deadline', [$tour, $dl]) }}">
+            @csrf @method('PUT')
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+                <input class="f-input" type="text" name="label" value="{{ $dl->label }}" placeholder="ラベル" style="flex:1;font-size:12px;">
+            </div>
+            <div style="display:flex;gap:6px;">
+                <div style="flex:1;">
+                    <label style="font-size:10px;color:var(--color-ink-sub);">締切</label>
+                    <input class="f-input" type="datetime-local" name="application_deadline"
+                           value="{{ optional($dl->application_deadline)->format('Y-m-d\TH:i') }}" style="font-size:11px;">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:10px;color:var(--color-ink-sub);">発表</label>
+                    <input class="f-input" type="date" name="announce_date"
+                           value="{{ optional($dl->announce_date)->format('Y-m-d') }}" style="font-size:11px;">
+                </div>
+                <button type="submit" class="copy-btn" style="font-size:10px;padding:2px 8px;align-self:flex-end;">保存</button>
+            </div>
+        </form>
+        <form method="POST" action="{{ route('tours.destroy-deadline', [$tour, $dl]) }}" style="margin-top:4px;text-align:right;"
+              onsubmit="return confirm('この締切を削除しますか？')">
+            @csrf @method('DELETE')
+            <button type="submit" class="copy-btn" style="font-size:10px;padding:2px 6px;color:#C7414F;">削除</button>
+        </form>
     </div>
     @endforeach
 

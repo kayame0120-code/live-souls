@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\Tour;
+use App\Models\TourDeadline;
 use Illuminate\Http\Request;
 
 /**
@@ -66,6 +67,36 @@ class TourController extends Controller
 
         return redirect()->route('tours.show', $tour)
             ->with('success', '締切を追加しました');
+    }
+
+    public function updateDeadline(Request $request, Tour $tour, TourDeadline $deadline)
+    {
+        if ($deadline->tour_id !== $tour->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'label' => ['nullable', 'string', 'max:255'],
+            'application_deadline' => ['nullable', 'date'],
+            'announce_date' => ['nullable', 'date'],
+        ]);
+
+        $deadline->update($validated);
+
+        return redirect()->route('tours.show', $tour)
+            ->with('success', '締切を更新しました');
+    }
+
+    public function destroyDeadline(Tour $tour, TourDeadline $deadline)
+    {
+        if ($deadline->tour_id !== $tour->id) {
+            abort(404);
+        }
+
+        $deadline->delete();
+
+        return redirect()->route('tours.show', $tour)
+            ->with('success', '締切を削除しました');
     }
 
     public function destroy(Tour $tour)

@@ -69,12 +69,14 @@ class HomeService
             ->get();
     }
 
-    /** 更新受付期間中の名義一覧（spec v2.0 §4.2） */
+    /** 更新受付期間中の名義一覧（dismiss済みは除外） */
     public function getRenewalMemberships(): Collection
     {
         return FcMembership::with(['person', 'group'])
             ->get()
-            ->filter(fn (FcMembership $m) => $m->isInRenewalWindow());
+            ->filter(fn (FcMembership $m) => $m->isInRenewalWindow())
+            ->filter(fn (FcMembership $m) => $m->renewal_dismissed_at === null
+                || $m->renewal_dismissed_at->lt($m->renewalWindowStart()));
     }
 
     /**

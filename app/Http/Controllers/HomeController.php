@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\FcMembership;
 use App\Services\HomeService;
 use Illuminate\Http\Request;
 
@@ -45,5 +46,12 @@ class HomeController extends Controller
 
         return redirect()->route('home')
             ->with('success', $validated['decision'] === 'attended' ? '参戦を記録しました' : 'スキップしました');
+    }
+
+    public function dismissRenewal(FcMembership $fcMembership)
+    {
+        $fcMembership->update(['renewal_dismissed_at' => now()]);
+
+        return redirect()->route('home');
     }
 }

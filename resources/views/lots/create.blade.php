@@ -26,9 +26,30 @@
                 {{ $m->displayName() }}
             </label>
             @endforeach
+            <label class="form-checkbox-label">
+                <input type="checkbox" name="non_member" value="1"
+                       {{ old('non_member') ? 'checked' : '' }}
+                       onchange="document.getElementById('non-member-wrap').style.display = this.checked ? '' : 'none';">
+                <span class="dot" style="--oshi-color: #8A8C92"></span>
+                非会員
+            </label>
+            <label class="form-checkbox-label">
+                <input type="checkbox" name="other_attendee" value="1"
+                       {{ old('other_attendee') ? 'checked' : '' }}
+                       onchange="document.getElementById('other-name-wrap').style.display = this.checked ? '' : 'none';">
+                <span class="dot" style="--oshi-color: #D8D7D0"></span>
+                その他
+            </label>
+        </div>
+        <div id="other-name-wrap" style="{{ old('other_attendee') ? '' : 'display:none;' }}margin-top:6px;">
+            <input class="form-input" type="text" name="other_name" value="{{ old('other_name') }}" placeholder="その他の名前（自由記述）">
         </div>
         @endif
         @error('identity_ids')<div class="form-error">{{ $message }}</div>@enderror
+
+        <label class="form-label" for="companion">同行者 <span class="opt">（任意）</span></label>
+        <input class="form-input" type="text" id="companion" name="companion"
+               value="{{ old('companion') }}" placeholder="例：ゆきちゃん">
 
         <button type="submit" class="btn btn-primary" style="margin-top:18px;">申込を登録する</button>
     </form>

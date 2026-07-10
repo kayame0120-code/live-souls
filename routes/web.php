@@ -27,11 +27,16 @@ Route::middleware('auth')->group(function () {
     // 公演日経過の「参戦した？」確認への応答（T8・自動遷移はしない）
     Route::patch('/attendances/{attendance}/confirm', [HomeController::class, 'confirmAttendance'])
         ->name('attendances.confirm');
+    Route::post('/renewals/{fcMembership}/dismiss', [HomeController::class, 'dismissRenewal'])
+        ->name('renewals.dismiss');
 
     Route::resource('attendances', AttendanceController::class);
     // 当落結果の更新（S5/S6 の入力動線・参戦詳細から）
     Route::patch('/attendance-identities/{pivotId}/result', [AttendanceController::class, 'updateResult'])
         ->name('attendance-identities.update-result');
+
+    // グループ（idol_groups）追加
+    Route::post('/idol-groups', [\App\Http\Controllers\IdolGroupController::class, 'store'])->name('idol-groups.store');
 
     Route::get('/identities', [IdentityController::class, 'index'])->name('identities.index');
     Route::get('/identities/create', [IdentityController::class, 'create'])->name('identities.create');
@@ -55,6 +60,8 @@ Route::middleware('auth')->group(function () {
     // ツアー共有マスタ（v1.4・全ユーザー可）
     Route::get('/tours/{tour}', [TourController::class, 'show'])->name('tours.show');
     Route::post('/tours/{tour}/deadlines', [TourController::class, 'updateDeadlines'])->name('tours.update-deadlines');
+    Route::put('/tours/{tour}/deadlines/{deadline}', [TourController::class, 'updateDeadline'])->name('tours.update-deadline');
+    Route::delete('/tours/{tour}/deadlines/{deadline}', [TourController::class, 'destroyDeadline'])->name('tours.destroy-deadline');
     Route::delete('/tours/{tour}', [TourController::class, 'destroy'])->name('tours.destroy');
     // 日程（event）はツアー配下で作成（旧 /events/create を置換）
     Route::get('/tours/{tour}/events/create', [EventController::class, 'create'])->name('events.create');
