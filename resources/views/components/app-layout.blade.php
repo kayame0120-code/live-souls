@@ -49,7 +49,7 @@
         <a href="{{ route('attendances.index') }}" class="{{ request()->routeIs('attendances.*') ? 'on' : '' }}">
             <span class="bar"></span>参戦記録
         </a>
-        <a href="{{ route('identities.index') }}" class="{{ request()->routeIs('identities.*') || request()->routeIs('identity-groups.*') ? 'on' : '' }}">
+        <a href="{{ route('identities.index') }}" class="{{ request()->routeIs('identities.*') ? 'on' : '' }}">
             <span class="bar"></span>名義
         </a>
         <a href="{{ route('lots.index') }}" class="{{ request()->routeIs('lots.*') ? 'on' : '' }}">

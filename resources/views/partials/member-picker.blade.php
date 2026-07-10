@@ -9,6 +9,7 @@
     $currentIdolGroupId = $currentMember?->idol_group_id;
 @endphp
 
+<input type="hidden" name="group_id" id="group_id" value="{{ old('group_id', $currentIdolGroupId) }}">
 <input type="hidden" name="group_member_id" id="group_member_id" value="{{ $selectedGroupMemberId }}">
 <input type="hidden" name="oshi_color" id="oshi_color" value="{{ $selectedColor }}">
 <input type="hidden" name="artist_name" id="artist_name" value="{{ old('artist_name', $currentMember?->name ?? '') }}">
@@ -56,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const groups = JSON.parse(document.getElementById('idol-groups-data').textContent);
     const select = document.getElementById('idol_group_select');
     const chipsWrap = document.getElementById('member-chips');
+    const hiddenGroup = document.getElementById('group_id');
     const hiddenMember = document.getElementById('group_member_id');
     const hiddenColor = document.getElementById('oshi_color');
     const hiddenArtist = document.getElementById('artist_name');
@@ -102,6 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     select.addEventListener('change', function () {
         selectedMemberId = null;
+        hiddenGroup.value = this.value;
         hiddenMember.value = '';
         hiddenArtist.value = '';
         memberDisplay.style.display = 'none';

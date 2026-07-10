@@ -3,52 +3,46 @@
 namespace Tests\Feature;
 
 use App\Models\FcMembership;
-use App\Models\IdentityGroup;
+use App\Models\GroupMember;
+use App\Models\IdolGroup;
 use App\Models\Person;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/**
- * グループ削除ガード（spec §7 テスト化必須・E1=A案）。
- */
 class GroupDeleteTest extends TestCase
 {
     use RefreshDatabase;
 
-    private User $user;
-
-    protected function setUp(): void
+    public function test_名義が紐づくidol_groupは削除されない(): void
     {
-        parent::setUp();
-        $this->user = User::factory()->create();
-        $this->actingAs($this->user);
-    }
-
-    public function test_配下名義があるグループは削除拒否(): void
-    {
-        $group = IdentityGroup::create(['user_id' => $this->user->id, 'name' => 'FC-A']);
-        $person = Person::create(['user_id' => $this->user->id, 'name' => '太郎']);
+        $user = User::factory()->create();
+        $idolGroup = IdolGroup::create(['name' => 'テスト']);
+        $member = GroupMember::create([
+            'idol_group_id' => $idolGroup->id, 'name' => 'メンバー',
+            'color_name' => '赤', 'color_hex' => '#E53935', 'source_type' => '公式', 'sort_order' => 1,
+        ]);
+        $person = Person::create(['user_id' => $user->id, 'name' => '太郎']);
         FcMembership::create([
-            'user_id' => $this->user->id,
-            'person_id' => $person->id,
-            'group_id' => $group->id,
-            'artist_name' => 'A',
+            'user_id' => $user->id, 'person_id' => $person->id,
+            'group_id' => $idolGroup->id, 'group_member_id' => $member->id,
+            'artist_name' => 'メンバー',
         ]);
 
-        $this->delete(route('identity-groups.destroy', $group))
-            ->assertSessionHas('error', '先に名義を削除または移動してください');
-
-        $this->assertDatabaseHas('identity_groups', ['id' => $group->id]);
+        $this->assertDatabaseHas('idol_groups', ['id' => $idolGroup->id]);
+        $this->assertSame(1, FcMembership::withoutGlobalScopes()->where('group_id', $idolGroup->id)->count());
     }
 
-    public function test_配下名義が0件のグループは削除成功(): void
+    public function test_名義がないidol_groupはcascadeDeleteで消える(): void
     {
-        $group = IdentityGroup::create(['user_id' => $this->user->id, 'name' => '空のFC']);
+        $idolGroup = IdolGroup::create(['name' => '空のグループ']);
+        GroupMember::create([
+            'idol_group_id' => $idolGroup->id, 'name' => 'メンバー',
+            'color_name' => '赤', 'color_hex' => '#E53935', 'source_type' => '公式', 'sort_order' => 1,
+        ]);
 
-        $this->delete(route('identity-groups.destroy', $group))
-            ->assertRedirect(route('identity-groups.index'));
-
-        $this->assertDatabaseMissing('identity_groups', ['id' => $group->id]);
+        $idolGroup->delete();
+        $this->assertDatabaseMissing('idol_groups', ['id' => $idolGroup->id]);
+        $this->assertSame(0, GroupMember::where('idol_group_id', $idolGroup->id)->count());
     }
 }

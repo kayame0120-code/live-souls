@@ -36,6 +36,7 @@ class TourController extends Controller
     /** ツアー詳細（日程一覧）。配下 events を日付順に表示（mockup #scr-event-detail） */
     public function show(Tour $tour)
     {
+        $tour->load('deadlines');
         $events = $tour->events()
             ->with(['venue', 'setlist'])
             ->orderBy('event_date')
@@ -48,24 +49,23 @@ class TourController extends Controller
     public function updateDeadlines(Request $request, Tour $tour)
     {
         $validated = $request->validate([
-            'events' => ['required', 'array'],
-            'events.*.application_deadline' => ['nullable', 'date'],
-            'events.*.announce_date' => ['nullable', 'date'],
+            'label' => ['nullable', 'string', 'max:255'],
+            'application_deadline' => ['nullable', 'date'],
+            'announce_date' => ['nullable', 'date'],
         ]);
 
-        foreach ($validated['events'] as $eventId => $data) {
-            $event = Event::where('tour_id', $tour->id)->find($eventId);
-            if (! $event) {
-                continue;
-            }
-            $event->update([
-                'application_deadline' => $data['application_deadline'] ?? null,
-                'announce_date' => $data['announce_date'] ?? null,
-            ]);
+        if (empty($validated['application_deadline']) && empty($validated['announce_date'])) {
+            return back()->with('error', '締切または発表日を入力してください');
         }
 
+        $tour->deadlines()->create([
+            'label' => $validated['label'] ?? null,
+            'application_deadline' => $validated['application_deadline'] ?? null,
+            'announce_date' => $validated['announce_date'] ?? null,
+        ]);
+
         return redirect()->route('tours.show', $tour)
-            ->with('success', '締切情報を更新しました');
+            ->with('success', '締切を追加しました');
     }
 
     public function destroy(Tour $tour)

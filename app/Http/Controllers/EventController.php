@@ -59,8 +59,6 @@ class EventController extends Controller
             'venue_id' => ['nullable', 'exists:venues,id'],
             'venue_name' => ['nullable', 'string', 'max:255'],
             'venue_address' => ['nullable', 'string', 'max:255'],
-            'application_deadline' => ['nullable', 'date'],
-            'announce_date' => ['nullable', 'date'],
             'confirm_duplicate' => ['nullable', 'boolean'],
         ], [
             'event_date.required' => '日付を入力してください',
@@ -80,13 +78,6 @@ class EventController extends Controller
         $event = $this->service->create(
             $tour->id, $validated['event_label'] ?? null, $validated['event_date'], $startTime, $venueId
         );
-
-        if (! empty($validated['application_deadline'])) {
-            $event->update(['application_deadline' => $validated['application_deadline']]);
-        }
-        if (! empty($validated['announce_date'])) {
-            $event->update(['announce_date' => $validated['announce_date']]);
-        }
 
         return redirect()->route('tours.show', $tour)
             ->with('success', '日程を登録しました');
@@ -108,8 +99,6 @@ class EventController extends Controller
             'venue_id' => ['nullable', 'exists:venues,id'],
             'venue_name' => ['nullable', 'string', 'max:255'],
             'venue_address' => ['nullable', 'string', 'max:255'],
-            'application_deadline' => ['nullable', 'date'],
-            'announce_date' => ['nullable', 'date'],
         ]);
 
         $venueId = $this->service->resolveVenueId($validated);
@@ -119,8 +108,6 @@ class EventController extends Controller
             'event_date' => $validated['event_date'],
             'start_time' => $validated['start_time'] ?? null,
             'venue_id' => $venueId,
-            'application_deadline' => $validated['application_deadline'] ?? null,
-            'announce_date' => $validated['announce_date'] ?? null,
         ]);
 
         return redirect()->route('tours.show', $event->tour)
@@ -225,8 +212,6 @@ class EventController extends Controller
             'rows.*.event_date' => ['nullable', 'date'],
             'rows.*.start_time' => ['nullable', 'date_format:H:i'],
             'rows.*.venue_name' => ['nullable', 'string', 'max:255'],
-            'rows.*.application_deadline' => ['nullable', 'date'],
-            'rows.*.announce_date' => ['nullable', 'date'],
         ], [
             'tour_name.required' => 'ツアー名を入力してください',
         ]);
@@ -256,15 +241,7 @@ class EventController extends Controller
                 $startTime = ! empty($row['start_time']) ? $row['start_time'] : null;
                 $eventLabel = ! empty($row['event_label']) ? $row['event_label'] : null;
 
-                $event = $this->service->create($tourId, $eventLabel, $row['event_date'], $startTime, $venueId);
-
-                if (! empty($row['application_deadline'])) {
-                    $event->update(['application_deadline' => $row['application_deadline']]);
-                }
-                if (! empty($row['announce_date'])) {
-                    $event->update(['announce_date' => $row['announce_date']]);
-                }
-
+                $this->service->create($tourId, $eventLabel, $row['event_date'], $startTime, $venueId);
                 $imported++;
             }
         });

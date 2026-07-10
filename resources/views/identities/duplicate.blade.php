@@ -27,16 +27,6 @@
         {{-- 名義の基本 --}}
         <div class="d-block">
             <div class="d-h">新しい名義の情報</div>
-            <div class="f-field">
-                <label for="group_id">FC（グループ）</label>
-                <select class="f-input @error('group_id') is-invalid @enderror" id="group_id" name="group_id" required>
-                    <option value="">選択してください</option>
-                    @foreach($groups as $group)
-                    <option value="{{ $group->id }}" {{ old('group_id') == $group->id ? 'selected' : '' }}>{{ $group->name }}</option>
-                    @endforeach
-                </select>
-                @error('group_id')<div class="form-error">{{ $message }}</div>@enderror
-            </div>
             <div class="f-field" style="margin-bottom:0;">
                 @include('partials.member-picker', ['selectedGroupMemberId' => old('group_member_id'), 'selectedColor' => old('oshi_color')])
             </div>

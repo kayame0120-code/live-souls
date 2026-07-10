@@ -19,8 +19,6 @@ class Event extends Model
         'event_label',
         'event_date',
         'start_time',
-        'application_deadline',
-        'announce_date',
         'venue_id',
     ];
 
@@ -28,8 +26,6 @@ class Event extends Model
     {
         return [
             'event_date' => 'date',
-            'application_deadline' => 'datetime',
-            'announce_date' => 'date',
         ];
     }
 
@@ -74,12 +70,6 @@ class Event extends Model
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);
-    }
-
-    /** 申込締切を過ぎているか（サーバー側now()判定・spec §4.6） */
-    public function isDeadlinePassed(): bool
-    {
-        return $this->application_deadline !== null && now()->gte($this->application_deadline);
     }
 
     public function setlist(): \Illuminate\Database\Eloquent\Relations\HasOne

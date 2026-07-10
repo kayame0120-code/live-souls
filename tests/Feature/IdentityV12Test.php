@@ -5,23 +5,18 @@ namespace Tests\Feature;
 use App\Models\FcMembership;
 use App\Models\GroupMember;
 use App\Models\IdolGroup;
-use App\Models\IdentityGroup;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\MakesDomainData;
 use Tests\TestCase;
 
-/**
- * v1.2 名義まわり（指示書T3-T4・T9・§9テスト）:
- * email の encrypted 保存・伏字表示 / oshi_color プリセット検証 / 当選率の非表示。
- */
 class IdentityV12Test extends TestCase
 {
     use RefreshDatabase;
     use MakesDomainData;
 
     private User $user;
-    private IdentityGroup $group;
+    private IdolGroup $idolGroup;
     private GroupMember $member;
 
     protected function setUp(): void
@@ -29,10 +24,9 @@ class IdentityV12Test extends TestCase
         parent::setUp();
         $this->user = User::factory()->create();
         $this->actingAs($this->user);
-        $this->group = IdentityGroup::create(['user_id' => $this->user->id, 'name' => 'FC']);
-        $ig = IdolGroup::create(['name' => 'テストグループ']);
+        $this->idolGroup = IdolGroup::create(['name' => 'テストグループ']);
         $this->member = GroupMember::create([
-            'idol_group_id' => $ig->id, 'name' => 'テストメンバー',
+            'idol_group_id' => $this->idolGroup->id, 'name' => 'テストメンバー',
             'color_name' => '赤', 'color_hex' => '#E53935', 'source_type' => '公式', 'sort_order' => 1,
         ]);
     }
@@ -41,7 +35,7 @@ class IdentityV12Test extends TestCase
     {
         return array_merge([
             'person_name' => '太郎',
-            'group_id' => $this->group->id,
+            'group_id' => $this->idolGroup->id,
             'group_member_id' => $this->member->id,
         ], $override);
     }

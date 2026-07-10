@@ -4,7 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Attendance;
 use App\Models\FcMembership;
-use App\Models\IdentityGroup;
+
+
 use App\Models\Person;
 use App\Models\User;
 use App\Models\VenueNote;
@@ -97,18 +98,13 @@ class MultiTenantTest extends TestCase
             ->assertSessionHasErrors('identity_ids.0');
     }
 
-    public function test_他ユーザーのグループIDでは名義登録できない(): void
+    public function test_存在しないグループIDでは名義登録できない(): void
     {
-        $otherGroup = IdentityGroup::withoutGlobalScopes()->create([
-            'user_id' => $this->other->id,
-            'name' => '他人のグループ',
-        ]);
-
         $this->actingAs($this->user)
             ->post(route('identities.store'), [
                 'person_name' => 'テスト太郎',
-                'group_id' => $otherGroup->id,
-                'artist_name' => 'テスト',
+                'group_id' => 99999,
+                'group_member_id' => 99999,
             ])
             ->assertSessionHasErrors('group_id');
     }

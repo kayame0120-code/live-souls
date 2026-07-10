@@ -5,7 +5,8 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\IdentityController;
-use App\Http\Controllers\IdentityGroupController;
+
+
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\LotController;
 use App\Http\Controllers\PhotoController;
@@ -42,8 +43,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/identities/{fcMembership}/duplicate', [IdentityController::class, 'storeDuplicate'])->name('identities.store-duplicate');
     Route::delete('/identities/{fcMembership}', [IdentityController::class, 'destroy'])->name('identities.destroy');
 
-    Route::resource('identity-groups', IdentityGroupController::class)->except(['show']);
-    Route::post('/identity-groups/reorder', [IdentityGroupController::class, 'reorder'])->name('identity-groups.reorder');
+
+
 
     // 当落（S9・v1.4: ツアーカード一覧→当落詳細）。create は tour より前に定義
     Route::get('/lots', [LotController::class, 'index'])->name('lots.index');

@@ -4,12 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\FcMembership;
 use App\Models\GroupMember;
-use App\Models\IdentityGroup;
+use App\Models\IdolGroup;
 use App\Services\IdentityService;
 use App\Support\JoinedMonthConverter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 
 class IdentityController extends Controller
 {
@@ -19,16 +18,16 @@ class IdentityController extends Controller
 
     public function index(Request $request)
     {
-        $groups = IdentityGroup::with('fcMemberships.person')->get();
+        $memberships = FcMembership::with(['person', 'group'])->get();
+        $groups = $memberships->pluck('group')->filter()->unique('id')->sortBy('name')->values();
         $currentGroupId = $request->get('group');
 
-        return view('identities.index', compact('groups', 'currentGroupId'));
+        return view('identities.index', compact('groups', 'currentGroupId', 'memberships'));
     }
 
     public function create()
     {
-        $groups = IdentityGroup::all();
-        return view('identities.create', compact('groups'));
+        return view('identities.create');
     }
 
     public function store(Request $request)
@@ -50,8 +49,7 @@ class IdentityController extends Controller
     public function edit(FcMembership $fcMembership)
     {
         $fcMembership->load('person');
-        $groups = IdentityGroup::all();
-        return view('identities.edit', compact('fcMembership', 'groups'));
+        return view('identities.edit', compact('fcMembership'));
     }
 
     public function update(Request $request, FcMembership $fcMembership)
@@ -67,15 +65,14 @@ class IdentityController extends Controller
     public function duplicate(FcMembership $fcMembership)
     {
         $fcMembership->load('person');
-        $groups = IdentityGroup::all();
 
-        return view('identities.duplicate', compact('fcMembership', 'groups'));
+        return view('identities.duplicate', compact('fcMembership'));
     }
 
     public function storeDuplicate(Request $request, FcMembership $fcMembership)
     {
         $validated = $request->validate([
-            'group_id' => ['required', Rule::exists('identity_groups', 'id')->where('user_id', Auth::id())],
+            'group_id' => ['required', 'exists:idol_groups,id'],
             'group_member_id' => ['required', 'exists:group_members,id'],
             'member_no' => ['nullable', 'string', 'max:255'],
             'login_id' => ['nullable', 'string', 'max:255'],
@@ -122,12 +119,6 @@ class IdentityController extends Controller
             ->with('success', '名義を削除しました');
     }
 
-    /**
-     * 登録・更新共通のバリデーション。
-     * 入会年月は type=month（YYYY-MM）で受け、1日固定の date に変換して保存（spec §4）。
-     *
-     * @return array{0: array, 1: array}
-     */
     private function validatedData(Request $request): array
     {
         $validated = $request->validate([
@@ -136,7 +127,7 @@ class IdentityController extends Controller
             'phone' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
             'label' => ['nullable', 'string', 'max:255'],
-            'group_id' => ['required', Rule::exists('identity_groups', 'id')->where('user_id', Auth::id())],
+            'group_id' => ['required', 'exists:idol_groups,id'],
             'group_member_id' => ['required', 'exists:group_members,id'],
             'artist_name' => ['nullable', 'string', 'max:255'],
             'member_no' => ['nullable', 'string', 'max:255'],
@@ -150,7 +141,6 @@ class IdentityController extends Controller
         ]);
 
         $member = GroupMember::find($validated['group_member_id']);
-        $artistName = $member->name;
 
         $personData = [
             'name' => $validated['person_name'],
@@ -162,7 +152,7 @@ class IdentityController extends Controller
 
         $membershipData = [
             'group_id' => $validated['group_id'],
-            'artist_name' => $artistName,
+            'artist_name' => $member->name,
             'member_no' => $validated['member_no'] ?? null,
             'login_id' => $validated['login_id'] ?? null,
             'email' => $validated['email'] ?? null,

@@ -49,7 +49,7 @@ class FcMembership extends Model
 
     public function group(): BelongsTo
     {
-        return $this->belongsTo(IdentityGroup::class, 'group_id');
+        return $this->belongsTo(IdolGroup::class, 'group_id');
     }
 
     public function groupMember(): BelongsTo
