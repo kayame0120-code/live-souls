@@ -37,17 +37,12 @@
   4. 保存時は既存personのIDを参照して新規fc_membershipを作成
 - **決めてほしいこと（片倉）**: 上記ラフ案の方向性でOKか、別アプローチ（モーダル等）がよいか。
 
-### QV20-6: Ollama本番投入の可否（Step1前例確認の結果）
+### QV20-6 ✅決定: Ollama本番同居は不可→C案（ローカルOllama / 本番クラウドLLM）（2026-07-10）
 
-- **spec根拠**: cc_instructions_v2.0.md §5
-- **Flyマシン現行スペック**: 1GB RAM / shared CPU 1コア / nrtリージョン（fly.toml確認済み）
-- **評価**: 1B〜3Bクラスのモデル（tinyllama, phi-3-mini等）は最低2GB以上のRAMが必要。現行1GBではWebアプリ（Laravel）と同居させると確実にOOMになる。
-- **選択肢**:
-  A: Flyマシンのメモリを2GB以上に増強（月額コスト増・shared-cpu-1xで$5.22→$10.44程度）
-  B: Ollama用の別Flyマシンを立て、API経由で呼び出す（分離・独立スケール可能）
-  C: ローカル（開発時のみ）Ollama + 本番はクラウドLLM API（OpenAI等）にフォールバック
-- **決めてほしいこと（片倉）**: 実測の前にまず方針を選定。A/B/Cのいずれで進めるか。
-  実測はその方針に基づいた環境で行う。
+- **Flyマシン現行スペック**: 1GB RAM / shared CPU 1コア。Ollama同居はOOM確実。
+- **片倉判断**: Fly.ioへの追加課金はなし → **C案で確定**。
+- **実装方針**: `LlmService`インターフェースで抽象化。`LLM_DRIVER`環境変数で`ollama`（ローカル）/`openai`（本番）を切替。
+- **残**: 本番用のAPIキー（`OPENAI_API_KEY`）は人間が`.env`にセット。
 
 ---
 
