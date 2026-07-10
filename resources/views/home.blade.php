@@ -34,9 +34,7 @@
         </div>
     @endif
 
-    {{-- 公演日を過ぎた予定（planned）の「参戦した？」確認（spec §5・自動遷移はしない）。
-         公演マスタへの導線はナビ5タブ目「公演」に一本化したため link-row は撤去。 --}}
-    @if($pendingConfirmations->isNotEmpty())
+    @if($pendingConfirmations->isNotEmpty() || $ticketReminders->isNotEmpty())
     <div class="sec-label">確認が必要</div>
     @foreach($pendingConfirmations as $attendance)
         <div class="confirm-card">
@@ -57,6 +55,33 @@
                     <input type="hidden" name="decision" value="skipped">
                     <button type="submit" class="btn-skipped" style="width:100%;">行けなかった</button>
                 </form>
+            </div>
+        </div>
+    @endforeach
+    @foreach($ticketReminders as $attendance)
+        <div class="confirm-card">
+            <div class="confirm-lead">チケット確認はお済みですか？</div>
+            <div class="confirm-title">{{ $attendance->event_name }}</div>
+            <div class="confirm-sub">
+                {{ optional($attendance->event_date)->format('Y.m.d') }}（{{ optional($attendance->event_date)->translatedFormat('D') }}）
+                @if($attendance->fcMemberships->isNotEmpty())・{{ $attendance->fcMemberships->first()->displayName() }}@endif
+            </div>
+        </div>
+    @endforeach
+    @endif
+
+    @if($renewalMemberships->isNotEmpty())
+    <div class="sec-label">更新期間の名義</div>
+    @foreach($renewalMemberships as $membership)
+        @php $expiry = $membership->expiryDate(); @endphp
+        <div class="card" style="padding:12px 14px; margin-bottom:8px; border-left:3px solid {{ $membership->oshi_color ?? '#C7414F' }};">
+            <div style="font-size:13px; font-weight:600; color:var(--color-ink);">
+                <span class="dot" style="--oshi-color: {{ $membership->oshi_color ?? '#C7414F' }}"></span>
+                {{ $membership->displayName() }}
+            </div>
+            <div style="font-size:11px; color:var(--color-ink-sub); margin-top:4px;">
+                {{ $membership->artist_name }}
+                @if($expiry)・期限 {{ $expiry->format('Y.m.d') }}@endif
             </div>
         </div>
     @endforeach

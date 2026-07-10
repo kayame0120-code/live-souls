@@ -13,6 +13,7 @@ class Venue extends Model
         'address',
         'nearest_station',
         'capacity',
+        'arena_view_key',
         'created_by',
     ];
 

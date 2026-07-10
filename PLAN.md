@@ -1,5 +1,30 @@
 # PLAN.md — 現場手帖
 
+## v2.0 改修（2026-07-10）
+
+spec_v2.0.md / cc_instructions_v2.0.md に基づく改修。既存コードは変更せず、新機能追加のみ。
+
+### すぐ着手（依存なし・指示書§2）
+- **T1 ホーム:更新通知カード** — HomeService に getRenewalMemberships() 追加、home.blade に「更新期間の名義」カード表示。テスト付き
+- **T2 参戦詳細:開場時間表示** — attendances/show.blade に open_time を表示追加（既存フィールド）
+- **T3 ホーム:チケット確認通知** — HomeService に getTicketReminders() 追加、「確認が必要」に「チケット確認はお済みですか？」表示。テスト付き
+- **T4 QV13-1 反映確認** — events.start_time 優先が全画面で守られているか調査。差分があれば修正
+
+### 先行マイグレーション（指示書§4）
+- **T5 venues.arena_view_key** — nullable string カラム追加（マイグレーションのみ・利用側は未決）
+
+### 未決→QUESTIONS.md（指示書§3,§4）
+- **T6 QUESTIONS.md更新** — spec 7章の未決5件 + 名義複製ラフ案 + Ollama Step1調査結果を記録
+
+### Ollama基盤（指示書§5）
+- **T7 Ollama Step1: 前例確認** — Flyマシンスペック・メモリ使用量の確認と報告
+
+### 検証・成果物
+- V1 migrate / V2 /up 200 / V3 test 全通過
+- QUESTIONS.md / REPORT.md 更新
+
+---
+
 ## v1.2 改修（2026-07-08）— 完了
 
 破壊的変更（attendances の event_id 化）を含む改修。migration-first で実施。

@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\AttendanceIdentity;
 use App\Models\FcMembership;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
 class HomeService
@@ -64,6 +65,32 @@ class HomeService
         return Attendance::with(['event.tour', 'event.venue', 'fcMemberships.person'])
             ->where('status', 'planned')
             ->whereHas('event', fn ($e) => $e->whereDate('event_date', '<', Carbon::today()))
+            ->orderByEventDateDesc()
+            ->get();
+    }
+
+    /** 更新受付期間中の名義一覧（spec v2.0 §4.2） */
+    public function getRenewalMemberships(): Collection
+    {
+        return FcMembership::with(['person', 'group'])
+            ->get()
+            ->filter(fn (FcMembership $m) => $m->isInRenewalWindow());
+    }
+
+    /**
+     * 公演日が7日以内に迫った参戦予定（spec v2.0 §4.3）。
+     * 「チケット確認はお済みですか？」の受動的表示用。
+     */
+    public function getTicketReminders()
+    {
+        $today = Carbon::today();
+        $threshold = $today->copy()->addDays(7);
+
+        return Attendance::with(['event.tour', 'event.venue', 'fcMemberships.person'])
+            ->where('status', 'planned')
+            ->whereHas('event', fn ($e) => $e
+                ->whereDate('event_date', '>=', $today)
+                ->whereDate('event_date', '<=', $threshold))
             ->orderByEventDateDesc()
             ->get();
     }

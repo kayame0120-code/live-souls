@@ -16,9 +16,8 @@
         @endif
     </div>
 
-    {{-- 公演情報（共有マスタ）。開演は event.start_time（H:i・null非表示）。開場(open_time)行は廃止（mockup準拠） --}}
     <div class="d-block">
-        <div class="d-h">公演情報（共有マスタ）</div>
+        <div class="d-h">公演情報</div>
         @if($attendance->venue)
         <div class="d-row">
             <span class="k">会場</span>
@@ -27,6 +26,9 @@
         @endif
         @if($attendance->venue?->nearest_station)
         <div class="d-row"><span class="k">最寄</span><span class="v">{{ $attendance->venue->nearest_station }}</span></div>
+        @endif
+        @if($attendance->open_time)
+        <div class="d-row"><span class="k">開場</span><span class="v mono">{{ \Carbon\Carbon::parse($attendance->open_time)->format('H:i') }}</span></div>
         @endif
         @if($attendance->event?->start_time)
         <div class="d-row"><span class="k">開演</span><span class="v mono">{{ $attendance->event->start_time->format('H:i') }}</span></div>

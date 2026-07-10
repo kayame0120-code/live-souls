@@ -18,8 +18,13 @@ class HomeController extends Controller
         $stats = $this->homeService->getStats();
         $recentAttendances = $this->homeService->getRecentAttendances();
         $pendingConfirmations = $this->homeService->getPendingConfirmations();
+        $renewalMemberships = $this->homeService->getRenewalMemberships();
+        $ticketReminders = $this->homeService->getTicketReminders();
 
-        return view('home', compact('nextAttendance', 'stats', 'recentAttendances', 'pendingConfirmations'));
+        return view('home', compact(
+            'nextAttendance', 'stats', 'recentAttendances',
+            'pendingConfirmations', 'renewalMemberships', 'ticketReminders',
+        ));
     }
 
     /**
