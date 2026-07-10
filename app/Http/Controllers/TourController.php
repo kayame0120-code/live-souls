@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
 use App\Models\Tour;
 use Illuminate\Http\Request;
 
@@ -42,6 +43,29 @@ class TourController extends Controller
             ->get();
 
         return view('tours.show', compact('tour', 'events'));
+    }
+
+    public function updateDeadlines(Request $request, Tour $tour)
+    {
+        $validated = $request->validate([
+            'events' => ['required', 'array'],
+            'events.*.application_deadline' => ['nullable', 'date'],
+            'events.*.announce_date' => ['nullable', 'date'],
+        ]);
+
+        foreach ($validated['events'] as $eventId => $data) {
+            $event = Event::where('tour_id', $tour->id)->find($eventId);
+            if (! $event) {
+                continue;
+            }
+            $event->update([
+                'application_deadline' => $data['application_deadline'] ?? null,
+                'announce_date' => $data['announce_date'] ?? null,
+            ]);
+        }
+
+        return redirect()->route('tours.show', $tour)
+            ->with('success', '締切情報を更新しました');
     }
 
     public function destroy(Tour $tour)

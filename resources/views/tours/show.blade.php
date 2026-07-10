@@ -54,6 +54,32 @@
     {{-- ＋日程を追加（mockup: ツアー詳細側の m-add） --}}
     <a href="{{ route('events.create', $tour) }}" class="m-add">＋ 日程を追加</a>
 
+    {{-- 締切・発表日の一括編集 --}}
+    @if($events->isNotEmpty())
+    <div class="sec-label">申込締切・当落発表日</div>
+    <form method="POST" action="{{ route('tours.update-deadlines', $tour) }}">
+        @csrf
+        @foreach($events as $event)
+        <div class="d-block" style="margin-bottom:8px;padding:8px 12px;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:6px;">{{ $event->event_date->format('m.d') }} {{ $event->venue?->name ?? '会場未設定' }}@if($event->event_label) {{ $event->event_label }}@endif</div>
+            <div style="display:flex;gap:8px;">
+                <div style="flex:1;">
+                    <label style="font-size:10px;color:var(--color-ink-sub);">申込締切</label>
+                    <input class="f-input" type="datetime-local" name="events[{{ $event->id }}][application_deadline]"
+                           value="{{ optional($event->application_deadline)->format('Y-m-d\TH:i') }}" style="font-size:12px;">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:10px;color:var(--color-ink-sub);">発表日</label>
+                    <input class="f-input" type="date" name="events[{{ $event->id }}][announce_date]"
+                           value="{{ optional($event->announce_date)->format('Y-m-d') }}" style="font-size:12px;">
+                </div>
+            </div>
+        </div>
+        @endforeach
+        <button type="submit" class="btn btn-primary" style="margin-top:8px;">締切を保存</button>
+    </form>
+    @endif
+
     @if($events->isEmpty())
     <form method="POST" action="{{ route('tours.destroy', $tour) }}" style="margin-top:14px;"
           onsubmit="return confirm('このツアーを削除しますか？')">

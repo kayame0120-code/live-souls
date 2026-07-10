@@ -88,15 +88,6 @@ class EventMasterTest extends TestCase
         $this->assertSame(1, Event::where('tour_id', $tour->id)->whereDate('event_date', '2026-10-01')->count());
     }
 
-    public function test_ツアー作成後に日程追加画面へ遷移する(): void
-    {
-        $this->post(route('tours.store'), ['name' => '新ツアー'])
-            ->assertRedirect();
-        $tour = Tour::where('name', '新ツアー')->first();
-        $this->assertNotNull($tour);
-        $this->get(route('events.create', $tour))->assertOk();
-    }
-
     public function test_一括インポートはツアーを解決して日程を登録する(): void
     {
         $this->post(route('events.import.store'), [

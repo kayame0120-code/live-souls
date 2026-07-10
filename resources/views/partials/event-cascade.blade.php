@@ -10,10 +10,7 @@
         <option value="{{ $t->id }}" {{ old('tour_id', $selTourId) == $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
         @endforeach
     </select>
-    <div class="f-hint">
-        目的のツアーが無い場合は
-        <a href="{{ route('tours.create') }}" style="color:var(--color-ink);font-weight:700;">＋ ツアーを追加</a>
-    </div>
+    <div class="f-hint">目的のツアーが無い場合は「一覧を貼って一括登録」から追加できます</div>
 </div>
 
 <div class="f-field">

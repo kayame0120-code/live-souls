@@ -40,7 +40,10 @@
                 <input class="form-input" type="text" name="rows[{{ $i }}][venue_name]" value="{{ $row['venue'] }}" placeholder="会場">
                 <input class="form-input" type="text" name="rows[{{ $i }}][event_label]" value="" placeholder="日程ラベル（任意・例 大阪2日目）" style="margin-top:4px;">
             </div>
-            <span></span>
+            <div style="display:flex;flex-direction:column;gap:4px;min-width:140px;">
+                <input class="form-input" type="datetime-local" name="rows[{{ $i }}][application_deadline]" placeholder="申込締切" style="font-size:11px;">
+                <input class="form-input" type="date" name="rows[{{ $i }}][announce_date]" placeholder="発表日" style="font-size:11px;">
+            </div>
         </div>
         @endforeach
 

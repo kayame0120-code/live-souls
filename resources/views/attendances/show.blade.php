@@ -78,17 +78,19 @@
     @endif
 
     {{-- メモ --}}
-    @if($attendance->memo)
     <div class="d-block">
         <div class="d-h">メモ</div>
+        @if($attendance->memo)
         <p style="font-size:12.5px; line-height:1.8; color:var(--color-ink);">{{ $attendance->memo }}</p>
+        @else
+        <p style="font-size:12px; color:var(--color-ink-sub);">編集から追加できます</p>
+        @endif
     </div>
-    @endif
 
     {{-- この日の写真（メンバー間共有 / 削除は投稿者のみ） --}}
-    @if($attendance->photos->isNotEmpty())
     <div class="d-block">
         <div class="d-h">この日の写真（{{ $attendance->photos->count() }}）</div>
+        @if($attendance->photos->isNotEmpty())
         <div class="thumb-grid">
             @foreach($attendance->photos as $photo)
             <div class="thumb">
@@ -104,8 +106,10 @@
             </div>
             @endforeach
         </div>
+        @else
+        <p style="font-size:12px; color:var(--color-ink-sub);">編集から写真を追加できます</p>
+        @endif
     </div>
-    @endif
 
     {{-- 会場のビュー（見え方マッピング）への導線。360°(C)は対象外・通常の会場詳細へ --}}
     @if($attendance->venue)

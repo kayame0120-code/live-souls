@@ -3,7 +3,6 @@
         公演情報はメンバー全員で持ち寄る共有台帳です。参戦・申込のときはここから公演を選ぶだけで日付・会場が入ります。
     </div>
     <div class="ev-actions">
-        <a href="{{ route('tours.create') }}" class="ev-new">＋ ツアーを追加</a>
         <a href="{{ route('events.import') }}" class="ev-import">一覧を貼って一括登録</a>
     </div>
 
@@ -18,8 +17,8 @@
     </a>
     @empty
     <div class="empty-state">
-        まだツアーがありません。<br>
-        <a href="{{ route('tours.create') }}" class="btn btn-secondary btn-sm" style="margin-top:12px;">ツアーを追加</a>
+        まだ公演がありません。<br>
+        <a href="{{ route('events.import') }}" class="btn btn-secondary btn-sm" style="margin-top:12px;">一覧を貼って一括登録</a>
     </div>
     @endforelse
 </x-app-layout>

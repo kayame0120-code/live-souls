@@ -39,7 +39,6 @@ class PageRenderSmokeTest extends TestCase
             '申込登録' => ['lots.create'],
             '公演一覧' => ['events.index'],
             '一括インポート' => ['events.import'],
-            'ツアー作成' => ['tours.create'],
             '招待管理' => ['invitations.index'],
         ];
     }

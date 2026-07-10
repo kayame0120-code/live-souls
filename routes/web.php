@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Auth\InvitedRegisterController;
-use App\Http\Controllers\DeadlineController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
@@ -52,10 +51,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/lots', [LotController::class, 'store'])->name('lots.store');
     Route::get('/lots/tours/{tour}', [LotController::class, 'showByTour'])->name('lots.tour');
 
-    // ツアー共有マスタ（v1.4・全ユーザー可）。create は {tour} より前に定義
-    Route::get('/tours/create', [TourController::class, 'create'])->name('tours.create');
-    Route::post('/tours', [TourController::class, 'store'])->name('tours.store');
+    // ツアー共有マスタ（v1.4・全ユーザー可）
     Route::get('/tours/{tour}', [TourController::class, 'show'])->name('tours.show');
+    Route::post('/tours/{tour}/deadlines', [TourController::class, 'updateDeadlines'])->name('tours.update-deadlines');
     Route::delete('/tours/{tour}', [TourController::class, 'destroy'])->name('tours.destroy');
     // 日程（event）はツアー配下で作成（旧 /events/create を置換）
     Route::get('/tours/{tour}/events/create', [EventController::class, 'create'])->name('events.create');
@@ -76,11 +74,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/events/{event}/setlist/items/{item}', [SetlistController::class, 'destroyItem'])->name('setlists.destroy-item');
     Route::post('/events/{event}/setlist/ai-parse', [SetlistController::class, 'aiParse'])->name('setlists.ai-parse');
     Route::post('/events/{event}/setlist/bulk', [SetlistController::class, 'bulkStore'])->name('setlists.bulk-store');
-
-    // 当落締切AI一括登録（spec §4.6）
-    Route::get('/deadlines/import', [DeadlineController::class, 'form'])->name('deadlines.form');
-    Route::post('/deadlines/import/parse', [DeadlineController::class, 'parse'])->name('deadlines.parse');
-    Route::post('/deadlines/import', [DeadlineController::class, 'store'])->name('deadlines.store');
 
     // 参戦写真（閲覧=全メンバー / 削除=投稿者のみ）
     Route::get('/photos/{photo}', [PhotoController::class, 'show'])->name('photos.show');

@@ -225,6 +225,8 @@ class EventController extends Controller
             'rows.*.event_date' => ['nullable', 'date'],
             'rows.*.start_time' => ['nullable', 'date_format:H:i'],
             'rows.*.venue_name' => ['nullable', 'string', 'max:255'],
+            'rows.*.application_deadline' => ['nullable', 'date'],
+            'rows.*.announce_date' => ['nullable', 'date'],
         ], [
             'tour_name.required' => 'ツアー名を入力してください',
         ]);
@@ -254,7 +256,15 @@ class EventController extends Controller
                 $startTime = ! empty($row['start_time']) ? $row['start_time'] : null;
                 $eventLabel = ! empty($row['event_label']) ? $row['event_label'] : null;
 
-                $this->service->create($tourId, $eventLabel, $row['event_date'], $startTime, $venueId);
+                $event = $this->service->create($tourId, $eventLabel, $row['event_date'], $startTime, $venueId);
+
+                if (! empty($row['application_deadline'])) {
+                    $event->update(['application_deadline' => $row['application_deadline']]);
+                }
+                if (! empty($row['announce_date'])) {
+                    $event->update(['announce_date' => $row['announce_date']]);
+                }
+
                 $imported++;
             }
         });

@@ -1,7 +1,6 @@
 <x-app-layout>
     <div class="link-row">
         <a href="{{ route('lots.create') }}" class="primary">＋ 申込を登録</a>
-        <a href="{{ route('deadlines.form') }}">締切を貼って一括登録</a>
         <a href="{{ route('events.index') }}">公演一覧</a>
     </div>
 
