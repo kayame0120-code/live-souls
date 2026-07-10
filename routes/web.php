@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\InvitedRegisterController;
+use App\Http\Controllers\DeadlineController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\HomeController;
@@ -73,7 +74,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/events/{event}/setlist', [SetlistController::class, 'show'])->name('setlists.show');
     Route::post('/events/{event}/setlist/items', [SetlistController::class, 'addItem'])->name('setlists.add-item');
     Route::delete('/events/{event}/setlist/items/{item}', [SetlistController::class, 'destroyItem'])->name('setlists.destroy-item');
+    Route::post('/events/{event}/setlist/ai-parse', [SetlistController::class, 'aiParse'])->name('setlists.ai-parse');
     Route::post('/events/{event}/setlist/bulk', [SetlistController::class, 'bulkStore'])->name('setlists.bulk-store');
+
+    // 当落締切AI一括登録（spec §4.6）
+    Route::get('/deadlines/import', [DeadlineController::class, 'form'])->name('deadlines.form');
+    Route::post('/deadlines/import/parse', [DeadlineController::class, 'parse'])->name('deadlines.parse');
+    Route::post('/deadlines/import', [DeadlineController::class, 'store'])->name('deadlines.store');
 
     // 参戦写真（閲覧=全メンバー / 削除=投稿者のみ）
     Route::get('/photos/{photo}', [PhotoController::class, 'show'])->name('photos.show');

@@ -38,6 +38,14 @@ class OpenAiLlmService implements LlmService
         );
     }
 
+    public function parseDeadlines(string $text): array
+    {
+        return $this->call(
+            'コンサート・ライブの申込締切・当落発表日を抽出するアシスタントです。JSON形式でのみ応答します。',
+            $this->buildDeadlineUserMessage($text),
+        );
+    }
+
     private function call(string $system, string $user): array
     {
         try {
@@ -89,6 +97,19 @@ MSG;
 
 出力形式:
 {"items": [{"order": 1, "title": "曲名", "note": "備考(アンコールなど、なければnull)"}]}
+
+テキスト:
+{$text}
+MSG;
+    }
+
+    private function buildDeadlineUserMessage(string $text): string
+    {
+        return <<<MSG
+以下のテキストからコンサート・ライブの申込締切・当落発表日の情報を抽出し、JSON形式で返してください。
+
+出力形式:
+{"deadlines": [{"venue": "会場名", "event_date": "YYYY-MM-DD(なければnull)", "application_deadline": "YYYY-MM-DD HH:MM(なければnull)", "announce_date": "YYYY-MM-DD(なければnull)"}]}
 
 テキスト:
 {$text}

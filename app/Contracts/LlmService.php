@@ -22,4 +22,11 @@ interface LlmService
      * @return array{items: array<array{order: int, title: string, note: ?string}>}
      */
     public function parseSetlist(string $text): array;
+
+    /**
+     * テキストから当落締切情報をJSON配列として抽出する。
+     *
+     * @return array{deadlines: array<array{venue: string, event_date: ?string, application_deadline: ?string, announce_date: ?string}>}
+     */
+    public function parseDeadlines(string $text): array;
 }

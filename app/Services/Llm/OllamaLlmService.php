@@ -30,6 +30,12 @@ class OllamaLlmService implements LlmService
         return $this->call($prompt);
     }
 
+    public function parseDeadlines(string $text): array
+    {
+        $prompt = $this->buildDeadlinePrompt($text);
+        return $this->call($prompt);
+    }
+
     private function call(string $prompt): array
     {
         try {
@@ -77,6 +83,19 @@ PROMPT;
 
 出力形式:
 {"items": [{"order": 1, "title": "曲名", "note": "備考(アンコールなど、なければnull)"}]}
+
+テキスト:
+{$text}
+PROMPT;
+    }
+
+    private function buildDeadlinePrompt(string $text): string
+    {
+        return <<<PROMPT
+以下のテキストからコンサート・ライブの申込締切・当落発表日の情報を抽出し、JSON形式で返してください。
+
+出力形式:
+{"deadlines": [{"venue": "会場名", "event_date": "YYYY-MM-DD(なければnull)", "application_deadline": "YYYY-MM-DD HH:MM(なければnull)", "announce_date": "YYYY-MM-DD(なければnull)"}]}
 
 テキスト:
 {$text}

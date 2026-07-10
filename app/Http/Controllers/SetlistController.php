@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\LlmService;
 use App\Models\Event;
 use App\Models\Setlist;
 use App\Models\SetlistItem;
@@ -10,6 +11,10 @@ use Illuminate\Support\Facades\DB;
 
 class SetlistController extends Controller
 {
+    public function __construct(private LlmService $llm)
+    {
+    }
+
     public function show(Event $event)
     {
         $setlist = $event->setlist?->load('items');
@@ -48,6 +53,24 @@ class SetlistController extends Controller
 
         return redirect()->route('setlists.show', $event)
             ->with('success', '曲を削除しました');
+    }
+
+    public function aiParse(Request $request, Event $event)
+    {
+        $validated = $request->validate([
+            'text' => ['required', 'string'],
+        ]);
+
+        try {
+            $result = $this->llm->parseSetlist($validated['text']);
+        } catch (\Throwable $e) {
+            return back()->with('error', 'AI解析に失敗しました: ' . $e->getMessage());
+        }
+
+        $setlist = $event->setlist?->load('items');
+        $aiItems = $result['items'] ?? [];
+
+        return view('setlists.show', compact('event', 'setlist', 'aiItems'));
     }
 
     public function bulkStore(Request $request, Event $event)

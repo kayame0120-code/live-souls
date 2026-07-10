@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\LlmService;
 use App\Models\Event;
 use App\Models\Tour;
-use App\Services\EventImportParser;
 use App\Services\EventService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -19,7 +19,7 @@ class EventController extends Controller
 {
     public function __construct(
         private EventService $service,
-        private EventImportParser $parser,
+        private LlmService $llm,
     ) {
     }
 
@@ -198,13 +198,16 @@ class EventController extends Controller
             'text.required' => 'テキストを貼り付けてください',
         ]);
 
-        // parse() は不変（jsx 1:1移植）。tour は全行共通、未解析行は捨てず確認画面に出す
-        $result = $this->parser->extractEvents($validated['text']);
+        try {
+            $result = $this->llm->parseEvents($validated['text']);
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', 'AI解析に失敗しました: ' . $e->getMessage());
+        }
 
         return view('events.import-confirm', [
-            'rows' => $result['events'],
-            'unknown' => $result['unknown'],
-            'tour' => $result['tour'],
+            'rows' => $result['events'] ?? [],
+            'unknown' => [],
+            'tour' => $result['tour'] ?? '',
         ]);
     }
 

@@ -2,12 +2,16 @@
     <x-slot:pageHeader>
         <div class="page-header">
             <a href="{{ route('events.index') }}" class="back">← 戻る</a>
-            <h1>公演を一括インポート</h1>
+            <h1>一覧を貼って一括登録</h1>
         </div>
     </x-slot:pageHeader>
 
+    @if(session('error'))
+    <div class="warn">{{ session('error') }}</div>
+    @endif
+
     <p style="font-size:12px; color:var(--color-ink-sub); line-height:1.8; margin-bottom:16px;">
-        公演一覧テキストを貼り付けると、日付・会場・公演名に分解されます。<br>
+        公演一覧テキストを貼り付けると、AIが日付・会場・公演名に分解します。<br>
         共有マスタ（events）へ入るだけで、名義の選択はありません。
     </p>
 

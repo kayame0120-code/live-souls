@@ -37,4 +37,32 @@
             <button type="submit" class="btn btn-primary" style="white-space:nowrap;">追加</button>
         </form>
     </div>
+
+    {{-- AI一括登録 --}}
+    <div class="d-block" style="margin-top:16px;">
+        <div class="d-h">セトリを貼って一括登録</div>
+        @if(session('error'))
+        <div class="warn">{{ session('error') }}</div>
+        @endif
+
+        @if(isset($aiItems))
+        <form method="POST" action="{{ route('setlists.bulk-store', $event) }}">
+            @csrf
+            @foreach($aiItems as $i => $item)
+            <div class="imp-row" style="display:flex;gap:8px;align-items:center;padding:6px 0;">
+                <input type="checkbox" name="items[{{ $i }}][include]" value="1" checked>
+                <input class="f-input" type="text" name="items[{{ $i }}][display_label]" value="{{ $item['note'] ?? '' }}" style="width:50px;text-align:center;font-size:12px;" placeholder="EN">
+                <input class="f-input" type="text" name="items[{{ $i }}][title]" value="{{ $item['title'] ?? '' }}" style="flex:1;">
+            </div>
+            @endforeach
+            <button type="submit" class="btn btn-primary" style="margin-top:12px;">チェックした曲を登録</button>
+        </form>
+        @else
+        <form method="POST" action="{{ route('setlists.ai-parse', $event) }}">
+            @csrf
+            <textarea class="f-input" name="text" rows="5" placeholder="セットリストのテキストを貼り付け" required>{{ old('text') }}</textarea>
+            <button type="submit" class="btn btn-primary" style="margin-top:8px;">AIで解析する</button>
+        </form>
+        @endif
+    </div>
 </x-app-layout>
