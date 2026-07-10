@@ -63,6 +63,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/events/import', [EventController::class, 'importForm'])->name('events.import');
     Route::post('/events/import/parse', [EventController::class, 'importParse'])->name('events.import.parse');
     Route::post('/events/import', [EventController::class, 'importStore'])->name('events.import.store');
+    Route::get('/events/{event}/edit', [EventController::class, 'edit'])->name('events.edit');
+    Route::put('/events/{event}', [EventController::class, 'update'])->name('events.update');
     Route::delete('/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
 
     // セットリスト（公演詳細から遷移・手動/AI一括）

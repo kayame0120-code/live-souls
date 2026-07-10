@@ -12,6 +12,14 @@
                 {{ optional($attendance->event_date)->format('m.d') }}（{{ optional($attendance->event_date)->translatedFormat('D') }}）
                 @if($attendance->event?->start_time)・開演 {{ $attendance->event->start_time->format('H:i') }}@endif
             </div>
+            @if($attendance->event?->application_deadline)
+            <div class="lot-sub" style="color:{{ $attendance->event->isDeadlinePassed() ? 'var(--color-ink-sub)' : '#C7414F' }};font-size:11px;">
+                締切 {{ $attendance->event->application_deadline->format('m.d H:i') }}{{ $attendance->event->isDeadlinePassed() ? '（締切済）' : '' }}
+            </div>
+            @endif
+            @if($attendance->event?->announce_date)
+            <div class="lot-sub" style="font-size:11px;">発表 {{ $attendance->event->announce_date->format('m.d') }}</div>
+            @endif
         </div>
     </div>
     <div class="lot-rows">

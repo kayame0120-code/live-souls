@@ -3,11 +3,11 @@
 <label class="form-label" for="venue_name">会場（検索付き・無ければ新規登録）</label>
 <div class="combo">
     <input class="form-input" type="text" id="venue_name" name="venue_name"
-           value="{{ old('venue_name') }}" placeholder="会場名で検索" autocomplete="off">
-    <input type="hidden" id="venue_id" name="venue_id" value="{{ old('venue_id') }}">
+           value="{{ old('venue_name', $selectedVenueName ?? '') }}" placeholder="会場名で検索" autocomplete="off">
+    <input type="hidden" id="venue_id" name="venue_id" value="{{ old('venue_id', $selectedVenueId ?? '') }}">
     <div class="combo-list" id="venue-list" style="display:none;"></div>
 </div>
-<div class="form-group" id="venue-address-wrap" style="{{ old('venue_id') ? 'display:none;' : '' }}">
+<div class="form-group" id="venue-address-wrap" style="{{ old('venue_id', $selectedVenueId ?? '') ? 'display:none;' : '' }}">
     <label class="form-label" for="venue_address">会場住所（新規会場のみ・自動補完）</label>
     <input class="form-input" type="text" id="venue_address" name="venue_address"
            value="{{ old('venue_address') }}" placeholder="空欄可">

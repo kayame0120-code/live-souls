@@ -92,6 +92,41 @@ class EventController extends Controller
             ->with('success', '日程を登録しました');
     }
 
+    public function edit(Event $event)
+    {
+        $event->load(['tour', 'venue']);
+
+        return view('events.edit', compact('event'));
+    }
+
+    public function update(Request $request, Event $event)
+    {
+        $validated = $request->validate([
+            'event_label' => ['nullable', 'string', 'max:255'],
+            'event_date' => ['required', 'date'],
+            'start_time' => ['nullable', 'date_format:H:i'],
+            'venue_id' => ['nullable', 'exists:venues,id'],
+            'venue_name' => ['nullable', 'string', 'max:255'],
+            'venue_address' => ['nullable', 'string', 'max:255'],
+            'application_deadline' => ['nullable', 'date'],
+            'announce_date' => ['nullable', 'date'],
+        ]);
+
+        $venueId = $this->service->resolveVenueId($validated);
+
+        $event->update([
+            'event_label' => $validated['event_label'] ?? null,
+            'event_date' => $validated['event_date'],
+            'start_time' => $validated['start_time'] ?? null,
+            'venue_id' => $venueId,
+            'application_deadline' => $validated['application_deadline'] ?? null,
+            'announce_date' => $validated['announce_date'] ?? null,
+        ]);
+
+        return redirect()->route('tours.show', $event->tour)
+            ->with('success', '日程を更新しました');
+    }
+
     public function destroy(Event $event)
     {
         // 紐づく参戦がある日程は削除不可（venues/グループ削除と同型・spec §5）

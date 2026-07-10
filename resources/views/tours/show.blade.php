@@ -32,6 +32,7 @@
             @endif
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+            <a href="{{ route('events.edit', $event) }}" class="sched-tag" style="text-decoration:none;font-size:11px;">編集</a>
             @if($event->setlist)
             <a href="{{ route('setlists.show', $event) }}" class="sched-tag" style="text-decoration:none;">セトリ</a>
             @endif
