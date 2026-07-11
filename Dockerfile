@@ -40,8 +40,12 @@ COPY .fly/supervisor/ /etc/supervisor/
 COPY .fly/entrypoint.sh /entrypoint
 COPY .fly/start-nginx.sh /usr/local/bin/start-nginx
 RUN chmod 754 /usr/local/bin/start-nginx
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 COPY . /var/www/html
 WORKDIR /var/www/html
+RUN npm ci && npm run build && rm -rf node_modules
 RUN composer install --optimize-autoloader --no-dev \
     && mkdir -p storage/logs \
     && php artisan optimize:clear \
