@@ -9,7 +9,7 @@
             <div class="d-h">名義の基本</div>
             <div class="f-field">
                 <label for="label">名義の呼び名 <span class="opt">（任意）</span></label>
-                <input class="f-input" type="text" id="label" name="label" value="{{ old('label', $fcMembership->person->label) }}" placeholder="例：母名義・ゆきちゃん共同">
+                <input class="f-input" type="text" id="label" name="label" value="{{ old('label', $fcMembership->label) }}" placeholder="例：母名義・ゆきちゃん共同">
             </div>
             <div class="f-field" style="margin-bottom:0;">
                 @include('partials.member-picker', [

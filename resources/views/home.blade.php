@@ -85,7 +85,7 @@
             </form>
             <div class="renew-top">
                 <span class="renew-swatch"></span>
-                <div class="renew-name">{{ $membership->person->name }}@if($membership->person->label)<small>{{ $membership->group?->name }}・{{ $membership->person->label }}</small>@else<small>{{ $membership->group?->name }}</small>@endif</div>
+                <div class="renew-name">{{ $membership->person->name }}@if($membership->label)<small>{{ $membership->group?->name }}・{{ $membership->label }}</small>@else<small>{{ $membership->group?->name }}</small>@endif</div>
             </div>
             <div class="renew-body">
                 更新受付中 <b>{{ $renewStart?->format('Y.m.d') }} – {{ $expiry?->format('m.d') }}</b> ／ 有効期限 <b>{{ $expiry?->format('Y.m.d') }}</b>

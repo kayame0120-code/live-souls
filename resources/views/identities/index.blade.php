@@ -45,7 +45,7 @@
             <a href="{{ route('identities.show', $m) }}" class="m-card tappable" style="--oshi-color: {{ $m->oshi_color ?? '#C7414F' }}">
                 <div class="m-cardhead">
                     <span class="m-swatch"></span>
-                    <div class="m-name">{{ $m->person->name }}@if($m->person->label)<small>{{ $m->person->label }}</small>@endif</div>
+                    <div class="m-name">{{ $m->person->name }}@if($m->label)<small>{{ $m->label }}</small>@endif</div>
                 </div>
                 @if($m->member_no)
                 <div class="m-no">No. {{ $m->member_no }}</div>

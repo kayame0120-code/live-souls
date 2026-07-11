@@ -8,7 +8,7 @@
     <div class="m-card" style="--oshi-color: {{ $fcMembership->oshi_color ?? '#C7414F' }}; margin-bottom:16px;">
         <div class="m-cardhead">
             <span class="m-swatch"></span>
-            <div class="m-name">{{ $fcMembership->person->name }}@if($fcMembership->person->label)<small>{{ $fcMembership->person->label }}</small>@endif</div>
+            <div class="m-name">{{ $fcMembership->person->name }}@if($fcMembership->label)<small>{{ $fcMembership->label }}</small>@endif</div>
         </div>
         @if($fcMembership->member_no)
         {{-- S4: 名義詳細では会員番号も伏字（コピーで取得） --}}
