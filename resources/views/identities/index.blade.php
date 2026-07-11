@@ -18,12 +18,20 @@
         </div>
 
         {{-- グループ追加フォーム（トグル） --}}
+        @php $availableGroups = \App\Models\IdolGroup::orderBy('name')->get()->diff($myGroups); @endphp
         <div id="add-group-form" style="display:none;padding:8px 0;">
             <form method="POST" action="{{ route('idol-groups.store') }}" style="display:flex;gap:8px;align-items:center;">
                 @csrf
-                <input class="f-input" type="text" name="name" placeholder="新しいグループ名" required style="flex:1;font-size:12px;">
+                <select class="f-input" name="name" id="group-select" required style="flex:1;font-size:12px;">
+                    <option value="">グループを選択</option>
+                    @foreach($availableGroups as $ig)
+                    <option value="{{ $ig->name }}">{{ $ig->name }}</option>
+                    @endforeach
+                    <option value="__new__">── 新しいグループを入力 ──</option>
+                </select>
                 <button type="submit" class="btn btn-primary" style="white-space:nowrap;font-size:12px;padding:6px 12px;">追加</button>
             </form>
+            <input class="f-input" type="text" id="new-group-input" placeholder="新しいグループ名" style="display:none;margin-top:6px;font-size:12px;">
         </div>
 
         @php
@@ -77,7 +85,25 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btn && formWrap) {
         btn.addEventListener('click', function () {
             formWrap.style.display = formWrap.style.display === 'none' ? '' : 'none';
-            if (formWrap.style.display !== 'none') formWrap.querySelector('input[name="name"]').focus();
+        });
+    }
+
+    var sel = document.getElementById('group-select');
+    var newInput = document.getElementById('new-group-input');
+    if (sel && newInput) {
+        sel.addEventListener('change', function () {
+            if (this.value === '__new__') {
+                newInput.style.display = '';
+                newInput.focus();
+                newInput.required = true;
+                sel.name = '';
+                newInput.name = 'name';
+            } else {
+                newInput.style.display = 'none';
+                newInput.required = false;
+                sel.name = 'name';
+                newInput.name = '';
+            }
         });
     }
 });
