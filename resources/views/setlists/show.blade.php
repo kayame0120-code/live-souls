@@ -95,15 +95,13 @@
         </div>
         @endif
     </div>
-</x-app-layout>
 
-@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const stabAi = document.getElementById('stab-ai');
-    const stabJson = document.getElementById('stab-json');
-    const spaneAi = document.getElementById('spane-ai');
-    const spaneJson = document.getElementById('spane-json');
+    var stabAi = document.getElementById('stab-ai');
+    var stabJson = document.getElementById('stab-json');
+    var spaneAi = document.getElementById('spane-ai');
+    var spaneJson = document.getElementById('spane-json');
     if (stabAi && stabJson && spaneAi && spaneJson) {
         stabAi.addEventListener('click', function () {
             stabAi.classList.add('on'); stabJson.classList.remove('on');
@@ -115,16 +113,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    const form = document.getElementById('setlist-ai-form');
-    const btn = document.getElementById('setlist-ai-btn');
-    const loading = document.getElementById('setlist-loading');
+    var form = document.getElementById('setlist-ai-form');
+    var btn = document.getElementById('setlist-ai-btn');
+    var loading = document.getElementById('setlist-loading');
     if (form && btn && loading) {
         form.addEventListener('submit', function () {
-            btn.disabled = true;
-            btn.style.display = 'none';
-            loading.style.display = '';
+            btn.disabled = true; btn.style.display = 'none'; loading.style.display = '';
         });
     }
 });
 </script>
-@endpush
+</x-app-layout>

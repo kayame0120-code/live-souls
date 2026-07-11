@@ -57,28 +57,29 @@
             <button type="submit" class="btn btn-primary" style="margin-top:12px;">読み込む</button>
         </form>
     </div>
-</x-app-layout>
 
-@push('scripts')
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const tabAi = document.getElementById('tab-ai');
-    const tabJson = document.getElementById('tab-json');
-    const paneAi = document.getElementById('pane-ai');
-    const paneJson = document.getElementById('pane-json');
+    var tabAi = document.getElementById('tab-ai');
+    var tabJson = document.getElementById('tab-json');
+    var paneAi = document.getElementById('pane-ai');
+    var paneJson = document.getElementById('pane-json');
 
-    tabAi.addEventListener('click', function () {
-        tabAi.classList.add('on'); tabJson.classList.remove('on');
-        paneAi.style.display = ''; paneJson.style.display = 'none';
-    });
-    tabJson.addEventListener('click', function () {
-        tabJson.classList.add('on'); tabAi.classList.remove('on');
-        paneJson.style.display = ''; paneAi.style.display = 'none';
-    });
+    if (tabAi && tabJson && paneAi && paneJson) {
+        tabAi.addEventListener('click', function () {
+            tabAi.classList.add('on'); tabJson.classList.remove('on');
+            paneAi.style.display = ''; paneJson.style.display = 'none';
+        });
+        tabJson.addEventListener('click', function () {
+            tabJson.classList.add('on'); tabAi.classList.remove('on');
+            paneJson.style.display = ''; paneAi.style.display = 'none';
+        });
+    }
 
-    const form = paneAi.querySelector('form');
-    const btn = document.getElementById('parse-btn');
-    const loading = document.getElementById('loading');
+    var form = paneAi ? paneAi.querySelector('form') : null;
+    var btn = document.getElementById('parse-btn');
+    var loading = document.getElementById('loading');
     if (form && btn && loading) {
         form.addEventListener('submit', function () {
             btn.disabled = true; btn.style.display = 'none'; loading.style.display = '';
@@ -86,4 +87,4 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-@endpush
+</x-app-layout>
