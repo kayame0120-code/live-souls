@@ -11,7 +11,7 @@
     <a href="{{ route('events.group-tours', $group) }}" class="tour-card">
         <div class="tc-body">
             <div class="tc-name">{{ $group->name }}</div>
-            <div class="tc-sub">{{ $group->tours_count }}ツアー</div>
+            <div class="tc-sub">{{ $group->tours_count > 0 ? $group->tours_count . 'ツアー' : 'ツアー未登録' }}</div>
         </div>
         <span class="tc-arrow">›</span>
     </a>

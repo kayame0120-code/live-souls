@@ -26,15 +26,21 @@ class EventController extends Controller
     /** 公演一覧＝グループカード一覧（spec v2.5 §2.2・3階層の第1層） */
     public function index()
     {
-        $groups = \App\Models\IdolGroup::withCount(['tours' => fn ($q) => $q->has('events')])
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        $myGroupIds = $user->idolGroups()->pluck('idol_groups.id');
+
+        $groupsWithTours = \App\Models\IdolGroup::withCount(['tours' => fn ($q) => $q->has('events')])
+            ->where(function ($q) use ($myGroupIds) {
+                $q->whereIn('id', $myGroupIds)
+                  ->orWhereHas('tours', fn ($tq) => $tq->has('events'));
+            })
             ->orderBy('name')
-            ->get()
-            ->filter(fn ($g) => $g->tours_count > 0)
-            ->values();
+            ->get();
 
         $hasUncategorized = Tour::whereNull('idol_group_id')->has('events')->exists();
 
-        return view('events.index', compact('groups', 'hasUncategorized'));
+        return view('events.index', ['groups' => $groupsWithTours, 'hasUncategorized' => $hasUncategorized]);
     }
 
     /** 第2階層: グループ内ツアー一覧 */
