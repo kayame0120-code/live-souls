@@ -17,7 +17,7 @@ class TourDeadline extends Model
     protected function casts(): array
     {
         return [
-            'application_deadline' => 'datetime',
+            'application_deadline' => 'date',
             'announce_date' => 'date',
         ];
     }

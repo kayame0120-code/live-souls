@@ -62,8 +62,8 @@
             <div style="display:flex;gap:6px;">
                 <div style="flex:1;">
                     <label style="font-size:10px;color:var(--color-ink-sub);">締切</label>
-                    <input class="f-input" type="datetime-local" name="application_deadline"
-                           value="{{ optional($dl->application_deadline)->format('Y-m-d\TH:i') }}" style="font-size:11px;">
+                    <input class="f-input" type="date" name="application_deadline"
+                           value="{{ optional($dl->application_deadline)->format('Y-m-d') }}" style="font-size:11px;">
                 </div>
                 <div style="flex:1;">
                     <label style="font-size:10px;color:var(--color-ink-sub);">発表</label>
@@ -91,7 +91,7 @@
             <div style="display:flex;gap:8px;">
                 <div style="flex:1;">
                     <label style="font-size:10px;color:var(--color-ink-sub);">申込締切</label>
-                    <input class="f-input" type="datetime-local" name="application_deadline" style="font-size:12px;">
+                    <input class="f-input" type="date" name="application_deadline" style="font-size:12px;">
                 </div>
                 <div style="flex:1;">
                     <label style="font-size:10px;color:var(--color-ink-sub);">発表日</label>

@@ -13,7 +13,7 @@
         @if($dl->label)<strong>{{ $dl->label }}</strong> — @endif
         @if($dl->application_deadline)
         <span style="color:{{ $dl->isDeadlinePassed() ? 'var(--color-ink-sub)' : '#C7414F' }}">
-            締切 {{ $dl->application_deadline->format('m.d H:i') }}{{ $dl->isDeadlinePassed() ? '（締切済）' : '' }}
+            締切 {{ $dl->application_deadline->format('m.d') }}{{ $dl->isDeadlinePassed() ? '（締切済）' : '' }}
         </span>
         @endif
         @if($dl->announce_date)
