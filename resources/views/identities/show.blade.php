@@ -134,7 +134,7 @@
         <button type="submit" class="f-danger">この名義を削除する</button>
     </form>
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const text = this.dataset.copy;

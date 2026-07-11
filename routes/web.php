@@ -42,7 +42,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/identities', [IdentityController::class, 'index'])->name('identities.index');
     Route::get('/identities/create', [IdentityController::class, 'create'])->name('identities.create');
     Route::post('/identities', [IdentityController::class, 'store'])->name('identities.store');
-    Route::get('/identities/{fcMembership}', [IdentityController::class, 'show'])->name('identities.show');
+    Route::get('/identities/{fcMembership}', [IdentityController::class, 'show'])->name('identities.show')
+        ->middleware('password.confirm');
     Route::get('/identities/{fcMembership}/edit', [IdentityController::class, 'edit'])->name('identities.edit');
     Route::put('/identities/{fcMembership}', [IdentityController::class, 'update'])->name('identities.update');
     Route::get('/identities/{fcMembership}/duplicate', [IdentityController::class, 'duplicate'])->name('identities.duplicate');
@@ -98,6 +99,17 @@ Route::middleware('auth')->group(function () {
     Route::put('/venues/{venue}/note', [VenueController::class, 'updateNote'])->name('venues.update-note');
 
     Route::resource('invitations', InvitationController::class)->only(['index', 'store', 'destroy']);
+
+    // E2E鍵管理API
+    Route::get('/api/e2e/keys', [\App\Http\Controllers\E2eKeyController::class, 'getKeys'])->name('api.e2e.keys');
+    Route::post('/api/e2e/keys', [\App\Http\Controllers\E2eKeyController::class, 'storeKeys'])->name('api.e2e.keys.store');
+    Route::put('/api/e2e/keys/rewrap', [\App\Http\Controllers\E2eKeyController::class, 'rewrapKeys'])->name('api.e2e.keys.rewrap');
+
+    // 暗号文取得API（password.confirm再認証 + レート制限）
+    Route::middleware('password.confirm')->group(function () {
+        Route::get('/api/e2e/ciphertext/{fcMembership}', [\App\Http\Controllers\E2eKeyController::class, 'getCiphertext'])
+            ->name('api.e2e.ciphertext');
+    });
 
     // 会場サジェストAPI
     Route::get('/api/venues/suggest', [VenueController::class, 'suggest'])->name('api.venues.suggest');

@@ -62,7 +62,7 @@
     @endunless
 </div>
 @unless($hideNav)
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 (function(){
     var tabs = [
         '{{ route('home') }}',

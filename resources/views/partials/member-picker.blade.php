@@ -51,7 +51,7 @@
 
 <script id="idol-groups-data" type="application/json">@json($idolGroups)</script>
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     const groups = JSON.parse(document.getElementById('idol-groups-data').textContent);
     const select = document.getElementById('idol_group_select');

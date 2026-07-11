@@ -12,7 +12,7 @@
 </div>
 @error('oshi_color')<div class="form-error">{{ $message }}</div>@enderror
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     const picker = document.getElementById('oshi-picker');
     const hidden = document.getElementById('oshi_color');

@@ -79,7 +79,7 @@
         @endif
     @endif
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     var btn = document.getElementById('toggle-add-group');
     var formWrap = document.getElementById('add-group-form');

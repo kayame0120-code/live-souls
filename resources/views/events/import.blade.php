@@ -75,7 +75,7 @@
     </div>
 
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     var tabAi = document.getElementById('tab-ai');
     var tabJson = document.getElementById('tab-json');

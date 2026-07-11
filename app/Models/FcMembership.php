@@ -32,9 +32,8 @@ class FcMembership extends Model
     protected function casts(): array
     {
         return [
-            'login_id' => 'encrypted',
+            // member_no, login_id, password はE2E暗号化(クライアント側で暗号化済みの暗号文を保存)
             'email' => 'encrypted',
-            'password' => 'encrypted',
             'joined_on' => 'date',
             'renewal_dismissed_at' => 'datetime',
         ];

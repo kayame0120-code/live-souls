@@ -104,7 +104,7 @@
         @endif
     </div>
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     var stabAi = document.getElementById('stab-ai');
     var stabJson = document.getElementById('stab-json');

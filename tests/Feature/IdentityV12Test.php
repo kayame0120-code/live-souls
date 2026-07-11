@@ -61,9 +61,9 @@ class IdentityV12Test extends TestCase
         ]));
         $membership = FcMembership::first();
 
-        $response = $this->get(route('identities.show', $membership));
+        $response = $this->withSession(['auth.password_confirmed_at' => time()])
+            ->get(route('identities.show', $membership));
         $response->assertOk();
-        // 画面本文に平文を出さない（伏字）。コピー用の data-copy 属性にのみ復号値
         $response->assertSee('data-copy="secret@example.com"', false);
         $response->assertDontSee('>secret@example.com<', false);
     }
@@ -96,9 +96,9 @@ class IdentityV12Test extends TestCase
         $attendance = $this->makeAttendance($this->user, $event, 'planned');
         $attendance->fcMemberships()->attach($membership->id, ['result' => 'won']);
 
-        $response = $this->get(route('identities.show', $membership));
+        $response = $this->withSession(['auth.password_confirmed_at' => time()])
+            ->get(route('identities.show', $membership));
         $response->assertOk()
-            // v1.3: 見出しは mockup 準拠「この名義の申込・当落」。当落一覧が出て当選率は出ない
             ->assertSee('申込・当落')
             ->assertSee('当選')
             ->assertDontSee('当選率');

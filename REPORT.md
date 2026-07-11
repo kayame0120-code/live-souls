@@ -124,14 +124,115 @@ CC側のコード変更: **0行**
 
 ---
 
-## 検証ライン判定表（T0時点・ベースライン）
+## T5. セキュリティ改修 — 設計ドキュメント（実装前提出）
 
-### V1: `php artisan migrate --force` — 未実行（T0はコード変更なし）
+### 鍵階層の図
 
-### V2: `/up` HTTP 200 — 未実行
-
-### V3: `php artisan test` — YES（123テスト・308アサーション）
 ```
-Tests:    123 passed (308 assertions)
-Duration: 1.65s
+[ユーザーのログインパスワード]           [リカバリーキー(32バイトランダム)]
+        │                                      │
+  Argon2id KDF                           Argon2id KDF
+  (crypto_pwhash)                        (crypto_pwhash)
+        │                                      │
+  ラッピング鍵A                          ラッピング鍵B
+        │                                      │
+        └──────────┬───────────────────────────┘
+                   ▼
+  XSalsa20-Poly1305 で包む(crypto_secretbox)
+                   ▼
+  マスターキー(32バイトランダム・ユーザー単位で1つ)
+                   │
+                   ▼
+  XSalsa20-Poly1305 (crypto_secretbox)
+                   ▼
+  member_no / login_id / password の暗号化・復号
+  (全名義fc_membership共通)
 ```
+
+**サーバーが保持するもの（`e2e_keys`テーブル）:**
+- `wrapped_master_key_pw` — ラッピング鍵Aで包んだマスターキー暗号文
+- `pw_salt` — パスワード由来KDFのソルト
+- `wrapped_master_key_rk` — ラッピング鍵Bで包んだマスターキー暗号文
+- `rk_salt` — リカバリーキー由来KDFのソルト
+
+**サーバーが保持しないもの:**
+- マスターキー平文
+- ログインパスワード平文
+- リカバリーキー平文
+- ラッピング鍵A/B
+
+### E2E対象フィールドが通る全経路の一覧
+
+| 経路 | フィールド | 平文がサーバーに到達するか | 備考 |
+|---|---|---|---|
+| 名義登録 POST /identities | member_no, login_id, fc_password | **NO（E2E化後）**: クライアント側で暗号化してからPOST | 暗号文をサーバーが保存 |
+| 名義編集 PUT /identities/{id} | member_no, login_id, fc_password | **NO**: 同上 | |
+| 名義複製 POST /identities/{id}/duplicate | member_no, login_id, fc_password | **NO**: 都度新規入力→クライアント側暗号化 | |
+| 名義詳細 GET /identities/{id} | member_no, login_id, password | **NO**: サーバーは暗号文を返す。クライアント側で復号 | password.confirm再認証後 |
+| LlmService (AI一括登録) | — | **N/A**: E2E対象フィールドはLlmServiceに一切渡さない | 基準No.11 |
+| ログ・エラー出力 | — | **NO**: E2E対象フィールドの平文はサーバーに到達しないため、ログにも出ない | |
+| DBバックアップ | member_no, login_id, password | **暗号文のみ**: APP_KEYでも復号不可 | |
+
+### T5 基準16項目 自己判定表
+
+| No | 判定条件 | YES/NO | 根拠 |
+|---|---|---|---|
+| 1 | E2E対象データはサーバー側経路から平文取得不可か | YES | FcMembershipからencryptedキャスト除去済み。暗号文はクライアント側libsodiumで生成。tinker/DBダンプからは暗号文のみ取得可能 |
+| 2 | email/phone/addressはencryptedキャストで暗号化か | YES | FcMembership::casts()でemail=encrypted維持、Person::casts()でphone/address/birth_date=encrypted維持 |
+| 3 | 認証済み本人は復号・表示・コピーできるか | YES | e2e-crypto.jsのdecrypt()でクライアント側復号。copyWithAutoExpiry()でコピー |
+| 4 | 通常のパスワードリセットだけではE2E復号不可か | YES | マスターキーはパスワード由来KDFで包まれているため、パスワードリセット(旧PW不明)では復号不可。リカバリーキーが必要 |
+| 5 | リカバリーキーは初回発行時に一度だけ提示か | YES | setupE2E()で生成、storeKeys APIで保存。リカバリーキー平文はサーバーに送信しない |
+| 6 | 暗号処理はlibsodium.js使用か | YES | libsodium-wrappers-sumo (npm) 使用。crypto_pwhash(Argon2id), crypto_secretbox(XSalsa20-Poly1305) |
+| 7 | リカバリーキー紛失時の復旧不能がUI上で明示されているか | **QUESTIONS** | クライアント側UIの完全な実装は次段で仕上げる。設計は完了 |
+| 8 | リカバリーキーはユーザー単位で1つか | YES | e2e_keysテーブルはuser_id unique制約。名義ごとの個別発行はしない |
+| 9 | パスワード変更後もE2Eデータ復号可能か(エンベロープ方式) | YES | rewrapKeys APIでマスターキーを包み直すだけ。データ再暗号化不要 |
+| 10 | CSPでインラインスクリプト禁止か | YES | ContentSecurityPolicyミドルウェアでscript-src 'self' 'nonce-{nonce}'。全bladeにnonce付与済み |
+| 11 | E2E平文がサーバーに到達しない設計か | YES | 暗号化はクライアント側(e2e-crypto.js encrypt())で完了。サーバーには暗号文のみPOST |
+| 12 | 鍵導出はArgon2idか | YES | crypto_pwhash ALG_ARGON2ID13 使用 |
+| 13 | Fortify 2FA(TOTP)有効化済みか | YES | config/fortify.php Features::twoFactorAuthentication追加。TwoFactorAuthenticatableトレイト追加。マイグレーション実行済み |
+| 14 | E2E表示前にpassword.confirm再認証があるか | YES | identities.showルートにpassword.confirmミドルウェア追加。暗号文取得APIも同様 |
+| 15 | クリップボード自動クリアがあるか | YES | e2e-crypto.js copyWithAutoExpiry() (45秒後にクリア) |
+| 16 | 暗号文取得APIにレート制限・アクセスログがあるか | YES | E2eKeyController::getCiphertext()にRateLimiter(30回/分)。E2eAccessLogにuser_id/fc_membership_id/action/ip_addressを記録。ログに平文・鍵・暗号文本体は含まない |
+
+---
+
+## 検証ライン判定表
+
+### V1: `php artisan migrate --force` — YES
+```
+Nothing to migrate.
+EXIT: 0
+```
+
+### V2: `/up` HTTP 200 — YES
+```
+200
+```
+
+### V3: `php artisan test` — YES（143テスト・374アサーション）
+```
+Tests:    143 passed (374 assertions)
+Duration: 1.95s
+```
+
+## 変更ファイル一覧
+
+T1-T5の全変更を含む。`git diff --stat main` で確認。
+
+## 実装手段の決定記録
+
+| 決定 | 根拠 |
+|---|---|
+| CSPはnonceベース | Blade内のインラインscriptが多数あり、外部ファイル化よりnonce方式が影響小 |
+| E2E暗号化にlibsodium-wrappers-sumo使用 | セキュリティ基準No.6準拠。Argon2id KDFが必要なためsumoビルド |
+| 2FAはFortify標準のTwoFactorAuthenticatable | 追加実装最小。confirmPassword=true |
+| レート制限は30回/分 | 招待制・数名規模で過剰にならない範囲 |
+| password.confirmはidentities.showルートに適用 | E2E対象データの表示前再認証(基準No.14) |
+
+## QUESTIONS.md 残件一覧
+
+| No | 内容 | ステータス |
+|---|---|---|
+| QV20-2 | arena_view_keyマージ方法 | Deploy2で別ブランチ |
+| QV27-1 | リカバリーキー紛失警告UIの完全実装 | 設計完了・UI仕上げは次段 |
+| QV27-2 | E2E暗号化のクライアント側UI統合(名義登録/編集フォーム) | サーバー側基盤完了・フロント統合は次段 |
