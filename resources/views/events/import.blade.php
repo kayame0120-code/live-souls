@@ -44,11 +44,13 @@
             <div class="d-h">JSON形式</div>
             <code style="font-size:10px;display:block;white-space:pre;overflow-x:auto;">{"tour":"ツアー名","events":[{"event_label":null,"event_date":"YYYY-MM-DD","start_time":"HH:MM","venue":"会場名"}]}</code>
         </div>
-        <form method="POST" action="{{ route('events.import.json') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('events.import.json') }}" enctype="multipart/form-data" id="json-form">
             @csrf
-            <div class="f-field">
-                <label>JSONファイル（複数選択可）</label>
-                <input class="f-input" type="file" name="json_files[]" accept=".json,.txt" multiple>
+            <div id="drop-zone" style="border:2px dashed var(--color-keisen-strong);border-radius:12px;padding:24px;text-align:center;margin-bottom:12px;cursor:pointer;transition:border-color .2s,background .2s;">
+                <div style="font-size:13px;font-weight:600;margin-bottom:4px;">ここにJSONファイルをドロップ</div>
+                <div style="font-size:11px;color:var(--color-ink-sub);">または クリックでファイル選択（複数可）</div>
+                <input type="file" name="json_files[]" accept=".json,.txt" multiple style="display:none;" id="json-file-input">
+                <div id="drop-file-list" style="margin-top:8px;font-size:12px;color:var(--color-ink);"></div>
             </div>
             <div class="f-field">
                 <label>または JSON文字列を貼り付け</label>
@@ -84,6 +86,41 @@ document.addEventListener('DOMContentLoaded', function () {
         form.addEventListener('submit', function () {
             btn.disabled = true; btn.style.display = 'none'; loading.style.display = '';
         });
+    }
+
+    // ページ全体のドロップを防止（ファイルがブラウザで開くのを阻止）
+    document.addEventListener('dragover', function (e) { e.preventDefault(); });
+    document.addEventListener('drop', function (e) { e.preventDefault(); });
+
+    // ドロップゾーン
+    var dropZone = document.getElementById('drop-zone');
+    var fileInput = document.getElementById('json-file-input');
+    var fileList = document.getElementById('drop-file-list');
+    if (dropZone && fileInput) {
+        dropZone.addEventListener('click', function () { fileInput.click(); });
+        dropZone.addEventListener('dragover', function (e) {
+            e.preventDefault(); e.stopPropagation();
+            dropZone.style.borderColor = 'var(--color-oshi, #C7414F)';
+            dropZone.style.background = 'rgba(199,65,79,0.05)';
+        });
+        dropZone.addEventListener('dragleave', function () {
+            dropZone.style.borderColor = ''; dropZone.style.background = '';
+        });
+        dropZone.addEventListener('drop', function (e) {
+            e.preventDefault(); e.stopPropagation();
+            dropZone.style.borderColor = ''; dropZone.style.background = '';
+            fileInput.files = e.dataTransfer.files;
+            showFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', function () { showFiles(this.files); });
+        function showFiles(files) {
+            fileList.textContent = '';
+            for (var i = 0; i < files.length; i++) {
+                var d = document.createElement('div');
+                d.textContent = '📄 ' + files[i].name;
+                fileList.appendChild(d);
+            }
+        }
     }
 });
 </script>
