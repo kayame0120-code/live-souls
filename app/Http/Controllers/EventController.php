@@ -201,6 +201,7 @@ class EventController extends Controller
             'rows' => $result['events'] ?? [],
             'unknown' => [],
             'tour' => $result['tour'] ?? '',
+            'deadlines' => $result['deadlines'] ?? [],
         ]);
     }
 
@@ -239,6 +240,10 @@ class EventController extends Controller
             'rows.*.event_date' => ['nullable', 'date'],
             'rows.*.start_time' => ['nullable', 'date_format:H:i'],
             'rows.*.venue_name' => ['nullable', 'string', 'max:255'],
+            'deadlines' => ['nullable', 'array'],
+            'deadlines.*.label' => ['nullable', 'string', 'max:255'],
+            'deadlines.*.application_deadline' => ['nullable', 'date'],
+            'deadlines.*.announce_date' => ['nullable', 'date'],
         ], [
             'tour_name.required' => 'ツアー名を入力してください',
         ]);
@@ -252,11 +257,9 @@ class EventController extends Controller
         $imported = 0;
 
         DB::transaction(function () use ($validated, &$imported) {
-            // ツアー名解決（既存照合／無ければ新規作成・venue名寄せと同型）
             $tourId = $this->service->resolveTourId(['tour_name' => $validated['tour_name']]);
 
             foreach ($validated['rows'] as $row) {
-                // 必須未充足（event_date）・除外行は取込対象外
                 if (empty($row['include']) || empty($row['event_date'])) {
                     continue;
                 }
@@ -270,6 +273,18 @@ class EventController extends Controller
 
                 $this->service->create($tourId, $eventLabel, $row['event_date'], $startTime, $venueId);
                 $imported++;
+            }
+
+            foreach ($validated['deadlines'] ?? [] as $dl) {
+                if (empty($dl['application_deadline']) && empty($dl['announce_date'])) {
+                    continue;
+                }
+                \App\Models\TourDeadline::create([
+                    'tour_id' => $tourId,
+                    'label' => $dl['label'] ?? null,
+                    'application_deadline' => $dl['application_deadline'] ?? null,
+                    'announce_date' => $dl['announce_date'] ?? null,
+                ]);
             }
         });
 

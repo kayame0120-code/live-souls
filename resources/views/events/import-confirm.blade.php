@@ -44,7 +44,24 @@
         </div>
         @endforeach
 
-        <button type="submit" class="btn btn-primary" style="margin-top:18px;">{{ count(array_filter($rows, fn($r) => !empty($r['event_date']))) }}件を登録する</button>
+        @if(!empty($deadlines))
+        <div class="sec-label" style="margin-top:18px;">申込締切・当落発表日</div>
+        @foreach($deadlines as $j => $dl)
+        <div class="d-block" style="margin-bottom:6px;padding:10px 14px;">
+            <input type="hidden" name="deadlines[{{ $j }}][label]" value="{{ $dl['label'] ?? '' }}">
+            <input type="hidden" name="deadlines[{{ $j }}][application_deadline]" value="{{ $dl['application_deadline'] ?? '' }}">
+            <input type="hidden" name="deadlines[{{ $j }}][announce_date]" value="{{ $dl['announce_date'] ?? '' }}">
+            <div style="font-size:13px;font-weight:600;">{{ $dl['label'] ?? '先行名なし' }}</div>
+            <div style="font-size:12px;color:var(--color-ink-sub);">
+                @if(!empty($dl['application_deadline']))締切 {{ $dl['application_deadline'] }}@endif
+                @if(!empty($dl['announce_date'])) ・発表 {{ $dl['announce_date'] }}@endif
+            </div>
+        </div>
+        @endforeach
+        @endif
+
+        @php $eventCount = count(array_filter($rows, fn($r) => !empty($r['event_date']))); @endphp
+        <button type="submit" class="btn btn-primary" style="margin-top:18px;">{{ $eventCount }}件の公演{{ !empty($deadlines) ? '＋締切' . count($deadlines) . '件' : '' }}を登録する</button>
     </form>
     @endif
 </x-app-layout>

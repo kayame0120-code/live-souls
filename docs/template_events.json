@@ -19,5 +19,17 @@
       "start_time": "18:00",
       "venue": "東京ドーム"
     }
+  ],
+  "deadlines": [
+    {
+      "label": "FC先行",
+      "application_deadline": "2026-07-20 12:00",
+      "announce_date": "2026-07-28"
+    },
+    {
+      "label": "一般",
+      "application_deadline": "2026-08-01 23:59",
+      "announce_date": "2026-08-10"
+    }
   ]
 }
