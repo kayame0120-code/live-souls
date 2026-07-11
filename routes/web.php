@@ -71,6 +71,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/events', [EventController::class, 'index'])->name('events.index');
     Route::get('/events/import', [EventController::class, 'importForm'])->name('events.import');
     Route::post('/events/import/parse', [EventController::class, 'importParse'])->name('events.import.parse');
+    Route::post('/events/import/json', [EventController::class, 'importJson'])->name('events.import.json');
     Route::post('/events/import', [EventController::class, 'importStore'])->name('events.import.store');
     Route::get('/events/{event}/edit', [EventController::class, 'edit'])->name('events.edit');
     Route::put('/events/{event}', [EventController::class, 'update'])->name('events.update');
@@ -81,6 +82,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/tours/{tour}/setlists/items', [SetlistController::class, 'addItem'])->name('setlists.add-item');
     Route::delete('/tours/{tour}/setlists/items/{item}', [SetlistController::class, 'destroyItem'])->name('setlists.destroy-item');
     Route::post('/tours/{tour}/setlists/ai-parse', [SetlistController::class, 'aiParse'])->name('setlists.ai-parse');
+    Route::post('/tours/{tour}/setlists/json', [SetlistController::class, 'jsonImport'])->name('setlists.json-import');
     Route::post('/tours/{tour}/setlists/bulk', [SetlistController::class, 'bulkStore'])->name('setlists.bulk-store');
 
     // 参戦写真（閲覧=全メンバー / 削除=投稿者のみ）

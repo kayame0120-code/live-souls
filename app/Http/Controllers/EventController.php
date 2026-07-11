@@ -177,6 +177,33 @@ class EventController extends Controller
         return view('events.import');
     }
 
+    public function importJson(Request $request)
+    {
+        $json = null;
+
+        if ($request->hasFile('json_file')) {
+            $json = $request->file('json_file')->get();
+        } elseif ($request->filled('json_text')) {
+            $json = $request->input('json_text');
+        }
+
+        if (! $json) {
+            return back()->with('error', 'JSONファイルまたはJSON文字列を入力してください');
+        }
+
+        $result = json_decode($json, true);
+
+        if (! is_array($result) || ! isset($result['events'])) {
+            return back()->with('error', 'JSONの形式が正しくありません。{"tour":"...","events":[...]} の形式にしてください');
+        }
+
+        return view('events.import-confirm', [
+            'rows' => $result['events'] ?? [],
+            'unknown' => [],
+            'tour' => $result['tour'] ?? '',
+        ]);
+    }
+
     public function importParse(Request $request)
     {
         $validated = $request->validate([

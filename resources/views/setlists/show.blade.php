@@ -46,35 +46,53 @@
         </form>
     </div>
 
-    {{-- AI一括登録 --}}
+    {{-- 一括登録（AI / JSON） --}}
     <div class="d-block" style="margin-top:16px;">
-        <div class="d-h">セトリを貼って一括登録</div>
+        <div class="d-h">セトリを一括登録</div>
         @if(session('error'))
         <div class="warn">{{ session('error') }}</div>
         @endif
+
+        <div class="fc-tabs" style="margin-bottom:10px;">
+            <button type="button" class="fc-tab on" id="stab-ai">AI解析</button>
+            <button type="button" class="fc-tab" id="stab-json">JSON貼り付け</button>
+        </div>
 
         @if(isset($aiItems))
         <form method="POST" action="{{ route('setlists.bulk-store', $tour) }}">
             @csrf
             @foreach($aiItems as $i => $item)
             <div class="imp-row" style="display:flex;gap:8px;align-items:center;padding:6px 0;">
-                <input type="checkbox" name="items[{{ $i }}][include]" value="1" checked>
-                <input class="f-input" type="text" name="items[{{ $i }}][display_label]" value="{{ $item['note'] ?? '' }}" style="width:50px;text-align:center;font-size:12px;" placeholder="EN">
-                <input class="f-input" type="text" name="items[{{ $i }}][title]" value="{{ $item['title'] ?? '' }}" style="flex:1;">
+                <input type="hidden" name="items[{{ $i }}][include]" value="1">
+                <span style="min-width:24px;text-align:center;font-size:12px;font-weight:600;">{{ $item['order'] ?? $i + 1 }}</span>
+                <input type="hidden" name="items[{{ $i }}][display_label]" value="{{ $item['note'] ?? '' }}">
+                <input type="hidden" name="items[{{ $i }}][title]" value="{{ $item['title'] ?? '' }}">
+                <span style="flex:1;font-size:13px;">{{ $item['title'] ?? '' }}</span>
+                @if(!empty($item['note']))<span style="font-size:11px;color:var(--color-ink-sub);">{{ $item['note'] }}</span>@endif
             </div>
             @endforeach
-            <button type="submit" class="btn btn-primary" style="margin-top:12px;">チェックした曲を登録</button>
+            <button type="submit" class="btn btn-primary" style="margin-top:12px;">{{ count($aiItems) }}曲を登録する</button>
         </form>
         @else
-        <form method="POST" action="{{ route('setlists.ai-parse', $tour) }}" id="setlist-ai-form">
-            @csrf
-            <textarea class="f-input" name="text" rows="5" placeholder="セットリストのテキストを貼り付け" required>{{ old('text') }}</textarea>
-            <button type="submit" class="btn btn-primary" id="setlist-ai-btn" style="margin-top:8px;">AIで解析する</button>
-            <div id="setlist-loading" style="display:none;text-align:center;padding:16px;">
-                <div style="font-size:13px;font-weight:600;">AI解析中...</div>
-                <div style="font-size:11px;color:var(--color-ink-sub);margin-top:4px;">少々お待ちください</div>
-            </div>
-        </form>
+        <div id="spane-ai">
+            <form method="POST" action="{{ route('setlists.ai-parse', $tour) }}" id="setlist-ai-form">
+                @csrf
+                <textarea class="f-input" name="text" rows="5" placeholder="セットリストのテキストを貼り付け" required>{{ old('text') }}</textarea>
+                <button type="submit" class="btn btn-primary" id="setlist-ai-btn" style="margin-top:8px;">AI解析する</button>
+                <div id="setlist-loading" style="display:none;text-align:center;padding:16px;">
+                    <div style="font-size:13px;font-weight:600;">AI解析中...</div>
+                </div>
+            </form>
+        </div>
+        <div id="spane-json" style="display:none;">
+            <form method="POST" action="{{ route('setlists.json-import', $tour) }}" enctype="multipart/form-data">
+                @csrf
+                <div class="f-field" style="margin-bottom:6px;">
+                    <textarea class="f-input" name="json_text" rows="5" placeholder='{"items":[{"order":1,"title":"曲名","note":null}]}'>{{ old('json_text') }}</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top:8px;">読み込む</button>
+            </form>
+        </div>
         @endif
     </div>
 </x-app-layout>
@@ -82,6 +100,21 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const stabAi = document.getElementById('stab-ai');
+    const stabJson = document.getElementById('stab-json');
+    const spaneAi = document.getElementById('spane-ai');
+    const spaneJson = document.getElementById('spane-json');
+    if (stabAi && stabJson && spaneAi && spaneJson) {
+        stabAi.addEventListener('click', function () {
+            stabAi.classList.add('on'); stabJson.classList.remove('on');
+            spaneAi.style.display = ''; spaneJson.style.display = 'none';
+        });
+        stabJson.addEventListener('click', function () {
+            stabJson.classList.add('on'); stabAi.classList.remove('on');
+            spaneJson.style.display = ''; spaneAi.style.display = 'none';
+        });
+    }
+
     const form = document.getElementById('setlist-ai-form');
     const btn = document.getElementById('setlist-ai-btn');
     const loading = document.getElementById('setlist-loading');

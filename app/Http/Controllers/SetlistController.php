@@ -59,6 +59,26 @@ class SetlistController extends Controller
             ->with('success', '曲を削除しました');
     }
 
+    public function jsonImport(Request $request, Tour $tour)
+    {
+        $json = $request->input('json_text');
+
+        if (! $json) {
+            return back()->with('error', 'JSON文字列を入力してください');
+        }
+
+        $result = json_decode($json, true);
+
+        if (! is_array($result) || ! isset($result['items'])) {
+            return back()->with('error', 'JSONの形式が正しくありません。{"items":[...]} の形式にしてください');
+        }
+
+        $tour->load('setlists.items');
+        $aiItems = $result['items'];
+
+        return view('setlists.show', compact('tour', 'aiItems'));
+    }
+
     public function aiParse(Request $request, Tour $tour)
     {
         $validated = $request->validate([
