@@ -86,7 +86,8 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL'),
+            // Fly.io は DATABASE_URL を注入する（deploy_runbook）。DB_URL があればそちらを優先
+            'url' => env('DB_URL', env('DATABASE_URL')),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),
