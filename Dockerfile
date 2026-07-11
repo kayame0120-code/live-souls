@@ -48,7 +48,8 @@ WORKDIR /var/www/html
 RUN npm ci && npm run build && rm -rf node_modules
 RUN composer install --optimize-autoloader --no-dev
 RUN mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache
-RUN php artisan optimize:clear
+# optimize:clear は置かない（.env/ローカルキャッシュは.dockerignoreで除外済みのクリーンイメージ。
+# 実行するとcache:clearがDB接続を要求してビルドが落ちる）
 # chown は単独RUNにする（前段の失敗でスキップされると www-data が書き込めず全リクエスト500になる）
 RUN chown -R www-data:www-data /var/www/html
 RUN echo "MAILTO=\"\"\n* * * * * www-data /usr/bin/php /var/www/html/artisan schedule:run" > /etc/cron.d/laravel; \

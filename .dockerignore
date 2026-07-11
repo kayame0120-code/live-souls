@@ -3,3 +3,10 @@ node_modules
 tests
 database/*.sqlite
 database/*.sqlite.*
+.env
+.env.*
+bootstrap/cache/*.php
+storage/framework/views/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/logs/*
