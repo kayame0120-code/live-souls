@@ -109,10 +109,14 @@ class TourController extends Controller
             'idol_group_id' => ['nullable', 'exists:idol_groups,id'],
         ]);
 
+        $previousGroupId = $tour->idol_group_id;
         $tour->update(['idol_group_id' => $validated['idol_group_id'] ?: null]);
 
-        return redirect()->route('tours.show', $tour)
-            ->with('success', '所属グループを変更しました');
+        $redirect = $previousGroupId
+            ? redirect()->route('events.group-tours', $previousGroupId)
+            : redirect()->route('events.uncategorized');
+
+        return $redirect->with('success', '所属グループを変更しました');
     }
 
     public function destroy(Tour $tour)
