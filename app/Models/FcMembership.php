@@ -5,14 +5,22 @@ namespace App\Models;
 use App\Models\Scopes\UserScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Crypt;
 
 #[ScopedBy(UserScope::class)]
 class FcMembership extends Model
 {
+    /**
+     * E2E暗号文の識別プレフィックス（セキュリティ正本・エンベロープ方式）。
+     * クライアント側で暗号化された値はこのプレフィックス付きで届き、
+     * サーバーは復号できない（そのまま保存・そのまま返却）。
+     */
+    public const E2E_PREFIX = 'e2e:';
     protected $fillable = [
         'user_id',
         'person_id',
@@ -32,11 +40,62 @@ class FcMembership extends Model
     protected function casts(): array
     {
         return [
-            // member_no, login_id, password はE2E暗号化(クライアント側で暗号化済みの暗号文を保存)
             'email' => 'encrypted',
             'joined_on' => 'date',
             'renewal_dismissed_at' => 'datetime',
         ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | E2E対象3項目（member_no / login_id / password）の読み出し
+    |--------------------------------------------------------------------------
+    | 3形式が混在しうる:
+    |  1. E2E暗号文（"e2e:"プレフィックス）→ そのまま返す（クライアントで復号）
+    |  2. レガシーAPP_KEY暗号文（Crypt形式）→ サーバー側で復号して返す
+    |  3. レガシー平文（旧member_no等）→ そのまま返す
+    | 書き込み時の暗号化はIdentityService::protectE2eField()が担う。
+    */
+
+    /** E2E/レガシー両対応の読み出し（復号失敗時は生値を返す） */
+    private static function readProtectedField(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return $value;
+        }
+        if (str_starts_with($value, self::E2E_PREFIX)) {
+            return $value; // E2E暗号文: サーバーは復号不能・クライアントに委ねる
+        }
+        // レガシーAPP_KEY暗号文（base64 JSON = "eyJ..."で始まる）の復号を試みる
+        if (str_starts_with($value, 'eyJ')) {
+            try {
+                return Crypt::decryptString($value);
+            } catch (\Throwable) {
+                return $value;
+            }
+        }
+        return $value; // レガシー平文
+    }
+
+    protected function memberNo(): Attribute
+    {
+        return Attribute::make(get: fn ($value) => self::readProtectedField($value));
+    }
+
+    protected function loginId(): Attribute
+    {
+        return Attribute::make(get: fn ($value) => self::readProtectedField($value));
+    }
+
+    protected function password(): Attribute
+    {
+        return Attribute::make(get: fn ($value) => self::readProtectedField($value));
+    }
+
+    /** このフィールド値がE2E暗号文か */
+    public static function isE2eValue(?string $value): bool
+    {
+        return $value !== null && str_starts_with($value, self::E2E_PREFIX);
     }
 
     public function user(): BelongsTo

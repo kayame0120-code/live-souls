@@ -93,10 +93,10 @@ class IdentityController extends Controller
             'group_id' => $validated['group_id'],
             'artist_name' => $member->name,
             'label' => $validated['label'] ?? null,
-            'member_no' => $validated['member_no'] ?? null,
-            'login_id' => $validated['login_id'] ?? null,
+            'member_no' => IdentityService::protectE2eField($validated['member_no'] ?? null),
+            'login_id' => IdentityService::protectE2eField($validated['login_id'] ?? null),
             'email' => $validated['email'] ?? null,
-            'password' => $validated['fc_password'] ?? null,
+            'password' => IdentityService::protectE2eField($validated['fc_password'] ?? null),
             'joined_on' => isset($validated['joined_month_input'])
                 ? JoinedMonthConverter::toDate($validated['joined_month_input'])
                 : null,

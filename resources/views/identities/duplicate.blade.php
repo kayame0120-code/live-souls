@@ -21,7 +21,7 @@
         @endif
     </div>
 
-    <form method="POST" action="{{ route('identities.store-duplicate', $fcMembership) }}">
+    <form method="POST" action="{{ route('identities.store-duplicate', $fcMembership) }}" data-e2e-form>
         @csrf
 
         {{-- 名義の基本 --}}

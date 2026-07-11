@@ -7,6 +7,7 @@ use App\Models\E2eKey;
 use App\Models\FcMembership;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 
 class E2eKeyController extends Controller
@@ -23,6 +24,31 @@ class E2eKeyController extends Controller
             'has_keys' => true,
             'wrapped_master_key_pw' => $key->wrapped_master_key_pw,
             'pw_salt' => $key->pw_salt,
+            // リカバリーキーによる復元フロー用（暗号文のみ・鍵平文は含まない）
+            'wrapped_master_key_rk' => $key->wrapped_master_key_rk,
+            'rk_salt' => $key->rk_salt,
+        ]);
+    }
+
+    /**
+     * E2Eセットアップ時のログインパスワード検証。
+     * KDFに使うパスワードのタイポで鍵が開かなくなる事故を防ぐ
+     * （ログインパスワード自体はサーバー既知のためNo.11の対象外）。
+     */
+    public function verifyPassword(Request $request)
+    {
+        $rateLimitKey = 'e2e-verify-pw:' . Auth::id();
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
+            return response()->json(['error' => '試行回数が多すぎます。しばらくしてから再度お試しください。'], 429);
+        }
+        RateLimiter::hit($rateLimitKey, 60);
+
+        $validated = $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        return response()->json([
+            'valid' => Hash::check($validated['password'], Auth::user()->password),
         ]);
     }
 

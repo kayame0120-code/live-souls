@@ -104,6 +104,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/e2e/keys', [\App\Http\Controllers\E2eKeyController::class, 'getKeys'])->name('api.e2e.keys');
     Route::post('/api/e2e/keys', [\App\Http\Controllers\E2eKeyController::class, 'storeKeys'])->name('api.e2e.keys.store');
     Route::put('/api/e2e/keys/rewrap', [\App\Http\Controllers\E2eKeyController::class, 'rewrapKeys'])->name('api.e2e.keys.rewrap');
+    Route::post('/api/e2e/verify-password', [\App\Http\Controllers\E2eKeyController::class, 'verifyPassword'])->name('api.e2e.verify-password');
 
     // 暗号文取得API（password.confirm再認証 + レート制限）
     Route::middleware('password.confirm')->group(function () {

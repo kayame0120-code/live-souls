@@ -1,7 +1,7 @@
 <x-app-layout :hide-fab="true" :hide-nav="true">
     <a href="{{ route('identities.show', $fcMembership) }}" class="detail-back">‹ 編集をやめる</a>
 
-    <form method="POST" action="{{ route('identities.update', $fcMembership) }}">
+    <form method="POST" action="{{ route('identities.update', $fcMembership) }}" data-e2e-form>
         @csrf @method('PUT')
 
         {{-- 名義の基本 --}}

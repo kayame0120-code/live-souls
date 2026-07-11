@@ -1,7 +1,7 @@
 <x-app-layout :hide-fab="true" :hide-nav="true">
     <a href="{{ route('identities.index') }}" class="detail-back">‹ 名義へ戻る</a>
 
-    <form method="POST" action="{{ route('identities.store') }}">
+    <form method="POST" action="{{ route('identities.store') }}" data-e2e-form>
         @csrf
 
         {{-- 名義の基本 --}}
