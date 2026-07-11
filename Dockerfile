@@ -47,7 +47,7 @@ COPY . /var/www/html
 WORKDIR /var/www/html
 RUN npm ci && npm run build && rm -rf node_modules
 RUN composer install --optimize-autoloader --no-dev \
-    && mkdir -p storage/logs \
+    && mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache \
     && php artisan optimize:clear \
     && chown -R www-data:www-data /var/www/html \
     && echo "MAILTO=\"\"\n* * * * * www-data /usr/bin/php /var/www/html/artisan schedule:run" > /etc/cron.d/laravel; \
