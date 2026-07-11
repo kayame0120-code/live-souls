@@ -66,11 +66,32 @@
             <button type="submit" class="btn btn-primary" style="margin-top:12px;">チェックした曲を登録</button>
         </form>
         @else
-        <form method="POST" action="{{ route('setlists.ai-parse', $tour) }}">
+        <form method="POST" action="{{ route('setlists.ai-parse', $tour) }}" id="setlist-ai-form">
             @csrf
             <textarea class="f-input" name="text" rows="5" placeholder="セットリストのテキストを貼り付け" required>{{ old('text') }}</textarea>
-            <button type="submit" class="btn btn-primary" style="margin-top:8px;">AIで解析する</button>
+            <button type="submit" class="btn btn-primary" id="setlist-ai-btn" style="margin-top:8px;">AIで解析する</button>
+            <div id="setlist-loading" style="display:none;text-align:center;padding:16px;">
+                <div style="font-size:13px;font-weight:600;">AI解析中...</div>
+                <div style="font-size:11px;color:var(--color-ink-sub);margin-top:4px;">少々お待ちください</div>
+            </div>
         </form>
         @endif
     </div>
 </x-app-layout>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('setlist-ai-form');
+    const btn = document.getElementById('setlist-ai-btn');
+    const loading = document.getElementById('setlist-loading');
+    if (form && btn && loading) {
+        form.addEventListener('submit', function () {
+            btn.disabled = true;
+            btn.style.display = 'none';
+            loading.style.display = '';
+        });
+    }
+});
+</script>
+@endpush

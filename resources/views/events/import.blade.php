@@ -22,6 +22,27 @@
                   id="text" name="text" rows="8"
                   placeholder="例:&#10;2026/09/12 横浜アリーナ Prism of Night&#10;2026/09/13 横浜アリーナ Prism of Night">{{ old('text') }}</textarea>
         @error('text')<div class="form-error">{{ $message }}</div>@enderror
-        <button type="submit" class="btn btn-primary" style="margin-top:18px;">解析する</button>
+        <button type="submit" class="btn btn-primary" id="parse-btn" style="margin-top:18px;">解析する</button>
+        <div id="loading" style="display:none;text-align:center;padding:24px;">
+            <div style="font-size:14px;font-weight:600;">AI解析中...</div>
+            <div style="font-size:12px;color:var(--color-ink-sub);margin-top:6px;">初回は30秒ほどかかる場合があります</div>
+        </div>
     </form>
 </x-app-layout>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('form');
+    const btn = document.getElementById('parse-btn');
+    const loading = document.getElementById('loading');
+    if (form && btn && loading) {
+        form.addEventListener('submit', function () {
+            btn.disabled = true;
+            btn.style.display = 'none';
+            loading.style.display = '';
+        });
+    }
+});
+</script>
+@endpush
