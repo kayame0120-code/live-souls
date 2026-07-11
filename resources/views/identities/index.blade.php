@@ -7,11 +7,12 @@
     @else
         {{-- グループタブ + 右端に追加ボタン --}}
         <div style="display:flex;align-items:center;gap:0;">
-            <div class="fc-tabs" style="flex:1;min-width:0;">
+            <div class="fc-tabs" id="group-tabs" style="flex:1;min-width:0;">
                 <a href="{{ route('identities.index') }}" class="fc-tab {{ !$currentGroupId ? 'on' : '' }}">すべて</a>
                 @foreach($myGroups as $ig)
                 <a href="{{ route('identities.index', ['group' => $ig->id]) }}"
-                   class="fc-tab {{ $currentGroupId == $ig->id ? 'on' : '' }}">{{ $ig->name }}</a>
+                   class="fc-tab {{ $currentGroupId == $ig->id ? 'on' : '' }}"
+                   draggable="true" data-group-id="{{ $ig->id }}">{{ $ig->name }}</a>
                 @endforeach
             </div>
             <button type="button" class="fc-tab add" id="toggle-add-group" style="flex:none;">＋</button>
@@ -85,6 +86,45 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btn && formWrap) {
         btn.addEventListener('click', function () {
             formWrap.style.display = formWrap.style.display === 'none' ? '' : 'none';
+        });
+    }
+
+    // ドラッグ&ドロップ並び替え
+    var tabs = document.getElementById('group-tabs');
+    if (tabs) {
+        var dragging = null;
+        tabs.addEventListener('dragstart', function (e) {
+            if (!e.target.dataset.groupId) return;
+            dragging = e.target;
+            e.target.style.opacity = '0.4';
+        });
+        tabs.addEventListener('dragend', function (e) {
+            if (dragging) dragging.style.opacity = '';
+            dragging = null;
+        });
+        tabs.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            var target = e.target.closest('[data-group-id]');
+            if (!target || target === dragging) return;
+            var rect = target.getBoundingClientRect();
+            var mid = rect.left + rect.width / 2;
+            if (e.clientX < mid) {
+                tabs.insertBefore(dragging, target);
+            } else {
+                tabs.insertBefore(dragging, target.nextSibling);
+            }
+        });
+        tabs.addEventListener('drop', function (e) {
+            e.preventDefault();
+            var order = [];
+            tabs.querySelectorAll('[data-group-id]').forEach(function (el) {
+                order.push(parseInt(el.dataset.groupId));
+            });
+            fetch('{{ route("idol-groups.reorder") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                body: JSON.stringify({ order: order })
+            });
         });
     }
 

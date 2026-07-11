@@ -45,7 +45,7 @@ class User extends Authenticatable
 
     public function idolGroups(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsToMany(IdolGroup::class, 'user_idol_groups')->orderBy('name');
+        return $this->belongsToMany(IdolGroup::class, 'user_idol_groups')->withPivot('sort_order')->orderByPivot('sort_order');
     }
 
     public function attendances(): HasMany

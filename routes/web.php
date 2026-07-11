@@ -35,8 +35,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/attendance-identities/{pivotId}/result', [AttendanceController::class, 'updateResult'])
         ->name('attendance-identities.update-result');
 
-    // グループ（idol_groups）追加
+    // グループ（idol_groups）追加・並べ替え
     Route::post('/idol-groups', [\App\Http\Controllers\IdolGroupController::class, 'store'])->name('idol-groups.store');
+    Route::post('/idol-groups/reorder', [\App\Http\Controllers\IdolGroupController::class, 'reorder'])->name('idol-groups.reorder');
 
     Route::get('/identities', [IdentityController::class, 'index'])->name('identities.index');
     Route::get('/identities/create', [IdentityController::class, 'create'])->name('identities.create');
