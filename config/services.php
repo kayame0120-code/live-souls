@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    // Places API 会場オートフィル（spec §5-11）。未設定でも動作（手入力フォールバック）
+    'google_places' => [
+        'key' => env('GOOGLE_PLACES_API_KEY'),
+    ],
+
 ];

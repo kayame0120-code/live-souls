@@ -1,0 +1,12 @@
+{
+  "tour": "ツアー名をここに入れる",
+  "events": [
+    { "event_label": null, "event_date": "2026-08-15", "start_time": "17:00", "venue": "京セラドーム大阪" },
+    { "event_label": "昼公演", "event_date": "2026-08-22", "start_time": "14:00", "venue": "東京ドーム" },
+    { "event_label": "夜公演", "event_date": "2026-08-22", "start_time": "18:00", "venue": "東京ドーム" }
+  ],
+  "deadlines": [
+    { "label": "FC先行", "application_deadline": "2026-07-20", "announce_date": "2026-07-28" },
+    { "label": "一般", "application_deadline": "2026-08-01", "announce_date": "2026-08-10" }
+  ]
+}

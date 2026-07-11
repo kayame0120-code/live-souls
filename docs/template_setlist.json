@@ -1,0 +1,11 @@
+{
+  "items": [
+    { "order": 1, "title": "曲名1", "note": null },
+    { "order": 2, "title": "曲名2", "note": null },
+    { "order": 3, "title": "曲名3", "note": "メドレー" },
+    { "order": 4, "title": "曲名4", "note": "メドレー" },
+    { "order": 5, "title": "曲名5", "note": null },
+    { "order": 6, "title": "曲名6", "note": "アンコール" },
+    { "order": 7, "title": "曲名7", "note": "アンコール" }
+  ]
+}

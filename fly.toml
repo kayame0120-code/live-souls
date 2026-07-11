@@ -2,7 +2,7 @@
 # 使い方: app名を新アプリ名に書き換えてから fly deploy する
 # （READMEの初回セットアップ手順を参照）
 
-app = 'CHANGE-ME'
+app = 'live-souls'
 primary_region = 'nrt'
 console_command = 'php /var/www/html/artisan tinker'
 

@@ -1,0 +1,120 @@
+<?php
+
+namespace App\Services\Llm;
+
+use App\Contracts\LlmService;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Http;
+use RuntimeException;
+
+class OpenAiLlmService implements LlmService
+{
+    private string $apiKey;
+    private string $model;
+
+    public function __construct()
+    {
+        $this->apiKey = config('llm.openai.api_key');
+        $this->model = config('llm.openai.model');
+
+        if (empty($this->apiKey)) {
+            throw new RuntimeException('OPENAI_API_KEY が設定されていません。');
+        }
+    }
+
+    public function parseEvents(string $text): array
+    {
+        return $this->call(
+            'コンサート・ライブの公演情報を抽出するアシスタントです。JSON形式でのみ応答します。',
+            $this->buildEventUserMessage($text),
+        );
+    }
+
+    public function parseSetlist(string $text): array
+    {
+        return $this->call(
+            'セットリスト（曲順リスト）を抽出するアシスタントです。JSON形式でのみ応答します。',
+            $this->buildSetlistUserMessage($text),
+        );
+    }
+
+    public function parseDeadlines(string $text): array
+    {
+        return $this->call(
+            'コンサート・ライブの申込締切・当落発表日を抽出するアシスタントです。JSON形式でのみ応答します。',
+            $this->buildDeadlineUserMessage($text),
+        );
+    }
+
+    private function call(string $system, string $user): array
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$this->apiKey}",
+            ])->timeout(60)->post('https://api.openai.com/v1/chat/completions', [
+                'model' => $this->model,
+                'response_format' => ['type' => 'json_object'],
+                'messages' => [
+                    ['role' => 'system', 'content' => $system],
+                    ['role' => 'user', 'content' => $user],
+                ],
+            ]);
+        } catch (ConnectionException $e) {
+            throw new RuntimeException('OpenAI APIに接続できません。', 0, $e);
+        }
+
+        if (! $response->successful()) {
+            throw new RuntimeException("OpenAI APIエラー: HTTP {$response->status()} — {$response->body()}");
+        }
+
+        $content = $response->json('choices.0.message.content');
+        $decoded = json_decode($content, true);
+
+        if (! is_array($decoded)) {
+            throw new RuntimeException('OpenAIのレスポンスをJSONとして解析できませんでした。');
+        }
+
+        return $decoded;
+    }
+
+    private function buildEventUserMessage(string $text): string
+    {
+        return <<<MSG
+以下のテキストからコンサート・ライブの公演情報と申込締切・当落発表日を抽出し、JSON形式で返してください。
+event_labelは「昼公演」「夜公演」「追加公演」など公演区分のみ。会場名は入れないでください。
+締切情報がテキストに含まれていれば deadlines に抽出。なければ空配列。
+
+出力形式:
+{"tour": "ツアー名(不明ならnull)", "events": [{"event_label": null, "event_date": "YYYY-MM-DD", "start_time": "HH:MM(不明ならnull)", "venue": "会場名"}], "deadlines": [{"label": "FC先行等(不明ならnull)", "application_deadline": "YYYY-MM-DD HH:MM(不明ならnull)", "announce_date": "YYYY-MM-DD(不明ならnull)"}]}
+
+テキスト:
+{$text}
+MSG;
+    }
+
+    private function buildSetlistUserMessage(string $text): string
+    {
+        return <<<MSG
+以下のテキストからセットリスト（曲順リスト）を抽出し、JSON形式で返してください。
+
+出力形式:
+{"items": [{"order": 1, "title": "曲名", "note": "備考(アンコールなど、なければnull)"}]}
+
+テキスト:
+{$text}
+MSG;
+    }
+
+    private function buildDeadlineUserMessage(string $text): string
+    {
+        return <<<MSG
+以下のテキストからコンサート・ライブの申込締切・当落発表日の情報を抽出し、JSON形式で返してください。
+
+出力形式:
+{"deadlines": [{"venue": "会場名", "event_date": "YYYY-MM-DD(なければnull)", "application_deadline": "YYYY-MM-DD HH:MM(なければnull)", "announce_date": "YYYY-MM-DD(なければnull)"}]}
+
+テキスト:
+{$text}
+MSG;
+    }
+}
