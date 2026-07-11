@@ -1,4 +1,7 @@
 <x-app-layout :hide-fab="true">
+    {{-- 旧形式名義のE2E化バナー（JSが対象を検出したときのみ表示） --}}
+    <div data-e2e-migration-banner></div>
+
     @if($memberships->isEmpty() && $myGroups->isEmpty())
         <div class="empty-state">
             まだ名義がありません<br>

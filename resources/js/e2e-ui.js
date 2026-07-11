@@ -384,12 +384,94 @@ export async function handleCopyButton(btn) {
 
 // ---- 起動 ----
 
+// ---- 既存データの一括E2E化（名義一覧のバナー） ----
+
+async function isPasswordConfirmed() {
+    try {
+        const res = await fetch('/user/confirmed-password-status', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+        });
+        const data = await res.json();
+        return !!data.confirmed;
+    } catch {
+        return false;
+    }
+}
+
+async function runMigration(banner, pending) {
+    // 暗号文取得APIはpassword.confirm必須。未確認なら確認画面を経由させる
+    if (!(await isPasswordConfirmed())) {
+        window.location.href = '/user/confirm-password';
+        return;
+    }
+
+    const status = banner.querySelector('[data-e2e-migrate-status]');
+    try {
+        const mk = await ensureUnlocked();
+        let done = 0;
+
+        for (const item of pending) {
+            status.textContent = `E2E化中… (${done + 1}/${pending.length}) ${item.name}`;
+
+            // 現在値を取得（レガシー行はサーバーが復号した平文が返る）
+            const values = await api('GET', `/api/e2e/ciphertext/${item.id}`);
+            const payload = {};
+            for (const field of ['member_no', 'login_id', 'password']) {
+                const v = values[field];
+                if (v && !v.startsWith(E2E_PREFIX)) {
+                    payload[field] = E2E_PREFIX + (await encrypt(v, mk));
+                }
+            }
+            if (Object.keys(payload).length > 0) {
+                await api('POST', `/api/e2e/migrate/${item.id}`, payload);
+            }
+            done++;
+        }
+
+        status.textContent = `完了: ${done}件の名義をE2E暗号化しました`;
+        setTimeout(() => window.location.reload(), 1200);
+    } catch (e) {
+        status.textContent = e.message === 'キャンセルされました'
+            ? 'キャンセルしました'
+            : `エラー: ${e.message || 'E2E化に失敗しました'}`;
+    }
+}
+
+async function initMigrationBanner() {
+    const container = document.querySelector('[data-e2e-migration-banner]');
+    if (!container) return;
+
+    try {
+        const { pending } = await api('GET', '/api/e2e/migration-status');
+        if (!pending || pending.length === 0) return;
+
+        const banner = el('div',
+            'background:#FFF3E0;border:1px solid #FFB74D;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;line-height:1.7;');
+        banner.appendChild(el('div', 'font-weight:700;color:#E65100;margin-bottom:4px;',
+            `旧形式の名義が${pending.length}件あります`));
+        banner.appendChild(el('div', 'color:#666;margin-bottom:8px;',
+            'FC会員番号・ID・パスワードを、サーバーからも読めないE2E暗号化へ移行できます。'));
+        const btn = el('button',
+            'padding:8px 16px;border:none;border-radius:8px;background:#E65100;color:#fff;font-size:12px;font-weight:600;cursor:pointer;',
+            'すべてE2E暗号化する');
+        btn.type = 'button';
+        const status = el('div', 'margin-top:6px;color:#666;');
+        status.setAttribute('data-e2e-migrate-status', '');
+        banner.append(btn, status);
+        container.prepend(banner);
+
+        btn.addEventListener('click', () => { btn.disabled = true; runMigration(banner, pending); });
+    } catch { /* バナー表示失敗は致命的でないため握りつぶす */ }
+}
+
 function init() {
     document.querySelectorAll('form[data-e2e-form]').forEach(wireE2eForm);
 
     document.querySelectorAll('.reveal-btn[data-copy]').forEach((btn) => {
         btn.addEventListener('click', () => handleRevealButton(btn));
     });
+
+    initMigrationBanner();
 }
 
 // vite moduleはDOMContentLoaded前後どちらでも実行されうる

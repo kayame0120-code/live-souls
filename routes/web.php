@@ -106,10 +106,20 @@ Route::middleware('auth')->group(function () {
     Route::put('/api/e2e/keys/rewrap', [\App\Http\Controllers\E2eKeyController::class, 'rewrapKeys'])->name('api.e2e.keys.rewrap');
     Route::post('/api/e2e/verify-password', [\App\Http\Controllers\E2eKeyController::class, 'verifyPassword'])->name('api.e2e.verify-password');
 
-    // 暗号文取得API（password.confirm再認証 + レート制限）
+    // セキュリティ設定（2FA有効化・基準No.13）。Fortifyの2FA操作ルートと同じくpassword.confirm必須
+    Route::get('/settings/security', [\App\Http\Controllers\SecuritySettingsController::class, 'show'])
+        ->middleware('password.confirm')->name('settings.security');
+
+    // E2E移行対象の一覧（名義名とIDのみ・機微値は含まない）
+    Route::get('/api/e2e/migration-status', [\App\Http\Controllers\E2eKeyController::class, 'migrationStatus'])
+        ->name('api.e2e.migration-status');
+
+    // 暗号文取得・E2E移行API（password.confirm再認証 + レート制限）
     Route::middleware('password.confirm')->group(function () {
         Route::get('/api/e2e/ciphertext/{fcMembership}', [\App\Http\Controllers\E2eKeyController::class, 'getCiphertext'])
             ->name('api.e2e.ciphertext');
+        Route::post('/api/e2e/migrate/{fcMembership}', [\App\Http\Controllers\E2eKeyController::class, 'migrate'])
+            ->name('api.e2e.migrate');
     });
 
     // 会場サジェストAPI

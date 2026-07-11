@@ -122,4 +122,10 @@
     @empty
         <div class="empty-state">まだ記録がありません</div>
     @endforelse
+
+    <div class="sec-label" style="margin-top:16px;">設定</div>
+    <a href="{{ route('settings.security') }}" class="rec" style="display:flex;justify-content:space-between;align-items:center;text-decoration:none;">
+        <span style="font-size:13px;">🔐 セキュリティ設定（2段階認証）</span>
+        <span style="color:var(--color-ink-sub);">›</span>
+    </a>
 </x-app-layout>
