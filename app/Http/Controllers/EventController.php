@@ -179,62 +179,166 @@ class EventController extends Controller
 
     public function importJson(Request $request)
     {
-        $tours = [];
+        $eventsGroups = [];
+        $setlistGroups = [];
+        $unknownFiles = [];
+        $errors = [];
+
+        $classify = function (array $decoded, string $source) use (&$eventsGroups, &$setlistGroups, &$unknownFiles) {
+            if (isset($decoded['events']) && is_array($decoded['events'])) {
+                $eventsGroups[] = [
+                    'source' => $source,
+                    'tour' => $decoded['tour'] ?? null,
+                    'events' => $decoded['events'],
+                    'deadlines' => $decoded['deadlines'] ?? [],
+                ];
+            } elseif (isset($decoded['items']) && is_array($decoded['items'])) {
+                $setlistGroups[] = [
+                    'source' => $source,
+                    'tour' => $decoded['tour'] ?? null,
+                    'items' => $decoded['items'],
+                ];
+            } elseif (is_array($decoded) && isset($decoded[0])) {
+                foreach ($decoded as $i => $entry) {
+                    if (isset($entry['events']) && is_array($entry['events'])) {
+                        $eventsGroups[] = [
+                            'source' => $source . '[' . $i . ']',
+                            'tour' => $entry['tour'] ?? null,
+                            'events' => $entry['events'],
+                            'deadlines' => $entry['deadlines'] ?? [],
+                        ];
+                    } elseif (isset($entry['items']) && is_array($entry['items'])) {
+                        $setlistGroups[] = [
+                            'source' => $source . '[' . $i . ']',
+                            'tour' => $entry['tour'] ?? null,
+                            'items' => $entry['items'],
+                        ];
+                    } else {
+                        $unknownFiles[] = $source . '[' . $i . ']';
+                    }
+                }
+            } else {
+                $unknownFiles[] = $source;
+            }
+        };
 
         if ($request->hasFile('json_files')) {
             foreach ($request->file('json_files') as $file) {
-                $decoded = json_decode($file->get(), true);
+                $content = $file->get();
+                $decoded = json_decode($content, true);
                 if (! is_array($decoded)) {
-                    return back()->with('error', $file->getClientOriginalName() . ' のJSONが不正です');
+                    $errors[] = $file->getClientOriginalName() . ' はJSON形式として読み込めませんでした';
+                    continue;
                 }
-                if (isset($decoded['events'])) {
-                    $tours[] = $decoded;
-                } elseif (is_array($decoded) && isset($decoded[0]['events'])) {
-                    $tours = array_merge($tours, $decoded);
-                }
+                $classify($decoded, $file->getClientOriginalName());
             }
-        } elseif ($request->filled('json_text')) {
-            $decoded = json_decode($request->input('json_text'), true);
-            if (! is_array($decoded)) {
-                return back()->with('error', 'JSONの形式が正しくありません');
-            }
-            $tours = isset($decoded['events']) ? [$decoded] : $decoded;
         }
 
-        if (empty($tours)) {
+        if ($request->filled('json_text')) {
+            $decoded = json_decode($request->input('json_text'), true);
+            if (! is_array($decoded)) {
+                $errors[] = 'テキスト欄のJSONが正しい形式ではありません';
+            } else {
+                $classify($decoded, 'テキスト入力');
+            }
+        }
+
+        if (empty($eventsGroups) && empty($setlistGroups) && empty($errors)) {
             return back()->with('error', 'JSONファイルまたはJSON文字列を入力してください');
         }
 
-        foreach ($tours as $t) {
-            if (! isset($t['events']) || ! is_array($t['events'])) {
-                return back()->with('error', 'JSONの形式が正しくありません。各要素に "events" 配列が必要です');
-            }
+        if (empty($eventsGroups) && empty($setlistGroups) && ! empty($errors)) {
+            return back()->with('error', implode('。', $errors));
         }
 
-        return view('events.import-confirm-json', compact('tours'));
+        $validationErrors = $this->validateJsonEntries($eventsGroups, $setlistGroups);
+
+        return view('events.import-confirm-json', compact(
+            'eventsGroups', 'setlistGroups', 'unknownFiles', 'errors', 'validationErrors'
+        ));
+    }
+
+    private function validateJsonEntries(array &$eventsGroups, array &$setlistGroups): array
+    {
+        $errors = [];
+
+        foreach ($eventsGroups as $gi => &$group) {
+            foreach ($group['events'] as $ei => &$event) {
+                if (! empty($event['event_date']) && ! strtotime($event['event_date'])) {
+                    $errors[] = ($group['source'] ?? 'events') . " の{$ei}行目: event_date「{$event['event_date']}」は有効な日付ではありません";
+                    $event['_invalid'] = true;
+                }
+                if (! empty($event['start_time']) && ! preg_match('/^\d{1,2}:\d{2}$/', $event['start_time'])) {
+                    $errors[] = ($group['source'] ?? 'events') . " の{$ei}行目: start_time「{$event['start_time']}」はHH:MM形式ではありません";
+                    $event['_invalid'] = true;
+                }
+            }
+            unset($event);
+        }
+        unset($group);
+
+        foreach ($setlistGroups as $gi => &$group) {
+            foreach ($group['items'] as $ii => &$item) {
+                if (empty($item['title'])) {
+                    $errors[] = ($group['source'] ?? 'setlist') . " の{$ii}行目: title（曲名）が空です";
+                    $item['_invalid'] = true;
+                }
+                if (isset($item['order']) && ! is_int($item['order'])) {
+                    $errors[] = ($group['source'] ?? 'setlist') . " の{$ii}行目: order は整数である必要があります";
+                }
+            }
+            unset($item);
+        }
+        unset($group);
+
+        return $errors;
     }
 
     public function importJsonStore(Request $request)
     {
-        $validated = $request->validate([
-            'tours' => ['required', 'array', 'min:1'],
-            'tours.*.tour_name' => ['required', 'string', 'max:255'],
-            'tours.*.events' => ['required', 'array'],
-            'tours.*.events.*.include' => ['nullable'],
-            'tours.*.events.*.event_date' => ['nullable', 'date'],
-            'tours.*.events.*.start_time' => ['nullable', 'date_format:H:i'],
-            'tours.*.events.*.venue_name' => ['nullable', 'string', 'max:255'],
-            'tours.*.events.*.event_label' => ['nullable', 'string', 'max:255'],
-            'tours.*.deadlines' => ['nullable', 'array'],
-            'tours.*.deadlines.*.label' => ['nullable', 'string', 'max:255'],
-            'tours.*.deadlines.*.application_deadline' => ['nullable', 'date'],
-            'tours.*.deadlines.*.announce_date' => ['nullable', 'date'],
-        ]);
+        $rules = [];
+        $messages = [
+            'events_groups.*.tour_name.required' => 'ツアー名を入力してください',
+            'setlist_groups.*.tour_name.required' => 'セットリストのツアー名を入力してください',
+        ];
 
-        $imported = 0;
+        if ($request->has('events_groups')) {
+            $rules['events_groups'] = ['nullable', 'array'];
+            $rules['events_groups.*.tour_name'] = ['required', 'string', 'max:255'];
+            $rules['events_groups.*.events'] = ['required', 'array'];
+            $rules['events_groups.*.events.*.include'] = ['nullable'];
+            $rules['events_groups.*.events.*.event_date'] = ['nullable', 'date'];
+            $rules['events_groups.*.events.*.start_time'] = ['nullable', 'date_format:H:i'];
+            $rules['events_groups.*.events.*.venue_name'] = ['nullable', 'string', 'max:255'];
+            $rules['events_groups.*.events.*.event_label'] = ['nullable', 'string', 'max:255'];
+            $rules['events_groups.*.deadlines'] = ['nullable', 'array'];
+            $rules['events_groups.*.deadlines.*.label'] = ['nullable', 'string', 'max:255'];
+            $rules['events_groups.*.deadlines.*.application_deadline'] = ['nullable', 'date'];
+            $rules['events_groups.*.deadlines.*.announce_date'] = ['nullable', 'date'];
+        }
 
-        DB::transaction(function () use ($validated, &$imported) {
-            foreach ($validated['tours'] as $tourData) {
+        if ($request->has('setlist_groups')) {
+            $rules['setlist_groups'] = ['nullable', 'array'];
+            $rules['setlist_groups.*.tour_name'] = ['required', 'string', 'max:255'];
+            $rules['setlist_groups.*.items'] = ['required', 'array', 'min:1'];
+            $rules['setlist_groups.*.items.*.include'] = ['nullable'];
+            $rules['setlist_groups.*.items.*.title'] = ['required', 'string', 'max:255'];
+            $rules['setlist_groups.*.items.*.display_label'] = ['nullable', 'string', 'max:50'];
+        }
+
+        $validator = validator($request->all(), $rules, $messages);
+
+        if ($validator->fails()) {
+            return redirect()->route('events.import')
+                ->with('error', $validator->errors()->first());
+        }
+
+        $validated = $validator->validated();
+        $importedEvents = 0;
+        $importedSetlists = 0;
+
+        DB::transaction(function () use ($validated, &$importedEvents, &$importedSetlists) {
+            foreach ($validated['events_groups'] ?? [] as $tourData) {
                 $tourId = $this->service->resolveTourId(['tour_name' => $tourData['tour_name']]);
 
                 foreach ($tourData['events'] as $row) {
@@ -246,7 +350,7 @@ class EventController extends Controller
                         $tourId, $row['event_label'] ?? null, $row['event_date'],
                         ! empty($row['start_time']) ? $row['start_time'] : null, $venueId
                     );
-                    $imported++;
+                    $importedEvents++;
                 }
 
                 foreach ($tourData['deadlines'] ?? [] as $dl) {
@@ -261,14 +365,40 @@ class EventController extends Controller
                     ]);
                 }
             }
+
+            foreach ($validated['setlist_groups'] ?? [] as $setlistData) {
+                $tourId = $this->service->resolveTourId(['tour_name' => $setlistData['tour_name']]);
+                $setlist = \App\Models\Setlist::create(['tour_id' => $tourId, 'label' => null]);
+                $order = 0;
+
+                foreach ($setlistData['items'] as $item) {
+                    if (empty($item['include'])) {
+                        continue;
+                    }
+                    $setlist->items()->create([
+                        'sort_order' => ++$order,
+                        'display_label' => $item['display_label'] ?? null,
+                        'title' => $item['title'],
+                    ]);
+                    $importedSetlists++;
+                }
+            }
         });
 
-        if ($imported === 0) {
-            return back()->with('error', '取込対象の公演がありませんでした');
+        if ($importedEvents === 0 && $importedSetlists === 0) {
+            return back()->with('error', '取込対象のデータがありませんでした');
+        }
+
+        $parts = [];
+        if ($importedEvents > 0) {
+            $parts[] = "{$importedEvents}件の公演";
+        }
+        if ($importedSetlists > 0) {
+            $parts[] = "{$importedSetlists}曲のセットリスト";
         }
 
         return redirect()->route('events.index')
-            ->with('success', count($validated['tours']) . "ツアー・{$imported}件の公演を登録しました");
+            ->with('success', implode('・', $parts) . 'を登録しました');
     }
 
     public function importParse(Request $request)

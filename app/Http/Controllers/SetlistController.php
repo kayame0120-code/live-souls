@@ -69,8 +69,14 @@ class SetlistController extends Controller
 
         $result = json_decode($json, true);
 
-        if (! is_array($result) || ! isset($result['items'])) {
+        if (! is_array($result) || ! isset($result['items']) || ! is_array($result['items'])) {
             return back()->with('error', 'JSONの形式が正しくありません。{"items":[...]} の形式にしてください');
+        }
+
+        foreach ($result['items'] as $i => $item) {
+            if (empty($item['title'])) {
+                return back()->with('error', ($i + 1) . '行目: title（曲名）が空です');
+            }
         }
 
         $tour->load('setlists.items');

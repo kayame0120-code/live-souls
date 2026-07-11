@@ -1,62 +1,137 @@
-# REPORT.md — 現場手帖 v2.1（2026-07-11）
+# REPORT.md — 現場手帖 v2.7（2026-07-12）
 
 > 検証はすべて **PHP 8.2.32** で実行。
-> v2.1: §3 idol_groups/group_members/setlists/締切カラム + §4 名義複製・担当メンバー選択 + §5 AI一括登録LlmService移行
-
-## 検証ライン判定表
-
-### V1: `php artisan migrate --force` — YES
-```
-Nothing to migrate.
-EXIT: 0
-```
-（全マイグレーションは人間投入済みのbatch 3で既に実行完了）
-
-### V2: `/up` HTTP 200 — YES
-```
-200
-```
-
-### V3: `php artisan test` — YES（124テスト・308アサーション）
-```
-Tests:    124 passed (308 assertions)
-Duration: 1.27s
-```
-v2.1新規テスト（StartoSeederTest: 7件、IdentityDuplicateTest: 4件）含め全通過。
-EventImportParserTest(5件)は§6削除により減。既存テスト退行なし。
-
-## 実装手段の決定記録
-
-| 決定 | 根拠 |
-|---|---|
-| color_hexはCC裁量でMaterial Design系の代表色を採用 | spec §3「公式の精密な値である必要はない」に準拠 |
-| oshi_colorバリデーションをHEX正規表現に拡張 | メンバーカラー由来のHEXも受け入れる必要あり。旧プリセット11色限定は意味を失った |
-| member-pickerはidol_groups全件をJSONでプリロード | 14グループ82人のためAPI分割不要。1リクエストで完結 |
-| LlmServiceの公演パースは同期呼び出し | 既存EventImportParserと同じ同期フロー維持（spec「ステートレス構造を踏襲」）。ParseEventsWithLlm jobはキュー利用時のインフラとして残置 |
-| 当落締切の自動マッチは会場名部分一致＋日付完全一致 | 一致しない場合の手動選択UIあり（spec §4.6「未マッチは手動選択」） |
-| EventImportParser削除 | LlmService移行完了後に削除（指示書§6「Step5動作確認後」準拠） |
-
-## 完了状況（cc_instructions_v2.1.md 照合）
-
-| 完了条件 | 状況 |
-|---|---|
-| §3.1 idol_groups/group_membersシーダー+テスト | ✅ 14グループ82人投入・テスト7件。NEWSはspec v2.4訂正表で単色 |
-| §3.2 events 締切カラム活用+編集画面 | ✅ events.edit/update新設・当落カードに締切表示 |
-| §3.3 setlists手動登録フォーム | ✅ show+addItem+destroyItem+bulkStore+AI一括 |
-| §4 名義複製+担当メンバー選択 | ✅ member-picker・duplicate画面・テスト4件 |
-| §5 LlmService移行Step4-7 | ✅ 公演/セトリ/締切の3系統AI一括登録完了 |
-| §6 EventImportParser削除 | ✅ 削除済み |
-| §7 Deploy1(本番投入) | ⏸ 人間の最終確認後にmainマージ→デプロイ |
-
-## QUESTIONS.md 残件一覧
-
-| No | 内容 | ステータス |
-|---|---|---|
-| QV20-2 | arena_view_keyマージ方法 | Deploy2で別ブランチ。spec §7/§9で方針確定 |
+> v2.7: cc_instructions_v2.7.md / spec v2.6 / security_requirements_v1.1 / security_criteria_v1.1
 
 ---
 
-## v2.0 報告（2026-07-10）— 完了
+## T0. 現状調査（コード変更禁止）
 
-V1 migrate YES / V2 /up 200 YES / V3 test 118テスト全通過。
-T1更新通知・T2開場表示・T3チケット確認・T4 QV13-1確認・T5 arena_view_key・T7 LlmService基盤。
+### 1. JSON手動アップロード窓口の実装状況
+
+**入口の画面・ルート名・コントローラ:**
+
+| 経路 | ルート名 | コントローラ | メソッド | 画面 |
+|---|---|---|---|---|
+| GET /events/import | `events.import` | EventController::importForm() | — | `events/import.blade.php`（タブ切替: AI解析 / JSONアップロード） |
+| POST /events/import/parse | `events.import.parse` | EventController::importParse() | AI解析→確認画面 | `events/import-confirm.blade.php` |
+| POST /events/import | `events.import.store` | EventController::importStore() | AI確認画面→DB登録 | — |
+| POST /events/import/json | `events.import.json` | EventController::importJson() | JSONパース→確認画面 | `events/import-confirm-json.blade.php` |
+| POST /events/import/json/store | `events.import.json.store` | EventController::importJsonStore() | JSON確認画面→DB登録 | — |
+
+**セットリスト側の入口（別経路）:**
+
+| 経路 | ルート名 | コントローラ | メソッド |
+|---|---|---|---|
+| POST /tours/{tour}/setlists/json | `setlists.json-import` | SetlistController::jsonImport() | JSON貼り付け→確認 |
+| POST /tours/{tour}/setlists/ai-parse | `setlists.ai-parse` | SetlistController::aiParse() | AI解析→確認 |
+| POST /tours/{tour}/setlists/bulk | `setlists.bulk-store` | SetlistController::bulkStore() | 一括登録 |
+
+FormRequest: なし（全てコントローラ内inline）
+
+**受け付けているJSONの種別:**
+- **events JSON のみ**。スキーマ: `{"tour":"ツアー名","events":[{"event_label":null,"event_date":"YYYY-MM-DD","start_time":"HH:MM","venue":"会場名"}],"deadlines":[...]}`
+- setlist JSONは **受け付けていない**（後述）
+
+**アップロード→確認画面→登録の流れ:**
+- JSON経路: importJson() でJSONパース→import-confirm-json.blade.phpで確認表示→importJsonStore()でDB登録。**確認画面を経由する正しい流れ**。直INSERTなし
+- AI経路: importParse()でLLM解析→import-confirm.blade.phpで確認表示→importStore()でDB登録。同様に確認画面経由
+
+### 2. JSONのバリデーション実装の有無
+
+**importJson() (パース段階):**
+- JSON構文検証: `json_decode`の結果がarrayかチェック (`EventController.php:187, 199`)
+- スキーマ検証: `$decoded['events']`の存在チェック**のみ** (`EventController.php:188, 209`)
+- キーの型・必須・不正値の検証: **なし**（パース段階では行っていない）
+
+**importJsonStore() (登録段階):**
+- Laravel Validatorでバリデーション (`EventController.php:219-232`):
+  - `tours.*.tour_name` → required, string, max:255
+  - `tours.*.events.*.event_date` → **nullable**, date（required ではない）
+  - `tours.*.events.*.start_time` → nullable, date_format:H:i
+  - `tours.*.events.*.venue_name` → nullable, string, max:255
+  - FK検証（event_idの存在チェック）: 該当なし（events JSONにはevent_idがないため）
+
+**不正JSONの実際の挙動（コード追跡による検証）:**
+
+```
+Test 1 - セットリストJSON {"items":[...]}:
+  json_decode → is_array: YES
+  isset($decoded['events']): NO
+  → 「JSONの形式が正しくありません。各要素に "events" 配列が必要です」で弾かれる（500ではない）
+
+Test 2 - 壊れたJSON "{broken json":
+  json_decode → NULL
+  is_array: NO
+  → 「JSONの形式が正しくありません」で弾かれる（500ではない）
+
+Test 3 - eventsキーなし {"tour":"test"}:
+  isset($decoded['events']): NO
+  → 「JSONの形式が正しくありません。各要素に "events" 配列が必要です」で弾かれる
+
+Test 4 - events空配列 {"tour":"test","events":[]}:
+  → 確認画面に到達するが0件表示
+```
+
+### 3. セットリストJSONが弾かれる件
+
+**原因: `EventController::importJson()` の L209 で `isset($t['events'])` をチェック**
+
+```php
+// EventController.php:208-211
+foreach ($tours as $t) {
+    if (! isset($t['events']) || ! is_array($t['events'])) {
+        return back()->with('error', 'JSONの形式が正しくありません。各要素に "events" 配列が必要です');
+    }
+}
+```
+
+セットリストJSON `{"items":[{"order":1,"title":"曲1","note":null}]}` には `events` キーが存在しないため、上記チェックで弾かれる。
+
+セットリスト側にはJSON入力経路が**別途存在する**: `SetlistController::jsonImport()` (POST /tours/{tour}/setlists/json)。ただしこれは：
+- ツアーを既に指定した状態でアクセスする必要がある（URLに`{tour}`を含む）
+- `events/import` の統合画面からは到達できない
+- セットリスト画面 (`setlists/show.blade.php`) の「JSON貼り付け」タブからのみアクセス可能
+
+**結論: events/importのJSONアップロード窓口にsetlist JSONを投入すると弾かれる。別入口を使う必要があるが、統合されていない。**
+
+### 4. EventImportParser / LotImportService の利用状況
+
+**EventImportParser:**
+- **削除済み**。`app/Services/` 配下にファイルなし
+- `grep -rn 'EventImportParser' --include='*.php'` → **0件**（テストも含め完全に除去済み）
+- REPORT.md v2.1で「§6 EventImportParser削除 ✅ 削除済み」と記録
+
+**LotImportService:**
+- `app/Services/LotImportService.php` に**物理的に存在するがデッドコード**
+- ルート・コントローラからの参照: **なし**（grep結果で自身のクラス定義のみ）
+- テスト: `tests/Unit/LotImportParserTest.php` が存在し、**6テストが全通過**（テスト自体は動作する）
+- 実際にアプリからは呼ばれていない
+
+**Ollama/Geminiドライバの残存:**
+- `app/Services/Llm/OllamaLlmService.php` — 残存
+- `app/Services/Llm/GeminiLlmService.php` — 残存
+- `app/Providers/AppServiceProvider.php` — 3ドライバのswitch分岐が残存
+- `config/llm.php` — ollama/gemini設定が残存、デフォルトドライバが `'ollama'`
+
+### git diff（コード変更なし確認）
+```
+git diff --stat:
+ .claude/settings.json |  11 ++-   ← ユーザーによる設定変更（CC作業ではない）
+ docs/spec.md          | 210 +++   ← ユーザーが配置した新仕様書（CC作業ではない）
+```
+CC側のコード変更: **0行**
+
+---
+
+## 検証ライン判定表（T0時点・ベースライン）
+
+### V1: `php artisan migrate --force` — 未実行（T0はコード変更なし）
+
+### V2: `/up` HTTP 200 — 未実行
+
+### V3: `php artisan test` — YES（123テスト・308アサーション）
+```
+Tests:    123 passed (308 assertions)
+Duration: 1.65s
+```

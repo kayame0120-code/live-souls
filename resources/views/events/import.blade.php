@@ -41,8 +41,11 @@
             ChatGPTやClaudeで作成したJSONファイルをアップロード、またはJSON文字列を貼り付けてください。
         </p>
         <div class="d-block" style="padding:10px 14px;margin-bottom:12px;font-size:11px;color:var(--color-ink-sub);line-height:1.8;">
-            <div class="d-h">JSON形式</div>
+            <div class="d-h">公演JSON</div>
             <code style="font-size:10px;display:block;white-space:pre;overflow-x:auto;">{"tour":"ツアー名","events":[{"event_label":null,"event_date":"YYYY-MM-DD","start_time":"HH:MM","venue":"会場名"}]}</code>
+            <div class="d-h" style="margin-top:8px;">セットリストJSON</div>
+            <code style="font-size:10px;display:block;white-space:pre;overflow-x:auto;">{"tour":"ツアー名","items":[{"order":1,"title":"曲名","note":null}]}</code>
+            <div style="margin-top:6px;">公演・セットリストを同時にアップロードできます</div>
         </div>
         <form method="POST" action="{{ route('events.import.json') }}" enctype="multipart/form-data" id="json-form">
             @csrf
