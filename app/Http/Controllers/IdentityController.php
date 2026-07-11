@@ -74,6 +74,7 @@ class IdentityController extends Controller
         $validated = $request->validate([
             'group_id' => ['required', 'exists:idol_groups,id'],
             'group_member_id' => ['required', 'exists:group_members,id'],
+            'label' => ['nullable', 'string', 'max:255'],
             'member_no' => ['nullable', 'string', 'max:255'],
             'login_id' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -91,6 +92,7 @@ class IdentityController extends Controller
             'person_id' => $fcMembership->person_id,
             'group_id' => $validated['group_id'],
             'artist_name' => $member->name,
+            'label' => $validated['label'] ?? null,
             'member_no' => $validated['member_no'] ?? null,
             'login_id' => $validated['login_id'] ?? null,
             'email' => $validated['email'] ?? null,
@@ -147,12 +149,12 @@ class IdentityController extends Controller
             'birth_date' => $validated['birth_date'] ?? null,
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
-            'label' => $validated['label'] ?? null,
         ];
 
         $membershipData = [
             'group_id' => $validated['group_id'],
             'artist_name' => $member->name,
+            'label' => $validated['label'] ?? null,
             'member_no' => $validated['member_no'] ?? null,
             'login_id' => $validated['login_id'] ?? null,
             'email' => $validated['email'] ?? null,

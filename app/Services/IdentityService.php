@@ -18,7 +18,6 @@ class IdentityService
                 'birth_date' => $personData['birth_date'] ?? null,
                 'phone' => $personData['phone'] ?? null,
                 'address' => $personData['address'] ?? null,
-                'label' => $personData['label'] ?? null,
             ]);
 
             return FcMembership::create([
@@ -26,6 +25,7 @@ class IdentityService
                 'person_id' => $person->id,
                 'group_id' => $membershipData['group_id'],
                 'artist_name' => $membershipData['artist_name'],
+                'label' => $membershipData['label'] ?? null,
                 'member_no' => $membershipData['member_no'] ?? null,
                 'login_id' => $membershipData['login_id'] ?? null,
                 'email' => $membershipData['email'] ?? null,
@@ -45,12 +45,12 @@ class IdentityService
                 'birth_date' => $personData['birth_date'] ?? null,
                 'phone' => $personData['phone'] ?? null,
                 'address' => $personData['address'] ?? null,
-                'label' => $personData['label'] ?? null,
             ]);
 
             $update = [
                 'group_id' => $membershipData['group_id'],
                 'artist_name' => $membershipData['artist_name'],
+                'label' => $membershipData['label'] ?? null,
                 'member_no' => $membershipData['member_no'] ?? null,
                 'login_id' => $membershipData['login_id'] ?? null,
                 'email' => $membershipData['email'] ?? null,

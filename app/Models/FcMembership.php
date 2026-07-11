@@ -18,6 +18,7 @@ class FcMembership extends Model
         'person_id',
         'group_id',
         'artist_name',
+        'label',
         'member_no',
         'login_id',
         'email',
@@ -80,8 +81,9 @@ class FcMembership extends Model
 
     public function displayName(): string
     {
-        $label = $this->person->label ? "（{$this->person->label}）" : '';
-        return $this->person->name . $label;
+        $displayLabel = $this->label ?? $this->person->label;
+        $suffix = $displayLabel ? "（{$displayLabel}）" : '';
+        return $this->person->name . $suffix;
     }
 
     /*
