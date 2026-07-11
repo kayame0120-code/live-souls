@@ -8,7 +8,11 @@
     @endphp
     <div class="venue-hero">
         <div class="vh-name">{{ $tour->name }}</div>
-        <div class="vh-sub">{{ $tour->idolGroup?->name ?? '未分類' }} ・ {{ $status }} ・ 全{{ $events->count() }}公演</div>
+        <div class="vh-sub">{{ $tour->idolGroup?->name ?? '未分類' }} ・
+            @if($status === '開催中')<span style="font-weight:700;color:#E65100;">開催中</span>
+            @elseif($status === '終了')<span style="font-weight:700;">終了</span>
+            @else{{ $status }}@endif
+            ・ 全{{ $events->count() }}公演</div>
     </div>
 
     <div class="d-block" style="padding:8px 12px;margin-bottom:12px;">

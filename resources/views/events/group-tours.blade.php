@@ -17,7 +17,16 @@
     <div class="d-block" style="margin-bottom:6px;padding:10px 14px;">
         <a href="{{ route('tours.show', $tour) }}" style="text-decoration:none;color:inherit;display:block;">
             <div style="font-size:14px;font-weight:600;">{{ $tour->name }}</div>
-            <div style="font-size:12px;color:var(--color-ink-sub);">{{ $tour->status_label }} ・ 全{{ $tour->events_count }}公演</div>
+            <div style="font-size:12px;color:var(--color-ink-sub);">
+                @if($tour->status_label === '開催中')
+                <span style="font-weight:700;color:#E65100;">開催中</span>
+                @elseif($tour->status_label === '終了')
+                <span style="font-weight:700;">終了</span>
+                @else
+                <span>{{ $tour->status_label }}</span>
+                @endif
+                ・ 全{{ $tour->events_count }}公演
+            </div>
         </a>
         <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
             {{-- グループ移動 --}}
