@@ -46,11 +46,12 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 COPY . /var/www/html
 WORKDIR /var/www/html
 RUN npm ci && npm run build && rm -rf node_modules
-RUN composer install --optimize-autoloader --no-dev \
-    && mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache \
-    && php artisan optimize:clear \
-    && chown -R www-data:www-data /var/www/html \
-    && echo "MAILTO=\"\"\n* * * * * www-data /usr/bin/php /var/www/html/artisan schedule:run" > /etc/cron.d/laravel; \
+RUN composer install --optimize-autoloader --no-dev
+RUN mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache
+RUN php artisan optimize:clear
+# chown は単独RUNにする（前段の失敗でスキップされると www-data が書き込めず全リクエスト500になる）
+RUN chown -R www-data:www-data /var/www/html
+RUN echo "MAILTO=\"\"\n* * * * * www-data /usr/bin/php /var/www/html/artisan schedule:run" > /etc/cron.d/laravel; \
     if [ -d .fly ]; then cp .fly/entrypoint.sh /entrypoint; chmod +x /entrypoint; fi;
 EXPOSE 8080
 ENTRYPOINT ["/entrypoint"]
