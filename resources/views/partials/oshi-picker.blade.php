@@ -12,7 +12,6 @@
 </div>
 @error('oshi_color')<div class="form-error">{{ $message }}</div>@enderror
 
-@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const picker = document.getElementById('oshi-picker');
@@ -27,4 +26,3 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-@endpush

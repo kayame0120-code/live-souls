@@ -13,7 +13,6 @@
            value="{{ old('venue_address') }}" placeholder="空欄可">
 </div>
 
-@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const input = document.getElementById('venue_name');
@@ -82,4 +81,3 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-@endpush

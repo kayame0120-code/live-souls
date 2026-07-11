@@ -51,7 +51,6 @@
 
 <script id="idol-groups-data" type="application/json">@json($idolGroups)</script>
 
-@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const groups = JSON.parse(document.getElementById('idol-groups-data').textContent);
@@ -128,4 +127,3 @@ document.addEventListener('DOMContentLoaded', function () {
     if (select.value) renderMembers(select.value);
 });
 </script>
-@endpush

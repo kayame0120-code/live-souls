@@ -64,9 +64,7 @@
         <button type="submit" class="btn btn-primary" style="margin-top:18px;">{{ $eventCount }}件の公演{{ !empty($deadlines) ? '＋締切' . count($deadlines) . '件' : '' }}を登録する</button>
     </form>
     @endif
-</x-app-layout>
 
-@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const input = document.getElementById('tour_name');
@@ -98,4 +96,4 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('click', e => { if (!list.contains(e.target) && e.target !== input) list.style.display = 'none'; });
 });
 </script>
-@endpush
+</x-app-layout>

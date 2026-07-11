@@ -63,8 +63,6 @@
 
         <button type="submit" class="btn btn-primary" style="margin-top:18px;">この参戦を記録する</button>
     </form>
-</x-app-layout>
 
-@push('scripts')
 @include('partials.seat-compose')
-@endpush
+</x-app-layout>

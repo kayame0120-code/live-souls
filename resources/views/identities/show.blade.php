@@ -133,9 +133,7 @@
         @csrf @method('DELETE')
         <button type="submit" class="f-danger">この名義を削除する</button>
     </form>
-</x-app-layout>
 
-@push('scripts')
 <script>
 document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -160,4 +158,4 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
     });
 });
 </script>
-@endpush
+</x-app-layout>

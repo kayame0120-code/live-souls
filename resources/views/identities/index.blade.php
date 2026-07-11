@@ -69,13 +69,11 @@
         <p class="privacy-note">名義情報は暗号化してサーバーに保存されます。他のユーザーからは見えません。</p>
         @endif
     @endif
-</x-app-layout>
 
-@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const btn = document.getElementById('toggle-add-group');
-    const form = document.getElementById('add-group-form');
+    var btn = document.getElementById('toggle-add-group');
+    var form = document.getElementById('add-group-form');
     if (btn && form) {
         btn.addEventListener('click', function () {
             form.style.display = form.style.display === 'none' ? '' : 'none';
@@ -84,4 +82,4 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-@endpush
+</x-app-layout>

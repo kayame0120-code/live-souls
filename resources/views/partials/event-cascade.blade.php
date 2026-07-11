@@ -26,7 +26,6 @@
     @error('event_id')<div class="form-error">{{ $message }}</div>@enderror
 </div>
 
-@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const tourSel = document.getElementById('tour_select');
@@ -73,4 +72,3 @@ document.addEventListener('DOMContentLoaded', function () {
     if (tourSel.value) loadEvents(tourSel.value, preselectEventId);
 });
 </script>
-@endpush
