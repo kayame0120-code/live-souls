@@ -66,12 +66,10 @@ class OllamaLlmService implements LlmService
     private function buildEventPrompt(string $text): string
     {
         return <<<PROMPT
-以下のテキストからコンサート・ライブの公演情報を抽出し、JSON形式で返してください。
+Extract concert info as JSON. Output ONLY valid JSON, no other text.
+{"tour":"tour name or null","events":[{"event_label":"label or null","event_date":"YYYY-MM-DD","start_time":"HH:MM or null","venue":"venue name"}]}
 
-出力形式:
-{"tour": "ツアー名", "events": [{"event_label": "公演ラベル(昼/夜など、なければnull)", "event_date": "YYYY-MM-DD", "start_time": "HH:MM(なければnull)", "venue": "会場名"}]}
-
-テキスト:
+Input:
 {$text}
 PROMPT;
     }
@@ -79,12 +77,10 @@ PROMPT;
     private function buildSetlistPrompt(string $text): string
     {
         return <<<PROMPT
-以下のテキストからセットリスト（曲順リスト）を抽出し、JSON形式で返してください。
+Extract setlist as JSON. Output ONLY valid JSON, no other text.
+{"items":[{"order":1,"title":"song title","note":"encore or null"}]}
 
-出力形式:
-{"items": [{"order": 1, "title": "曲名", "note": "備考(アンコールなど、なければnull)"}]}
-
-テキスト:
+Input:
 {$text}
 PROMPT;
     }
@@ -92,12 +88,10 @@ PROMPT;
     private function buildDeadlinePrompt(string $text): string
     {
         return <<<PROMPT
-以下のテキストからコンサート・ライブの申込締切・当落発表日の情報を抽出し、JSON形式で返してください。
+Extract deadline info as JSON. Output ONLY valid JSON, no other text.
+{"deadlines":[{"venue":"venue","event_date":"YYYY-MM-DD or null","application_deadline":"YYYY-MM-DD HH:MM or null","announce_date":"YYYY-MM-DD or null"}]}
 
-出力形式:
-{"deadlines": [{"venue": "会場名", "event_date": "YYYY-MM-DD(なければnull)", "application_deadline": "YYYY-MM-DD HH:MM(なければnull)", "announce_date": "YYYY-MM-DD(なければnull)"}]}
-
-テキスト:
+Input:
 {$text}
 PROMPT;
     }
