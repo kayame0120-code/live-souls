@@ -322,6 +322,44 @@ function wireE2eForm(form) {
     }
 }
 
+// ---- 一時表示（目ボタン・15秒で自動再伏字） ----
+
+export async function handleRevealButton(btn) {
+    const field = btn.closest('.copy-field');
+    const span = field?.querySelector('.cf-v');
+    if (!span) return;
+
+    // 表示中 → 再伏字
+    if (btn.dataset.revealed === '1') {
+        clearTimeout(btn._revealTimer);
+        span.textContent = btn.dataset.mask;
+        btn.dataset.revealed = '';
+        btn.textContent = '👁';
+        return;
+    }
+
+    let value = btn.dataset.copy;
+    try {
+        if (value.startsWith(E2E_PREFIX)) {
+            value = await decryptValue(value); // E2E暗号文はブラウザ内で復号
+        }
+    } catch {
+        return; // アンロックのキャンセル時は何もしない
+    }
+
+    btn.dataset.mask = span.textContent;
+    span.textContent = value;
+    btn.dataset.revealed = '1';
+    btn.textContent = '🙈';
+
+    // 肩越し閲覧対策: 15秒後に自動で伏字に戻す
+    btn._revealTimer = setTimeout(() => {
+        span.textContent = btn.dataset.mask;
+        btn.dataset.revealed = '';
+        btn.textContent = '👁';
+    }, 15000);
+}
+
 // ---- コピー（復号 + 自動クリア） ----
 
 export async function handleCopyButton(btn) {
@@ -348,6 +386,10 @@ export async function handleCopyButton(btn) {
 
 function init() {
     document.querySelectorAll('form[data-e2e-form]').forEach(wireE2eForm);
+
+    document.querySelectorAll('.reveal-btn[data-copy]').forEach((btn) => {
+        btn.addEventListener('click', () => handleRevealButton(btn));
+    });
 }
 
 // vite moduleはDOMContentLoaded前後どちらでも実行されうる
