@@ -1,61 +1,51 @@
 <x-app-layout :hide-fab="true" :hide-nav="true">
     <a href="{{ route('events.import') }}" class="detail-back">‹ やり直す</a>
-    <div class="sec-label">解析結果の確認</div>
+    <div class="sec-label">解析結果</div>
 
     @if(empty($rows))
-        <div class="empty-state">解析できる公演がありませんでした。形式を確認してください</div>
+        <div class="empty-state">解析できる公演がありませんでした。テキストを確認してやり直してください。</div>
     @else
-    <p style="font-size:12px; color:var(--color-ink-sub); line-height:1.8; margin-bottom:12px;">
-        内容を確認・修正してください。日付が空の行は取込対象外です（背景色つき）。<br>
-        同日でも開演が違えば別公演（昼夜）として登録されます。名義選択はありません。
+    <p style="font-size:12px; color:var(--color-ink-sub); margin-bottom:12px;">
+        {{ count($rows) }}件の公演が見つかりました。内容を確認して登録してください。
     </p>
 
     <form method="POST" action="{{ route('events.import.store') }}">
         @csrf
 
-        {{-- ★v1.4：ツアー名の解決（全行共通・1箇所）。既存tourを検索・無ければ新規作成 --}}
         <div class="f-field">
-            <label for="tour_name">ツアー名（全日程に適用）</label>
+            <label for="tour_name">ツアー名</label>
             <div class="combo">
                 <input class="f-input" type="text" id="tour_name" name="tour_name" autocomplete="off"
-                       value="{{ old('tour_name', $tour) }}" placeholder="ツアー名を入力・既存を検索" required>
+                       value="{{ old('tour_name', $tour) }}" placeholder="ツアー名" required>
                 <div class="combo-list" id="tour-list" style="display:none;"></div>
             </div>
-            <div class="f-hint">既存ツアーに一致すればそこへ、無ければ新規ツアーとして作成されます。</div>
+            <div class="f-hint">既存ツアーに一致すればそこへ追加、無ければ新規作成されます。</div>
         </div>
 
-        <div class="imp-head"><span>日付 / 開演</span><span>会場 / ラベル</span><span></span></div>
         @foreach($rows as $i => $row)
-        @php $invalid = empty($row['event_date']); @endphp
-        <div class="imp-row {{ $invalid ? 'imp-row-invalid' : '' }}">
-            <input type="hidden" name="rows[{{ $i }}][include]" value="0">
-            <div style="display:flex; flex-direction:column; gap:4px;">
-                <div style="display:flex; align-items:center; gap:4px;">
-                    <input type="checkbox" name="rows[{{ $i }}][include]" value="1" {{ $invalid ? '' : 'checked' }}>
-                    <input class="form-input" type="date" name="rows[{{ $i }}][event_date]" value="{{ $row['event_date'] }}">
+        @php $hasDate = !empty($row['event_date']); @endphp
+        <div class="d-block" style="margin-bottom:6px;padding:10px 14px;{{ $hasDate ? '' : 'opacity:0.5;' }}">
+            <input type="hidden" name="rows[{{ $i }}][include]" value="{{ $hasDate ? '1' : '0' }}">
+            <input type="hidden" name="rows[{{ $i }}][event_date]" value="{{ $row['event_date'] ?? '' }}">
+            <input type="hidden" name="rows[{{ $i }}][start_time]" value="{{ $row['start_time'] ?? '' }}">
+            <input type="hidden" name="rows[{{ $i }}][venue_name]" value="{{ $row['venue'] ?? '' }}">
+            <input type="hidden" name="rows[{{ $i }}][event_label]" value="{{ $row['event_label'] ?? '' }}">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;">{{ $row['event_date'] ?? '日付不明' }}@if(!empty($row['start_time'])) {{ $row['start_time'] }}@endif</div>
+                    <div style="font-size:12px;color:var(--color-ink-sub);">{{ $row['venue'] ?? '会場不明' }}@if(!empty($row['event_label'])) ・{{ $row['event_label'] }}@endif</div>
                 </div>
-                <input class="form-input" type="time" name="rows[{{ $i }}][start_time]" value="{{ $row['start_time'] }}" style="max-width:120px;">
+                @if($hasDate)
+                <span style="font-size:11px;color:#43A047;">登録</span>
+                @else
+                <span style="font-size:11px;color:var(--color-ink-sub);">スキップ</span>
+                @endif
             </div>
-            <div>
-                <input class="form-input" type="text" name="rows[{{ $i }}][venue_name]" value="{{ $row['venue'] }}" placeholder="会場">
-                <input class="form-input" type="text" name="rows[{{ $i }}][event_label]" value="" placeholder="日程ラベル（任意・例 大阪2日目）" style="margin-top:4px;">
-            </div>
-            <span></span>
         </div>
         @endforeach
 
-        <button type="submit" class="btn btn-primary" style="margin-top:18px;">チェックした行を共有マスタへ登録</button>
+        <button type="submit" class="btn btn-primary" style="margin-top:18px;">{{ count(array_filter($rows, fn($r) => !empty($r['event_date']))) }}件を登録する</button>
     </form>
-    @endif
-
-    {{-- 未解析行（捨てず保持・spec §5「未解析行」） --}}
-    @if(!empty($unknown))
-    <div style="margin-top:20px; padding:12px 14px; background:#FBF3F2; border:1px solid #EBD3D3; border-radius:6px;">
-        <div style="font-size:11.5px; color:var(--color-ink-sub); margin-bottom:6px;">未解析として保持された行（捨てていません・確認用）:</div>
-        @foreach($unknown as $u)
-        <div style="font-family:monospace; font-size:10.5px; color:var(--color-ink-sub);">・{{ $u }}</div>
-        @endforeach
-    </div>
     @endif
 </x-app-layout>
 

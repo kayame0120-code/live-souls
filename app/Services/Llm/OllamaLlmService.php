@@ -67,7 +67,8 @@ class OllamaLlmService implements LlmService
     {
         return <<<PROMPT
 Extract concert info as JSON. Output ONLY valid JSON, no other text.
-{"tour":"tour name or null","events":[{"event_label":"label or null","event_date":"YYYY-MM-DD","start_time":"HH:MM or null","venue":"venue name"}]}
+event_label is ONLY for 昼公演/夜公演/追加公演 etc. Do NOT put venue name in event_label. Set null if none.
+{"tour":"tour name or null","events":[{"event_label":null,"event_date":"YYYY-MM-DD","start_time":"HH:MM or null","venue":"venue name"}]}
 
 Input:
 {$text}
