@@ -22,6 +22,7 @@
             <div class="f-field">
                 <label for="member_no">会員番号</label>
                 <input class="f-input" type="text" id="member_no" name="member_no" value="{{ old('member_no') }}" placeholder="会員番号">
+                <input type="hidden" id="member_no_hint" name="member_no_hint" value="">
             </div>
             <div class="f-field">
                 <label for="fc_password">パスワード</label>

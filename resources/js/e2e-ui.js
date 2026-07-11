@@ -288,6 +288,11 @@ function wireE2eForm(form) {
         try {
             const mk = await ensureUnlocked();
             for (const f of targets) {
+                // 会員番号は下3桁を一覧表示ヒントとして別送（暗号化前に取得）
+                if (f.id === 'member_no') {
+                    const hintField = form.querySelector('#member_no_hint');
+                    if (hintField) hintField.value = f.value.slice(-3);
+                }
                 f.value = E2E_PREFIX + (await encrypt(f.value, mk));
             }
             encrypted = true;
@@ -420,6 +425,10 @@ async function runMigration(banner, pending) {
                 const v = values[field];
                 if (v && !v.startsWith(E2E_PREFIX)) {
                     payload[field] = E2E_PREFIX + (await encrypt(v, mk));
+                    // 会員番号は下3桁を一覧表示ヒントとして別送
+                    if (field === 'member_no') {
+                        payload.member_no_hint = v.slice(-3);
+                    }
                 }
             }
             if (Object.keys(payload).length > 0) {

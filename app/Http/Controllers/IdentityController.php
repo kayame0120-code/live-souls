@@ -76,6 +76,7 @@ class IdentityController extends Controller
             'group_member_id' => ['required', 'exists:group_members,id'],
             'label' => ['nullable', 'string', 'max:255'],
             'member_no' => ['nullable', 'string', 'max:255'],
+            'member_no_hint' => ['nullable', 'string', 'max:3'],
             'login_id' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'fc_password' => ['nullable', 'string', 'max:255'],
@@ -94,6 +95,9 @@ class IdentityController extends Controller
             'artist_name' => $member->name,
             'label' => $validated['label'] ?? null,
             'member_no' => IdentityService::protectE2eField($validated['member_no'] ?? null),
+            'member_no_hint' => IdentityService::resolveMemberNoHint(
+                $validated['member_no'] ?? null, $validated['member_no_hint'] ?? null
+            ),
             'login_id' => IdentityService::protectE2eField($validated['login_id'] ?? null),
             'email' => $validated['email'] ?? null,
             'password' => IdentityService::protectE2eField($validated['fc_password'] ?? null),
@@ -133,6 +137,7 @@ class IdentityController extends Controller
             'group_member_id' => ['required', 'exists:group_members,id'],
             'artist_name' => ['nullable', 'string', 'max:255'],
             'member_no' => ['nullable', 'string', 'max:255'],
+            'member_no_hint' => ['nullable', 'string', 'max:3'],
             'login_id' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'fc_password' => ['nullable', 'string', 'max:255'],
@@ -156,6 +161,7 @@ class IdentityController extends Controller
             'artist_name' => $member->name,
             'label' => $validated['label'] ?? null,
             'member_no' => $validated['member_no'] ?? null,
+            'member_no_hint' => $validated['member_no_hint'] ?? null,
             'login_id' => $validated['login_id'] ?? null,
             'email' => $validated['email'] ?? null,
             'password' => $validated['fc_password'] ?? null,

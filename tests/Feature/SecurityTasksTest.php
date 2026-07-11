@@ -169,14 +169,64 @@ class SecurityTasksTest extends TestCase
         $response->assertSee('No. ••••••••');
     }
 
-    public function test_名義一覧でレガシー会員番号は従来どおり表示される(): void
+    public function test_名義一覧でレガシー会員番号は下3桁のみ表示される(): void
     {
         $membership = $this->makeLegacyMembership($this->user);
         $this->user->idolGroups()->attach($membership->group_id, ['sort_order' => 1]);
 
         $response = $this->get(route('identities.index'));
         $response->assertOk();
-        $response->assertSee('No. 00187964');
+        $response->assertSee('No. •••••964');
+        $response->assertDontSee('00187964');
+    }
+
+    public function test_名義一覧でe2e値はヒントがあれば下3桁表示される(): void
+    {
+        $group = IdolGroup::firstOrCreate(['name' => 'テストグループ']);
+        $person = Person::withoutGlobalScopes()->create(['user_id' => $this->user->id, 'name' => 'ヒント名義']);
+        DB::table('fc_memberships')->insert([
+            'user_id' => $this->user->id, 'person_id' => $person->id, 'group_id' => $group->id,
+            'artist_name' => 'テスト',
+            'member_no' => 'e2e:hint-cipher', 'member_no_hint' => '964',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->user->idolGroups()->attach($group->id, ['sort_order' => 1]);
+
+        $response = $this->get(route('identities.index'));
+        $response->assertOk();
+        $response->assertSee('No. •••••964');
+    }
+
+    public function test_平文フォールバック保存時はサーバーが下3桁ヒントを算出する(): void
+    {
+        $group = IdolGroup::firstOrCreate(['name' => 'テストグループ']);
+        $member = GroupMember::firstOrCreate(
+            ['idol_group_id' => $group->id, 'name' => 'メンバー'],
+            ['color_name' => '赤', 'color_hex' => '#E53935', 'source_type' => '公式', 'sort_order' => 1],
+        );
+
+        $this->post(route('identities.store'), [
+            'person_name' => 'ヒントテスト',
+            'group_id' => $group->id,
+            'group_member_id' => $member->id,
+            'member_no' => '12345678',
+        ]);
+
+        $this->assertDatabaseHas('fc_memberships', ['member_no_hint' => '678']);
+    }
+
+    public function test_migrateでヒントも保存される(): void
+    {
+        $membership = $this->makeLegacyMembership($this->user);
+
+        $this->withSession(['auth.password_confirmed_at' => time()])
+            ->postJson(route('api.e2e.migrate', $membership->id), [
+                'member_no' => 'e2e:migrated',
+                'member_no_hint' => '964',
+            ])->assertOk();
+
+        $raw = DB::table('fc_memberships')->where('id', $membership->id)->first();
+        $this->assertSame('964', $raw->member_no_hint);
     }
 
     // ---- ②2FA設定画面 ----

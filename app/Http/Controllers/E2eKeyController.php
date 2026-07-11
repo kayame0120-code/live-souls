@@ -123,6 +123,8 @@ class E2eKeyController extends Controller
             'member_no' => ['nullable', 'string', 'starts_with:' . FcMembership::E2E_PREFIX],
             'login_id' => ['nullable', 'string', 'starts_with:' . FcMembership::E2E_PREFIX],
             'password' => ['nullable', 'string', 'starts_with:' . FcMembership::E2E_PREFIX],
+            // 会員番号の下3桁ヒント（一覧表示用・平文・低機微）
+            'member_no_hint' => ['nullable', 'string', 'max:3'],
         ], [
             'member_no.starts_with' => 'E2E暗号文のみ受け付けます',
             'login_id.starts_with' => 'E2E暗号文のみ受け付けます',

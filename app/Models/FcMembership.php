@@ -28,6 +28,7 @@ class FcMembership extends Model
         'artist_name',
         'label',
         'member_no',
+        'member_no_hint',
         'login_id',
         'email',
         'password',
@@ -99,9 +100,10 @@ class FcMembership extends Model
     }
 
     /**
-     * 一覧カード等での会員番号表示用。
-     * E2E暗号文はサーバー側で復号できないため伏字を返す（詳細画面の👁で復号表示）。
-     * レガシー値は従来どおり表示する。
+     * 一覧カード等での会員番号表示用（下3桁のみ常時表示・残りは伏字）。
+     * - E2E暗号文: 保存時に別送された下3桁ヒント（member_no_hint）を使う。ヒントが無ければ全伏字
+     * - レガシー値: サーバーで復号できるため下3桁をその場で算出
+     * 全桁の確認は詳細画面の👁（ブラウザ内復号）で行う。
      */
     public function displayMemberNo(): ?string
     {
@@ -110,7 +112,12 @@ class FcMembership extends Model
             return null;
         }
 
-        return self::isE2eValue($value) ? '••••••••' : $value;
+        if (self::isE2eValue($value)) {
+            return $this->member_no_hint ? '•••••' . $this->member_no_hint : '••••••••';
+        }
+
+        // レガシー値（アクセサ復号済みの平文）から下3桁を算出
+        return '•••••' . mb_substr($value, -3);
     }
 
     public function user(): BelongsTo
