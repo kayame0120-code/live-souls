@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\IdolGroup;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class IdolGroupController extends Controller
 {
@@ -13,7 +14,9 @@ class IdolGroupController extends Controller
             'name' => ['required', 'string', 'max:255'],
         ]);
 
-        IdolGroup::firstOrCreate(['name' => $validated['name']]);
+        $group = IdolGroup::firstOrCreate(['name' => $validated['name']]);
+
+        Auth::user()->idolGroups()->syncWithoutDetaching([$group->id]);
 
         return redirect()->route('identities.index')
             ->with('success', 'グループを追加しました');

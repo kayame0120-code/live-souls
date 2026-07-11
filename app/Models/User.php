@@ -43,6 +43,11 @@ class User extends Authenticatable
         return $this->hasMany(FcMembership::class);
     }
 
+    public function idolGroups(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(IdolGroup::class, 'user_idol_groups')->orderBy('name');
+    }
+
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);

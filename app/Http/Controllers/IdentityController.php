@@ -19,10 +19,10 @@ class IdentityController extends Controller
     public function index(Request $request)
     {
         $memberships = FcMembership::with(['person', 'group'])->get();
-        $allIdolGroups = \App\Models\IdolGroup::orderBy('name')->get();
+        $myGroups = Auth::user()->idolGroups;
         $currentGroupId = $request->get('group');
 
-        return view('identities.index', compact('allIdolGroups', 'currentGroupId', 'memberships'));
+        return view('identities.index', compact('myGroups', 'currentGroupId', 'memberships'));
     }
 
     public function create()

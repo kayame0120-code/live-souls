@@ -1,5 +1,5 @@
 <x-app-layout :hide-fab="true">
-    @if($memberships->isEmpty() && $groups->isEmpty())
+    @if($memberships->isEmpty() && $myGroups->isEmpty())
         <div class="empty-state">
             まだ名義がありません<br>
             <a href="{{ route('identities.create') }}" class="btn btn-secondary btn-sm" style="margin-top:12px;">名義を追加</a>
@@ -7,9 +7,9 @@
     @else
         {{-- グループタブ + 右端に追加ボタン --}}
         <div style="display:flex;align-items:center;gap:0;">
-            <div class="fc-tabs" style="flex:1;">
+            <div class="fc-tabs" style="flex:1;min-width:0;">
                 <a href="{{ route('identities.index') }}" class="fc-tab {{ !$currentGroupId ? 'on' : '' }}">すべて</a>
-                @foreach($allIdolGroups as $ig)
+                @foreach($myGroups as $ig)
                 <a href="{{ route('identities.index', ['group' => $ig->id]) }}"
                    class="fc-tab {{ $currentGroupId == $ig->id ? 'on' : '' }}">{{ $ig->name }}</a>
                 @endforeach
