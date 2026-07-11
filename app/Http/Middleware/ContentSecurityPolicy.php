@@ -19,7 +19,9 @@ class ContentSecurityPolicy
         if (method_exists($response, 'header')) {
             $response->header('Content-Security-Policy', implode('; ', [
                 "default-src 'self'",
-                "script-src 'self' 'nonce-{$nonce}'",
+                // 'wasm-unsafe-eval'はlibsodium.js(WebAssembly)のコンパイル許可のみ。
+                // JSのeval()は引き続き禁止（'unsafe-eval'とは別のスコープ済みディレクティブ）
+                "script-src 'self' 'nonce-{$nonce}' 'wasm-unsafe-eval'",
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                 "font-src 'self' https://fonts.gstatic.com",
                 "img-src 'self' data: blob:",
