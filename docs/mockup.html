@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>現場手帖 — UIモック v1.2</title>
+<title>現場手帖 — UIモック v2.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -685,13 +685,13 @@
         </div>
       </div>
 
-      <!-- 更新期間に入った名義（spec 4.2・isInRenewalWindow） -->
+      <!-- 申込締切（ツアー単位で表示） -->
       <div class="sec-label">申込締切</div>
       <div class="tour-card" data-detail="scr-lot-detail" style="--oshi:#8957A1;flex-direction:column;align-items:stretch;gap:0;cursor:pointer">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
           <div class="tc-body">
-            <div class="tc-name">LUMIÈRE「Prism of Night」京セラドーム</div>
-            <div class="tc-sub">08.23（土）公演</div>
+            <div class="tc-name">LUMIÈRE「Prism of Night」</div>
+            <div class="tc-sub">FC先行 締切 07.20 12:00</div>
           </div>
           <span class="tc-arrow">›</span>
         </div>
@@ -699,12 +699,13 @@
       </div>
 
       <div class="sec-label">更新期間の名義</div>
-      <div class="renew-card" style="--oshi:#8957A1">
+      <div class="renew-card" style="--oshi:#8957A1;position:relative">
         <div class="renew-top">
           <span class="renew-swatch"></span>
           <div class="renew-name">片倉 菖<small>LUMIÈRE FC・自名義</small></div>
         </div>
         <div class="renew-body">更新受付中 <b>2026.09.02 – 10.31</b> ／ 有効期限 <b>2026.10.31</b></div>
+        <button style="position:absolute;top:12px;right:14px;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.06em;padding:4px 10px;border-radius:999px;border:1px solid var(--keisen-strong);background:var(--card);color:var(--ink-sub);cursor:pointer">更新済み</button>
       </div>
 
       <div class="sec-label">積み上げ</div>
@@ -784,7 +785,7 @@
       <div class="fc-tabs">
         <span class="fc-tab on">LUMIÈRE FC</span>
         <span class="fc-tab">8PEACE FC</span>
-        <span class="fc-tab add">＋ FC追加</span>
+        <span class="fc-tab add">＋</span>
       </div>
 
       <div class="m-card tappable" style="--oshi:#8957A1" data-detail="scr-meigi-detail">
@@ -851,16 +852,7 @@
       </div>
 
       <div class="sec-label">申込・締切</div>
-
-      <div class="lot" style="--oshi:#8957A1">
-        <div class="lot-head">
-          <div>
-            <div class="lot-title">京セラドーム大阪</div>
-            <div class="lot-sub">08.23（土）公演</div>
-          </div>
-        </div>
-        <div class="deadline" style="--oshi:#8957A1;margin-top:12px" data-deadline="2026-07-20T12:00:00" data-announce="2026-07-28"></div>
-      </div>
+      <div class="deadline" style="--oshi:#8957A1" data-deadline="2026-07-20T12:00:00" data-announce="2026-07-28"></div>
 
       <div class="sec-label">当落待ち</div>
 
@@ -919,6 +911,36 @@
           </div>
         </div>
       </div>
+
+      <div class="sec-label">申込を追加</div>
+      <div class="d-block">
+        <div class="d-h">公演を選択</div>
+        <div class="f-field">
+          <select class="f-input">
+            <option value="">公演を選択</option>
+            <option>京セラドーム大阪 08.23</option>
+            <option>東京ドーム 昼 08.09</option>
+            <option>東京ドーム 夜 08.09</option>
+          </select>
+        </div>
+        <div class="d-h">申込名義（1つ選択）</div>
+        <div class="f-field">
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:var(--ink);margin-bottom:8px;cursor:pointer">
+            <input type="radio" name="identity_id" value="1"> <span class="dot" style="--oshi:#8957A1;display:inline-block"></span> 片倉 菖（自名義）
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:var(--ink);margin-bottom:8px;cursor:pointer">
+            <input type="radio" name="identity_id" value="2"> <span class="dot" style="--oshi:#D8A03C;display:inline-block"></span> 佐藤 由紀（ゆきちゃん共同）
+          </label>
+        </div>
+        <div class="d-h">同行者</div>
+        <div class="f-field" style="margin-bottom:0">
+          <select class="f-input">
+            <option value="">なし</option>
+            <option>片倉 菖（自名義）</option>
+            <option>佐藤 由紀（ゆきちゃん共同）</option>
+          </select>
+        </div>
+      </div>
     </section>
 
     <!-- ================= 公演（共有マスタ・v1.2追加タブ） ================= -->
@@ -927,8 +949,7 @@
         公演情報はメンバー全員で持ち寄る共有台帳です。参戦・申込のときはここから公演を選ぶだけで日付・会場が入ります。
       </div>
       <div class="ev-actions">
-        <button class="ev-new">＋ 公演を追加</button>
-        <button class="ev-import" data-detail="scr-ai-import">一覧を貼って一括登録</button>
+        <button class="ev-import" data-detail="scr-ai-import">一覧を貼って一括登録（AI解析 / JSON）</button>
       </div>
 
       <div class="sec-label">公演（ツアー）</div>
@@ -1005,6 +1026,12 @@
         <span class="sched-tag">予定</span>
       </div>
 
+      <div class="sec-label">申込締切・当落発表日</div>
+      <div class="d-block">
+        <div class="d-row"><span class="k">FC先行</span><span class="v">締切 07.20 12:00 ／ 発表 07.28</span></div>
+        <div class="d-row"><span class="k">一般</span><span class="v">締切 08.01 23:59 ／ 発表 08.05</span></div>
+      </div>
+
       <div class="sec-label">この公演の記録</div>
       <button class="link-row" data-detail="scr-setlist">
         <span>🎵 セットリスト</span><span class="lr-arrow">›</span>
@@ -1072,6 +1099,12 @@
           <span>LUMIÈRE FC ・ 入会 <b>2019.03</b>（8年目）</span>
           <span class="badge">更新受付中</span>
         </div>
+      </div>
+
+      <div class="d-block">
+        <div class="d-h">担当</div>
+        <div class="d-row"><span class="k">グループ</span><span class="v">LUMIÈRE</span></div>
+        <div class="d-row"><span class="k">担当メンバー</span><span class="v">高橋恭平</span></div>
       </div>
 
       <div class="d-block">
