@@ -61,6 +61,42 @@
     </nav>
     @endunless
 </div>
+@unless($hideNav)
+<script>
+(function(){
+    var tabs = [
+        '{{ route('home') }}',
+        '{{ route('attendances.index') }}',
+        '{{ route('identities.index') }}',
+        '{{ route('lots.index') }}',
+        '{{ route('events.index') }}'
+    ];
+    var current = tabs.findIndex(function(u){ return window.location.pathname === new URL(u).pathname; });
+    if(current < 0) return;
+
+    var sx=0, sy=0, swiping=false;
+    document.addEventListener('touchstart', function(e){
+        sx = e.touches[0].clientX; sy = e.touches[0].clientY; swiping = true;
+    }, {passive:true});
+    document.addEventListener('touchmove', function(e){
+        if(!swiping) return;
+        var dx = e.touches[0].clientX - sx;
+        var dy = e.touches[0].clientY - sy;
+        if(Math.abs(dy) > Math.abs(dx)){ swiping = false; }
+    }, {passive:true});
+    document.addEventListener('touchend', function(e){
+        if(!swiping) return;
+        swiping = false;
+        var dx = e.changedTouches[0].clientX - sx;
+        if(Math.abs(dx) < 60) return;
+        var next = dx < 0 ? current + 1 : current - 1;
+        if(next >= 0 && next < tabs.length){
+            window.location.href = tabs[next];
+        }
+    }, {passive:true});
+})();
+</script>
+@endunless
 @stack('scripts')
 </body>
 </html>
