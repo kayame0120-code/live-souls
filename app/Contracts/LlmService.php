@@ -10,9 +10,9 @@ namespace App\Contracts;
 interface LlmService
 {
     /**
-     * テキストからイベント情報をJSON配列として抽出する。
+     * テキストから公演情報＋締切情報を一括抽出する。
      *
-     * @return array{tour: string, events: array<array{event_label: ?string, event_date: string, start_time: ?string, venue: string}>}
+     * @return array{tour: string, events: array, deadlines: array}
      */
     public function parseEvents(string $text): array;
 

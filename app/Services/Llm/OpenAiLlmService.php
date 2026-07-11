@@ -80,10 +80,12 @@ class OpenAiLlmService implements LlmService
     private function buildEventUserMessage(string $text): string
     {
         return <<<MSG
-以下のテキストからコンサート・ライブの公演情報を抽出し、JSON形式で返してください。
+以下のテキストからコンサート・ライブの公演情報と申込締切・当落発表日を抽出し、JSON形式で返してください。
+event_labelは「昼公演」「夜公演」「追加公演」など公演区分のみ。会場名は入れないでください。
+締切情報がテキストに含まれていれば deadlines に抽出。なければ空配列。
 
 出力形式:
-{"tour": "ツアー名", "events": [{"event_label": "公演ラベル(昼/夜など、なければnull)", "event_date": "YYYY-MM-DD", "start_time": "HH:MM(なければnull)", "venue": "会場名"}]}
+{"tour": "ツアー名(不明ならnull)", "events": [{"event_label": null, "event_date": "YYYY-MM-DD", "start_time": "HH:MM(不明ならnull)", "venue": "会場名"}], "deadlines": [{"label": "FC先行等(不明ならnull)", "application_deadline": "YYYY-MM-DD HH:MM(不明ならnull)", "announce_date": "YYYY-MM-DD(不明ならnull)"}]}
 
 テキスト:
 {$text}

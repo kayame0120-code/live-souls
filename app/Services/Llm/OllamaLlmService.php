@@ -66,9 +66,10 @@ class OllamaLlmService implements LlmService
     private function buildEventPrompt(string $text): string
     {
         return <<<PROMPT
-Extract concert info as JSON. Output ONLY valid JSON, no other text.
+Extract concert info AND application deadlines as JSON. Output ONLY valid JSON, no other text.
 event_label is ONLY for 昼公演/夜公演/追加公演 etc. Do NOT put venue name in event_label. Set null if none.
-{"tour":"tour name or null","events":[{"event_label":null,"event_date":"YYYY-MM-DD","start_time":"HH:MM or null","venue":"venue name"}]}
+If deadline/announce info found, include in deadlines array. If not found, use empty array.
+{"tour":"tour name or null","events":[{"event_label":null,"event_date":"YYYY-MM-DD","start_time":"HH:MM or null","venue":"venue name"}],"deadlines":[{"label":"FC先行 or null","application_deadline":"YYYY-MM-DD HH:MM or null","announce_date":"YYYY-MM-DD or null"}]}
 
 Input:
 {$text}

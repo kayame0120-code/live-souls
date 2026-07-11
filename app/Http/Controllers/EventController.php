@@ -223,6 +223,7 @@ class EventController extends Controller
             'rows' => $result['events'] ?? [],
             'unknown' => [],
             'tour' => $result['tour'] ?? '',
+            'deadlines' => $result['deadlines'] ?? [],
         ]);
     }
 
