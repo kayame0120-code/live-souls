@@ -63,6 +63,8 @@ class E2eKeyController extends Controller
 
     public function getCiphertext(FcMembership $fcMembership)
     {
+        abort_unless($fcMembership->user_id === Auth::id(), 403);
+
         $rateLimitKey = 'e2e-ciphertext:' . Auth::id();
         if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
             return response()->json(['error' => 'レート制限を超えました。しばらくしてから再度お試しください。'], 429);
