@@ -93,19 +93,28 @@ document.addEventListener('DOMContentLoaded', function () {
     var tabs = document.getElementById('group-tabs');
     if (tabs) {
         var dragging = null;
+        tabs.style.cursor = 'grab';
+        tabs.querySelectorAll('[data-group-id]').forEach(function (el) { el.style.cursor = 'grab'; });
         tabs.addEventListener('dragstart', function (e) {
             if (!e.target.dataset.groupId) return;
             dragging = e.target;
             e.target.style.opacity = '0.4';
+            e.target.style.cursor = 'grabbing';
+            e.dataTransfer.effectAllowed = 'move';
         });
         tabs.addEventListener('dragend', function (e) {
-            if (dragging) dragging.style.opacity = '';
+            if (dragging) { dragging.style.opacity = ''; dragging.style.cursor = 'grab'; }
             dragging = null;
+            tabs.querySelectorAll('[data-group-id]').forEach(function (el) { el.style.outline = ''; });
         });
         tabs.addEventListener('dragover', function (e) {
             e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
             var target = e.target.closest('[data-group-id]');
+            tabs.querySelectorAll('[data-group-id]').forEach(function (el) { el.style.outline = ''; });
             if (!target || target === dragging) return;
+            target.style.outline = '2px dashed var(--color-ink-sub)';
+            target.style.outlineOffset = '2px';
             var rect = target.getBoundingClientRect();
             var mid = rect.left + rect.width / 2;
             if (e.clientX < mid) {
