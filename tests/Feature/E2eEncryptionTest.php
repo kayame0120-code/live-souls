@@ -195,6 +195,26 @@ class E2eEncryptionTest extends TestCase
             ->assertNotFound(); // UserScopeによりルートバインディングで404
     }
 
+    public function test_パスワード未確認で名義詳細を開くと確認画面へ誘導され確認画面は正常表示される(): void
+    {
+        $this->post(route('identities.store'), $this->payload());
+        $membership = FcMembership::first();
+
+        // 未確認 → password.confirm へリダイレクト
+        $this->get(route('identities.show', $membership))
+            ->assertRedirect(route('password.confirm'));
+
+        // 確認画面自体が500にならず表示できる（ConfirmPasswordViewResponse登録の回帰防止）
+        $this->get(route('password.confirm'))
+            ->assertOk()
+            ->assertSee('パスワード確認');
+
+        // パスワード送信で確認が通り、名義詳細に到達できる
+        $this->post(route('password.confirm'), ['password' => 'secret-login-pw'])
+            ->assertRedirect();
+        $this->get(route('identities.show', $membership))->assertOk();
+    }
+
     public function test_本人は暗号文を取得できアクセスログが残る(): void
     {
         $this->post(route('identities.store'), $this->payload(['member_no' => 'e2e:mine']));
