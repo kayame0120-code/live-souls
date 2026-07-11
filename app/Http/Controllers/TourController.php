@@ -23,11 +23,15 @@ class TourController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'idol_group_id' => ['nullable', 'exists:idol_groups,id'],
         ], [
             'name.required' => 'ツアー名を入力してください',
         ]);
 
-        $tour = Tour::create(['name' => $validated['name']]);
+        $tour = Tour::create([
+            'name' => $validated['name'],
+            'idol_group_id' => $validated['idol_group_id'] ?? null,
+        ]);
 
         // 作成後はそのツアー詳細（日程0件）へ。続けて日程を追加する導線（spec §5）
         return redirect()->route('tours.show', $tour)
@@ -97,6 +101,18 @@ class TourController extends Controller
 
         return redirect()->route('tours.show', $tour)
             ->with('success', '締切を削除しました');
+    }
+
+    public function updateGroup(Request $request, Tour $tour)
+    {
+        $validated = $request->validate([
+            'idol_group_id' => ['nullable', 'exists:idol_groups,id'],
+        ]);
+
+        $tour->update(['idol_group_id' => $validated['idol_group_id'] ?: null]);
+
+        return redirect()->route('tours.show', $tour)
+            ->with('success', '所属グループを変更しました');
     }
 
     public function destroy(Tour $tour)

@@ -23,16 +23,30 @@ class EventController extends Controller
     ) {
     }
 
-    /** 公演一覧＝ツアーカード一覧（spec §3・mockup #scr-event） */
+    /** 公演一覧＝グループカード一覧（spec v2.5 §2.2・3階層の第1層） */
     public function index()
+    {
+        $groups = \App\Models\IdolGroup::withCount(['tours' => fn ($q) => $q->has('events')])
+            ->orderBy('name')
+            ->get()
+            ->filter(fn ($g) => $g->tours_count > 0)
+            ->values();
+
+        $hasUncategorized = Tour::whereNull('idol_group_id')->has('events')->exists();
+
+        return view('events.index', compact('groups', 'hasUncategorized'));
+    }
+
+    /** 第2階層: グループ内ツアー一覧 */
+    public function groupTours(\App\Models\IdolGroup $idolGroup)
     {
         $today = Carbon::today();
 
-        $tours = Tour::withCount('events')
+        $tours = $idolGroup->tours()
+            ->withCount('events')
             ->with(['events' => fn ($q) => $q->orderBy('event_date')])
             ->get()
             ->map(function ($tour) use ($today) {
-                // 開催状況: 未来の日程が残っていれば「開催中」、無ければ「終了」
                 $hasUpcoming = $tour->events->contains(fn ($e) => $e->event_date->gte($today));
                 $tour->status_label = $tour->events_count === 0 ? '日程未登録' : ($hasUpcoming ? '開催中' : '終了');
                 return $tour;
@@ -40,7 +54,27 @@ class EventController extends Controller
             ->sortByDesc(fn ($t) => optional($t->events->max('event_date'))->timestamp)
             ->values();
 
-        return view('events.index', compact('tours'));
+        return view('events.group-tours', compact('idolGroup', 'tours'));
+    }
+
+    /** 第2階層: 未分類ツアー一覧 */
+    public function uncategorizedTours()
+    {
+        $today = Carbon::today();
+
+        $tours = Tour::whereNull('idol_group_id')
+            ->withCount('events')
+            ->with(['events' => fn ($q) => $q->orderBy('event_date')])
+            ->get()
+            ->map(function ($tour) use ($today) {
+                $hasUpcoming = $tour->events->contains(fn ($e) => $e->event_date->gte($today));
+                $tour->status_label = $tour->events_count === 0 ? '日程未登録' : ($hasUpcoming ? '開催中' : '終了');
+                return $tour;
+            })
+            ->sortByDesc(fn ($t) => optional($t->events->max('event_date'))->timestamp)
+            ->values();
+
+        return view('events.group-tours', ['idolGroup' => null, 'tours' => $tours]);
     }
 
     /** 日程（event）登録フォーム（ツアー配下・旧 /events/create を置換） */

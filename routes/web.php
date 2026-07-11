@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
 
     // ツアー共有マスタ（v1.4・全ユーザー可）
     Route::get('/tours/{tour}', [TourController::class, 'show'])->name('tours.show');
+    Route::post('/tours/{tour}/group', [TourController::class, 'updateGroup'])->name('tours.update-group');
     Route::post('/tours/{tour}/deadlines', [TourController::class, 'updateDeadlines'])->name('tours.update-deadlines');
     Route::put('/tours/{tour}/deadlines/{deadline}', [TourController::class, 'updateDeadline'])->name('tours.update-deadline');
     Route::delete('/tours/{tour}/deadlines/{deadline}', [TourController::class, 'destroyDeadline'])->name('tours.destroy-deadline');
@@ -68,8 +69,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/tours/{tour}/events/create', [EventController::class, 'create'])->name('events.create');
     Route::post('/tours/{tour}/events', [EventController::class, 'store'])->name('events.store');
 
-    // 公演一覧（ツアーカード）＋一括インポート（S11）
+    // 公演一覧（グループカード→ツアー一覧→公演詳細の3階層）
     Route::get('/events', [EventController::class, 'index'])->name('events.index');
+    Route::get('/events/groups/uncategorized', [EventController::class, 'uncategorizedTours'])->name('events.uncategorized');
+    Route::get('/events/groups/{idolGroup}', [EventController::class, 'groupTours'])->name('events.group-tours');
     Route::get('/events/import', [EventController::class, 'importForm'])->name('events.import');
     Route::post('/events/import/parse', [EventController::class, 'importParse'])->name('events.import.parse');
     Route::post('/events/import/json', [EventController::class, 'importJson'])->name('events.import.json');

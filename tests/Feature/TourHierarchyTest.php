@@ -36,8 +36,14 @@ class TourHierarchyTest extends TestCase
         $this->makeEvent('Prism Tour', '2026-08-09', $this->makeVenue('東京ドーム'));
         $this->makeEvent('Prism Tour', '2026-08-23', $this->makeVenue('京セラ'));
 
-        // 一覧＝ツアー名と全n公演
+        // v2.7: 公演一覧は3階層化。第1層はグループカード。
+        // 未分類ツアー(idol_group_idなし)は「未分類」カードに集約
         $this->get(route('events.index'))
+            ->assertOk()
+            ->assertSee('未分類');
+
+        // 未分類ツアー一覧にツアー名が出る
+        $this->get(route('events.uncategorized'))
             ->assertOk()
             ->assertSee('Prism Tour')
             ->assertSee('全2公演');

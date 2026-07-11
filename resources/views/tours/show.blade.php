@@ -8,7 +8,20 @@
     @endphp
     <div class="venue-hero">
         <div class="vh-name">{{ $tour->name }}</div>
-        <div class="vh-sub">{{ $status }} ・ 全{{ $events->count() }}公演</div>
+        <div class="vh-sub">{{ $tour->idolGroup?->name ?? '未分類' }} ・ {{ $status }} ・ 全{{ $events->count() }}公演</div>
+    </div>
+
+    <div class="d-block" style="padding:8px 12px;margin-bottom:12px;">
+        <form method="POST" action="{{ route('tours.update-group', $tour) }}" style="display:flex;gap:8px;align-items:center;">
+            @csrf
+            <select name="idol_group_id" class="f-input" style="flex:1;font-size:12px;">
+                <option value="">未分類</option>
+                @foreach(\App\Models\IdolGroup::orderBy('name')->get() as $ig)
+                <option value="{{ $ig->id }}" {{ $tour->idol_group_id == $ig->id ? 'selected' : '' }}>{{ $ig->name }}</option>
+                @endforeach
+            </select>
+            <button type="submit" class="copy-btn" style="font-size:11px;padding:4px 10px;">グループ変更</button>
+        </form>
     </div>
 
     <div class="sec-label">日程</div>
