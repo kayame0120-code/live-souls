@@ -31,7 +31,7 @@ class ParseEventsWithLlm implements ShouldQueue
     public function handle(LlmService $llm): void
     {
         try {
-            $result = $llm->parseEvents($this->inputText);
+            $result = $llm->parseEvents($this->inputText, []);
 
             Cache::put($this->cacheKey, [
                 'status' => 'completed',

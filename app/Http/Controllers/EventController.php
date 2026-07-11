@@ -403,14 +403,32 @@ class EventController extends Controller
 
     public function importParse(Request $request)
     {
-        $validated = $request->validate([
-            'text' => ['required', 'string'],
+        $request->validate([
+            'text' => ['nullable', 'string'],
+            'images' => ['nullable', 'array', 'max:5'],
+            'images.*' => ['image', 'mimes:jpeg,png,webp', 'max:10240'],
         ], [
-            'text.required' => 'テキストを貼り付けてください',
+            'images.max' => '画像は最大5枚までです',
+            'images.*.image' => '画像ファイル(jpeg/png/webp)をアップロードしてください',
+            'images.*.mimes' => '対応形式はjpeg・png・webpです',
+            'images.*.max' => '1枚あたり10MB以内にしてください',
         ]);
 
+        $text = $request->input('text');
+        $imagePaths = [];
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $imagePaths[] = $file->getRealPath();
+            }
+        }
+
+        if (empty($text) && empty($imagePaths)) {
+            return back()->withInput()->with('error', '画像またはテキストを入力してください');
+        }
+
         try {
-            $result = $this->llm->parseEvents($validated['text']);
+            $result = $this->llm->parseEvents($text, $imagePaths);
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', 'AI解析に失敗しました: ' . $e->getMessage());
         }

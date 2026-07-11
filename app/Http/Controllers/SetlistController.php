@@ -87,12 +87,30 @@ class SetlistController extends Controller
 
     public function aiParse(Request $request, Tour $tour)
     {
-        $validated = $request->validate([
-            'text' => ['required', 'string'],
+        $request->validate([
+            'text' => ['nullable', 'string'],
+            'images' => ['nullable', 'array', 'max:5'],
+            'images.*' => ['image', 'mimes:jpeg,png,webp', 'max:10240'],
+        ], [
+            'images.max' => '画像は最大5枚までです',
+            'images.*.mimes' => '対応形式はjpeg・png・webpです',
         ]);
 
+        $text = $request->input('text');
+        $imagePaths = [];
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $imagePaths[] = $file->getRealPath();
+            }
+        }
+
+        if (empty($text) && empty($imagePaths)) {
+            return back()->with('error', '画像またはテキストを入力してください');
+        }
+
         try {
-            $result = $this->llm->parseSetlist($validated['text']);
+            $result = $this->llm->parseSetlist($text, $imagePaths);
         } catch (\Throwable $e) {
             return back()->with('error', 'AI解析に失敗しました: ' . $e->getMessage());
         }

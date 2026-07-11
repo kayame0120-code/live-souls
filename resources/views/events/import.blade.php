@@ -16,18 +16,29 @@
         <button type="button" class="fc-tab" id="tab-json">JSONアップロード</button>
     </div>
 
-    {{-- AI解析 --}}
+    {{-- AI解析（画像主・テキスト従） --}}
     <div id="pane-ai">
         <p style="font-size:12px; color:var(--color-ink-sub); line-height:1.8; margin-bottom:12px;">
-            公演一覧テキストを貼り付けると、AIが日付・会場・公演名に分解します。
+            公演スケジュールのスクショや画像をアップロードすると、AIが日付・会場・公演名に分解します。
         </p>
-        <form method="POST" action="{{ route('events.import.parse') }}">
+        <form method="POST" action="{{ route('events.import.parse') }}" enctype="multipart/form-data">
             @csrf
-            <textarea class="form-textarea @error('text') is-invalid @enderror"
-                      id="text" name="text" rows="8"
-                      placeholder="公演情報のテキストをそのまま貼り付け">{{ old('text') }}</textarea>
-            @error('text')<div class="form-error">{{ $message }}</div>@enderror
-            <button type="submit" class="btn btn-primary" id="parse-btn" style="margin-top:12px;">AI解析する</button>
+            <div id="ai-drop-zone" style="border:2px dashed var(--color-keisen-strong);border-radius:12px;padding:24px;text-align:center;margin-bottom:12px;cursor:pointer;transition:border-color .2s,background .2s;">
+                <div style="font-size:13px;font-weight:600;margin-bottom:4px;">画像をドロップ または クリックで選択</div>
+                <div style="font-size:11px;color:var(--color-ink-sub);">jpeg / png / webp・最大5枚</div>
+                <input type="file" name="images[]" accept="image/jpeg,image/png,image/webp" multiple style="display:none;" id="ai-image-input">
+                <div id="ai-file-list" style="margin-top:8px;font-size:12px;color:var(--color-ink);"></div>
+            </div>
+            @error('images')<div class="form-error">{{ $message }}</div>@enderror
+            @error('images.*')<div class="form-error">{{ $message }}</div>@enderror
+
+            <details style="margin-bottom:12px;">
+                <summary style="font-size:12px;color:var(--color-ink-sub);cursor:pointer;">テキストで入力する場合はこちら</summary>
+                <textarea class="form-textarea" id="text" name="text" rows="6"
+                          placeholder="公演情報のテキストをそのまま貼り付け" style="margin-top:8px;">{{ old('text') }}</textarea>
+            </details>
+
+            <button type="submit" class="btn btn-primary" id="parse-btn">AI解析する</button>
             <div id="loading" style="display:none;text-align:center;padding:24px;">
                 <div style="font-size:14px;font-weight:600;">AI解析中...</div>
                 <div style="font-size:12px;color:var(--color-ink-sub);margin-top:6px;">少々お待ちください</div>
@@ -91,40 +102,42 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ページ全体のドロップを防止（ファイルがブラウザで開くのを阻止）
     document.addEventListener('dragover', function (e) { e.preventDefault(); });
     document.addEventListener('drop', function (e) { e.preventDefault(); });
 
-    // ドロップゾーン
-    var dropZone = document.getElementById('drop-zone');
-    var fileInput = document.getElementById('json-file-input');
-    var fileList = document.getElementById('drop-file-list');
-    if (dropZone && fileInput) {
-        dropZone.addEventListener('click', function () { fileInput.click(); });
-        dropZone.addEventListener('dragover', function (e) {
+    function setupDropZone(zoneId, inputId, listId) {
+        var zone = document.getElementById(zoneId);
+        var input = document.getElementById(inputId);
+        var list = document.getElementById(listId);
+        if (!zone || !input) return;
+        zone.addEventListener('click', function () { input.click(); });
+        zone.addEventListener('dragover', function (e) {
             e.preventDefault(); e.stopPropagation();
-            dropZone.style.borderColor = 'var(--color-oshi, #C7414F)';
-            dropZone.style.background = 'rgba(199,65,79,0.05)';
+            zone.style.borderColor = 'var(--color-oshi, #C7414F)';
+            zone.style.background = 'rgba(199,65,79,0.05)';
         });
-        dropZone.addEventListener('dragleave', function () {
-            dropZone.style.borderColor = ''; dropZone.style.background = '';
+        zone.addEventListener('dragleave', function () {
+            zone.style.borderColor = ''; zone.style.background = '';
         });
-        dropZone.addEventListener('drop', function (e) {
+        zone.addEventListener('drop', function (e) {
             e.preventDefault(); e.stopPropagation();
-            dropZone.style.borderColor = ''; dropZone.style.background = '';
-            fileInput.files = e.dataTransfer.files;
-            showFiles(e.dataTransfer.files);
+            zone.style.borderColor = ''; zone.style.background = '';
+            input.files = e.dataTransfer.files;
+            showFiles(list, e.dataTransfer.files);
         });
-        fileInput.addEventListener('change', function () { showFiles(this.files); });
-        function showFiles(files) {
-            fileList.textContent = '';
+        input.addEventListener('change', function () { showFiles(list, this.files); });
+        function showFiles(el, files) {
+            el.textContent = '';
             for (var i = 0; i < files.length; i++) {
                 var d = document.createElement('div');
-                d.textContent = '📄 ' + files[i].name;
-                fileList.appendChild(d);
+                d.textContent = files[i].name;
+                el.appendChild(d);
             }
         }
     }
+
+    setupDropZone('ai-drop-zone', 'ai-image-input', 'ai-file-list');
+    setupDropZone('drop-zone', 'json-file-input', 'drop-file-list');
 });
 </script>
 </x-app-layout>

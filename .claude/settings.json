@@ -14,6 +14,12 @@
       "Bash(git commit *)",
       "Bash(git switch *)",
       "Bash(git check-ignore *)",
+      "Bash(git push *)",
+      "Bash(fly *)",
+      "Bash(fly deploy*)",
+      "Bash(fly ssh *)",
+      "Bash(fly status*)",
+      "Bash(fly machine *)",
       "Bash(curl -s http://127.0.0.1:*)",
       "Bash(echo *)",
       "Bash(kill *)",
@@ -21,9 +27,8 @@
       "Read(//tmp/**)"
     ],
     "deny": [
-      "Bash(git push*)",
-      "Bash(fly *)",
-      "Bash(flyctl *)",
+
+
       "Bash(php artisan migrate:fresh*)",
       "Edit(.env)",
       "Edit(.env.*)",
