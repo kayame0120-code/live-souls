@@ -66,10 +66,12 @@ PROMPT);
 
     private function call(string $prompt): array
     {
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}";
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent";
 
         try {
-            $response = Http::timeout(60)->post($url, [
+            $response = Http::withHeaders([
+                'x-goog-api-key' => $this->apiKey,
+            ])->timeout(60)->post($url, [
                 'contents' => [
                     ['parts' => [['text' => $prompt]]],
                 ],
