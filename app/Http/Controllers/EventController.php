@@ -179,26 +179,31 @@ class EventController extends Controller
 
     public function importJson(Request $request)
     {
-        $json = null;
+        $tours = [];
 
-        if ($request->hasFile('json_file')) {
-            $json = $request->file('json_file')->get();
+        if ($request->hasFile('json_files')) {
+            foreach ($request->file('json_files') as $file) {
+                $decoded = json_decode($file->get(), true);
+                if (! is_array($decoded)) {
+                    return back()->with('error', $file->getClientOriginalName() . ' のJSONが不正です');
+                }
+                if (isset($decoded['events'])) {
+                    $tours[] = $decoded;
+                } elseif (is_array($decoded) && isset($decoded[0]['events'])) {
+                    $tours = array_merge($tours, $decoded);
+                }
+            }
         } elseif ($request->filled('json_text')) {
-            $json = $request->input('json_text');
+            $decoded = json_decode($request->input('json_text'), true);
+            if (! is_array($decoded)) {
+                return back()->with('error', 'JSONの形式が正しくありません');
+            }
+            $tours = isset($decoded['events']) ? [$decoded] : $decoded;
         }
 
-        if (! $json) {
+        if (empty($tours)) {
             return back()->with('error', 'JSONファイルまたはJSON文字列を入力してください');
         }
-
-        $result = json_decode($json, true);
-
-        if (! is_array($result)) {
-            return back()->with('error', 'JSONの形式が正しくありません');
-        }
-
-        // 単体({tour, events})と配列([{tour, events}, ...])の両方に対応
-        $tours = isset($result['events']) ? [$result] : $result;
 
         foreach ($tours as $t) {
             if (! isset($t['events']) || ! is_array($t['events'])) {

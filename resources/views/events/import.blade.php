@@ -47,8 +47,8 @@
         <form method="POST" action="{{ route('events.import.json') }}" enctype="multipart/form-data">
             @csrf
             <div class="f-field">
-                <label>JSONファイル</label>
-                <input class="f-input" type="file" name="json_file" accept=".json,.txt">
+                <label>JSONファイル（複数選択可）</label>
+                <input class="f-input" type="file" name="json_files[]" accept=".json,.txt" multiple>
             </div>
             <div class="f-field">
                 <label>または JSON文字列を貼り付け</label>
