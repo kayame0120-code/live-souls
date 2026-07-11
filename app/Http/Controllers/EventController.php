@@ -193,16 +193,77 @@ class EventController extends Controller
 
         $result = json_decode($json, true);
 
-        if (! is_array($result) || ! isset($result['events'])) {
-            return back()->with('error', 'JSONの形式が正しくありません。{"tour":"...","events":[...]} の形式にしてください');
+        if (! is_array($result)) {
+            return back()->with('error', 'JSONの形式が正しくありません');
         }
 
-        return view('events.import-confirm', [
-            'rows' => $result['events'] ?? [],
-            'unknown' => [],
-            'tour' => $result['tour'] ?? '',
-            'deadlines' => $result['deadlines'] ?? [],
+        // 単体({tour, events})と配列([{tour, events}, ...])の両方に対応
+        $tours = isset($result['events']) ? [$result] : $result;
+
+        foreach ($tours as $t) {
+            if (! isset($t['events']) || ! is_array($t['events'])) {
+                return back()->with('error', 'JSONの形式が正しくありません。各要素に "events" 配列が必要です');
+            }
+        }
+
+        return view('events.import-confirm-json', compact('tours'));
+    }
+
+    public function importJsonStore(Request $request)
+    {
+        $validated = $request->validate([
+            'tours' => ['required', 'array', 'min:1'],
+            'tours.*.tour_name' => ['required', 'string', 'max:255'],
+            'tours.*.events' => ['required', 'array'],
+            'tours.*.events.*.include' => ['nullable'],
+            'tours.*.events.*.event_date' => ['nullable', 'date'],
+            'tours.*.events.*.start_time' => ['nullable', 'date_format:H:i'],
+            'tours.*.events.*.venue_name' => ['nullable', 'string', 'max:255'],
+            'tours.*.events.*.event_label' => ['nullable', 'string', 'max:255'],
+            'tours.*.deadlines' => ['nullable', 'array'],
+            'tours.*.deadlines.*.label' => ['nullable', 'string', 'max:255'],
+            'tours.*.deadlines.*.application_deadline' => ['nullable', 'date'],
+            'tours.*.deadlines.*.announce_date' => ['nullable', 'date'],
         ]);
+
+        $imported = 0;
+
+        DB::transaction(function () use ($validated, &$imported) {
+            foreach ($validated['tours'] as $tourData) {
+                $tourId = $this->service->resolveTourId(['tour_name' => $tourData['tour_name']]);
+
+                foreach ($tourData['events'] as $row) {
+                    if (empty($row['include']) || empty($row['event_date'])) {
+                        continue;
+                    }
+                    $venueId = $this->service->resolveVenueId(['venue_name' => $row['venue_name'] ?? null]);
+                    $this->service->create(
+                        $tourId, $row['event_label'] ?? null, $row['event_date'],
+                        ! empty($row['start_time']) ? $row['start_time'] : null, $venueId
+                    );
+                    $imported++;
+                }
+
+                foreach ($tourData['deadlines'] ?? [] as $dl) {
+                    if (empty($dl['application_deadline']) && empty($dl['announce_date'])) {
+                        continue;
+                    }
+                    \App\Models\TourDeadline::create([
+                        'tour_id' => $tourId,
+                        'label' => $dl['label'] ?? null,
+                        'application_deadline' => $dl['application_deadline'] ?? null,
+                        'announce_date' => $dl['announce_date'] ?? null,
+                    ]);
+                }
+            }
+        });
+
+        if ($imported === 0) {
+            return back()->with('error', '取込対象の公演がありませんでした');
+        }
+
+        return redirect()->route('events.index')
+            ->with('success', count($validated['tours']) . "ツアー・{$imported}件の公演を登録しました");
     }
 
     public function importParse(Request $request)

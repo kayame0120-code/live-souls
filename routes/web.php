@@ -72,6 +72,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/events/import', [EventController::class, 'importForm'])->name('events.import');
     Route::post('/events/import/parse', [EventController::class, 'importParse'])->name('events.import.parse');
     Route::post('/events/import/json', [EventController::class, 'importJson'])->name('events.import.json');
+    Route::post('/events/import/json/store', [EventController::class, 'importJsonStore'])->name('events.import.json.store');
     Route::post('/events/import', [EventController::class, 'importStore'])->name('events.import.store');
     Route::get('/events/{event}/edit', [EventController::class, 'edit'])->name('events.edit');
     Route::put('/events/{event}', [EventController::class, 'update'])->name('events.update');
