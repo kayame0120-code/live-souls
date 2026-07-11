@@ -151,6 +151,34 @@ class SecurityTasksTest extends TestCase
         $after->assertSee('data-copy="e2e:cipher-x"', false);
     }
 
+    public function test_名義一覧ではe2e暗号文が表示されず伏字になる(): void
+    {
+        $group = IdolGroup::firstOrCreate(['name' => 'テストグループ']);
+        $person = Person::withoutGlobalScopes()->create(['user_id' => $this->user->id, 'name' => 'E2E名義']);
+        DB::table('fc_memberships')->insert([
+            'user_id' => $this->user->id, 'person_id' => $person->id, 'group_id' => $group->id,
+            'artist_name' => 'テスト',
+            'member_no' => 'e2e:list-cipher-visible-check',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->user->idolGroups()->attach($group->id, ['sort_order' => 1]);
+
+        $response = $this->get(route('identities.index'));
+        $response->assertOk();
+        $response->assertDontSee('e2e:list-cipher-visible-check');
+        $response->assertSee('No. ••••••••');
+    }
+
+    public function test_名義一覧でレガシー会員番号は従来どおり表示される(): void
+    {
+        $membership = $this->makeLegacyMembership($this->user);
+        $this->user->idolGroups()->attach($membership->group_id, ['sort_order' => 1]);
+
+        $response = $this->get(route('identities.index'));
+        $response->assertOk();
+        $response->assertSee('No. 00187964');
+    }
+
     // ---- ②2FA設定画面 ----
 
     public function test_セキュリティ設定画面が表示される_未設定状態(): void

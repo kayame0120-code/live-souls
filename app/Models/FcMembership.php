@@ -98,6 +98,21 @@ class FcMembership extends Model
         return $value !== null && str_starts_with($value, self::E2E_PREFIX);
     }
 
+    /**
+     * 一覧カード等での会員番号表示用。
+     * E2E暗号文はサーバー側で復号できないため伏字を返す（詳細画面の👁で復号表示）。
+     * レガシー値は従来どおり表示する。
+     */
+    public function displayMemberNo(): ?string
+    {
+        $value = $this->member_no;
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return self::isE2eValue($value) ? '••••••••' : $value;
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
