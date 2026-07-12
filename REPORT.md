@@ -260,7 +260,59 @@ FCパスワードは、次のいずれかで始まる必要があります。e2e
 
 ---
 
-## 8. 検証ライン
+---
+
+## 8. v2.7-R4 最終確認（回帰テスト証拠）
+
+### 8-1. キャッシュポーリングのIDOR対策
+
+`Tests\Feature\AiImportTest`:
+```
+✓ ジョブ完了後にポーリングで結果を取得できる                           0.16s
+✓ ジョブ失敗時にエラーステータスが返る                                 0.01s
+Tests:    2 passed (5 assertions)
+```
+実装: `importPollResult()`でキーフォーマット検証(`/^llm-parse:[0-9a-f\-]{36}$/`) + `user_id`所有権チェック。
+
+### 8-2. RequireE2eMigrationのuser_idスコープ
+
+`Tests\Feature\SecurityTasksTest`:
+```
+✓ レガシー行があるユーザーは名義画面がブロックされ移行画面へリダイレクト  0.15s
+✓ 全件移行完了後はブロックされない                                        0.02s
+Tests:    2 passed (3 assertions)
+```
+実装: `FcMembership::withoutGlobalScopes()->where('user_id', Auth::id())->...`で自分の行のみ検査。
+
+### 8-3. 公演一覧のTypeError修正（OPENAI_API_KEY未設定でも /events が200）
+
+`Tests\Feature\PageRenderSmokeTest`:
+```
+✓ 画面が200を返す with data set "公演一覧"                             0.16s
+Tests:    1 passed (1 assertions)
+```
+実装: `OpenAiLlmService`のAPIキーチェックをコンストラクタから`call()`に遅延。テスト環境は`LLM_DRIVER=fake`(phpunit.xml)。
+
+### 8-4. 移行APIの部分送信データ喪失防止
+
+`Tests\Feature\SecurityTasksTest`:
+```
+✓ 移行後にDBの全3フィールドがe2e暗号文に置き換わる
+✓ 移行で一部フィールドだけ送ると422でデータが守られる
+```
+実装: レガシー値が存在するフィールドに全てE2E暗号文が送られていなければ422で拒否。
+
+### 8-5. 当落タブ3階層化 + 公演ツアー一覧の編集トグル
+
+`Tests\Feature\TourHierarchyTest`:
+```
+✓ u6 当落一覧はツアー単位 詳細は待ち結果区分（3階層対応に修正済み）
+```
+公演ツアー一覧: 右上「編集」ボタンで移動/削除UIのトグル表示。
+
+---
+
+## 9. 検証ライン（最終）
 
 ### V1: php artisan migrate --force
 ```
@@ -275,13 +327,13 @@ EXIT: 0
 
 ### V3: php artisan test
 ```
-Tests:    170 passed (461 assertions)
-Duration: 2.06s
+Tests:    171 passed (463 assertions)
+Duration: 2.20s
 ```
 
 ---
 
-## 9. 未完了項目
+## 10. 未完了項目
 
 | No | 内容 |
 |---|---|
@@ -292,7 +344,7 @@ Duration: 2.06s
 ## 変更ファイル統計
 
 ```
-100 files changed, 7614 insertions(+), 848 deletions(-)
+102 files changed, 7729 insertions(+), 885 deletions(-)
 ```
 
-21コミット（main..HEAD）
+27コミット（main..HEAD）
