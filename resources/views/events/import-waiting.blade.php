@@ -61,6 +61,13 @@
                 csrf.name = '_token'; csrf.value = document.querySelector('meta[name="csrf-token"]').content;
                 form.appendChild(csrf);
 
+                var idolGroupId = @json($idolGroupId ?? null);
+                if (idolGroupId) {
+                    var gid = document.createElement('input');
+                    gid.name = 'idol_group_id'; gid.value = idolGroupId;
+                    form.appendChild(gid);
+                }
+
                 var result = data.result || {};
                 // ツアー名
                 var tn = document.createElement('input');

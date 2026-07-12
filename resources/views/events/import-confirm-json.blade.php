@@ -46,6 +46,7 @@
 
     <form method="POST" action="{{ route('events.import.json.store') }}">
         @csrf
+        @if(!empty($idolGroupId))<input type="hidden" name="idol_group_id" value="{{ $idolGroupId }}">@endif
 
         {{-- 公演グループ --}}
         @foreach($eventsGroups as $gi => $group)
@@ -57,6 +58,7 @@
         <div class="f-field" style="margin-bottom:8px;">
             <label>ツアー名</label>
             <input class="f-input" type="text" name="events_groups[{{ $gi }}][tour_name]" value="{{ $group['tour'] ?? '' }}" required>
+            @if(!empty($group['group']))<input type="hidden" name="events_groups[{{ $gi }}][group_name]" value="{{ $group['group'] }}">@endif
         </div>
 
         @foreach($group['events'] as $ei => $event)
@@ -107,6 +109,7 @@
         <div class="f-field" style="margin-bottom:8px;">
             <label>ツアー名</label>
             <input class="f-input" type="text" name="setlist_groups[{{ $si }}][tour_name]" value="{{ $group['tour'] ?? '' }}" required>
+            @if(!empty($group['group']))<input type="hidden" name="setlist_groups[{{ $si }}][group_name]" value="{{ $group['group'] }}">@endif
         </div>
 
         @foreach($group['items'] as $ii => $item)

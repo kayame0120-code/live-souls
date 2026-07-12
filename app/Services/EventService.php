@@ -58,6 +58,7 @@ class EventService
     /**
      * ツアー名を解決する（venue 名寄せと同じパターン・spec §5「ツアーの共有マスタ管理」）。
      * tour_id 指定があれば優先、なければ名前で既存検索、無ければ新規作成。
+     * idol_group_id が渡された場合、新規作成時にグループを設定する。
      */
     public function resolveTourId(array $data): ?int
     {
@@ -68,10 +69,19 @@ class EventService
         if (! empty($data['tour_name'])) {
             $existing = \App\Models\Tour::where('name', $data['tour_name'])->first();
             if ($existing) {
+                if (empty($existing->idol_group_id) && ! empty($data['idol_group_id'])) {
+                    $existing->update(['idol_group_id' => $data['idol_group_id']]);
+                }
+
                 return $existing->id;
             }
 
-            return \App\Models\Tour::create(['name' => $data['tour_name']])->id;
+            $attrs = ['name' => $data['tour_name']];
+            if (! empty($data['idol_group_id'])) {
+                $attrs['idol_group_id'] = $data['idol_group_id'];
+            }
+
+            return \App\Models\Tour::create($attrs)->id;
         }
 
         return null;

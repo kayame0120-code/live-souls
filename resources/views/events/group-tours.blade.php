@@ -10,7 +10,7 @@
     </div>
 
     <div class="ev-actions">
-        <a href="{{ route('events.import') }}" class="ev-import">一覧を貼って一括登録</a>
+        <a href="{{ route('events.import', $idolGroup ? ['idol_group_id' => $idolGroup->id] : []) }}" class="ev-import">一覧を貼って一括登録</a>
     </div>
 
     @php $allGroups = \App\Models\IdolGroup::orderBy('name')->get(); @endphp
