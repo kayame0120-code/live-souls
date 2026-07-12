@@ -23,7 +23,7 @@
         <div class="lot-edit-controls" style="display:none;margin-top:8px;">
             @if($row->tour->canBeDeleted())
             <form method="POST" action="{{ route('tours.destroy', $row->tour) }}" style="display:inline;"
-                  onsubmit="return confirm('「{{ $row->tour->name }}」を削除しますか？')">
+                  data-confirm="「{{ $row->tour->name }}」を削除しますか？">
                 @csrf @method('DELETE')
                 <button type="submit" class="copy-btn" style="font-size:10px;padding:2px 8px;color:#C7414F;">ツアーを削除</button>
             </form>
@@ -40,12 +40,18 @@
 document.addEventListener('DOMContentLoaded', function(){
     var btn = document.getElementById('lot-edit-toggle');
     var editing = false;
-    if(!btn) return;
-    btn.addEventListener('click', function(){
-        editing = !editing;
-        btn.textContent = editing ? '完了' : '編集';
-        document.querySelectorAll('.lot-edit-controls').forEach(function(el){
-            el.style.display = editing ? '' : 'none';
+    if(btn){
+        btn.addEventListener('click', function(){
+            editing = !editing;
+            btn.textContent = editing ? '完了' : '編集';
+            document.querySelectorAll('.lot-edit-controls').forEach(function(el){
+                el.style.display = editing ? '' : 'none';
+            });
+        });
+    }
+    document.querySelectorAll('form[data-confirm]').forEach(function(form){
+        form.addEventListener('submit', function(e){
+            if(!confirm(form.dataset.confirm)) e.preventDefault();
         });
     });
 });
