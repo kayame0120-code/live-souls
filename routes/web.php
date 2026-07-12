@@ -76,6 +76,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/events/groups/{idolGroup}', [EventController::class, 'groupTours'])->name('events.group-tours');
     Route::get('/events/import', [EventController::class, 'importForm'])->name('events.import');
     Route::post('/events/import/parse', [EventController::class, 'importParse'])->name('events.import.parse');
+    Route::post('/events/import/poll', [EventController::class, 'importPollResult'])->name('events.import.poll');
     Route::post('/events/import/json', [EventController::class, 'importJson'])->name('events.import.json');
     Route::post('/events/import/json/store', [EventController::class, 'importJsonStore'])->name('events.import.json.store');
     Route::post('/events/import', [EventController::class, 'importStore'])->name('events.import.store');
@@ -109,6 +110,9 @@ Route::middleware('auth')->group(function () {
     // セキュリティ設定（2FA有効化・基準No.13）。Fortifyの2FA操作ルートと同じくpassword.confirm必須
     Route::get('/settings/security', [\App\Http\Controllers\SecuritySettingsController::class, 'show'])
         ->middleware('password.confirm')->name('settings.security');
+
+    // E2E移行専用画面（未移行がある場合に強制リダイレクトされる）
+    Route::get('/e2e/migrate', fn () => view('e2e.migrate'))->name('e2e.migrate-page');
 
     // E2E移行対象の一覧（名義名とIDのみ・機微値は含まない）
     Route::get('/api/e2e/migration-status', [\App\Http\Controllers\E2eKeyController::class, 'migrationStatus'])

@@ -131,7 +131,8 @@ class SecurityTasksTest extends TestCase
         $membership = $this->makeLegacyMembership($this->user);
 
         // E2E化前: レガシー平文がコピー属性に乗る（従来挙動）
-        $before = $this->withSession(['auth.password_confirmed_at' => time()])
+        $before = $this->withoutMiddleware(\App\Http\Middleware\RequireE2eMigration::class)
+            ->withSession(['auth.password_confirmed_at' => time()])
             ->get(route('identities.show', $membership));
         $before->assertSee('data-copy="00187964"', false);
 
@@ -174,7 +175,8 @@ class SecurityTasksTest extends TestCase
         $membership = $this->makeLegacyMembership($this->user);
         $this->user->idolGroups()->attach($membership->group_id, ['sort_order' => 1]);
 
-        $response = $this->get(route('identities.index'));
+        $response = $this->withoutMiddleware(\App\Http\Middleware\RequireE2eMigration::class)
+            ->get(route('identities.index'));
         $response->assertOk();
         $response->assertSee('No. •••••964');
         $response->assertDontSee('00187964');
@@ -228,6 +230,46 @@ class SecurityTasksTest extends TestCase
 
         $raw = DB::table('fc_memberships')->where('id', $membership->id)->first();
         $this->assertSame('964', $raw->member_no_hint);
+    }
+
+    // ---- 移行強制化 (R3-A) ----
+
+    public function test_レガシー行があるユーザーは名義画面がブロックされ移行画面へリダイレクト(): void
+    {
+        $this->makeLegacyMembership($this->user);
+
+        $this->get(route('identities.index'))
+            ->assertRedirect(route('e2e.migrate-page'));
+    }
+
+    public function test_全件移行完了後はブロックされない(): void
+    {
+        $group = IdolGroup::firstOrCreate(['name' => 'テストグループ']);
+        $person = Person::withoutGlobalScopes()->create(['user_id' => $this->user->id, 'name' => 'E2E済み名義']);
+        DB::table('fc_memberships')->insert([
+            'user_id' => $this->user->id, 'person_id' => $person->id, 'group_id' => $group->id,
+            'artist_name' => 'テスト',
+            'member_no' => 'e2e:all-migrated', 'login_id' => 'e2e:login', 'password' => 'e2e:pass',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->get(route('identities.index'))->assertOk();
+    }
+
+    public function test_移行後にDBの旧暗号文がnullになる(): void
+    {
+        $membership = $this->makeLegacyMembership($this->user);
+
+        $this->withSession(['auth.password_confirmed_at' => time()])
+            ->postJson(route('api.e2e.migrate', $membership->id), [
+                'member_no' => 'e2e:new-val',
+            ])->assertOk();
+
+        $raw = DB::table('fc_memberships')->where('id', $membership->id)->first();
+        $this->assertSame('e2e:new-val', $raw->member_no);
+        // login_id/passwordはE2E値を送っていないためnullに上書きされる(旧暗号文の破棄)
+        $this->assertNull($raw->login_id);
+        $this->assertNull($raw->password);
     }
 
     // ---- ②2FA設定画面 ----

@@ -459,7 +459,8 @@ class EventController extends Controller
 
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                $imagePaths[] = $file->getRealPath();
+                $stored = $file->store('ai-temp', 'local');
+                $imagePaths[] = storage_path('app/' . $stored);
             }
         }
 
@@ -467,18 +468,23 @@ class EventController extends Controller
             return back()->withInput()->with('error', '画像またはテキストを入力してください');
         }
 
-        try {
-            $result = $this->llm->parseEvents($text, $imagePaths);
-        } catch (\Throwable $e) {
-            return back()->withInput()->with('error', 'AI解析に失敗しました: ' . $e->getMessage());
+        $cacheKey = 'llm-parse:' . \Illuminate\Support\Str::uuid();
+        \Illuminate\Support\Facades\Cache::put($cacheKey, ['status' => 'processing'], now()->addHour());
+        \App\Jobs\ParseWithLlm::dispatch($cacheKey, 'events', $text, $imagePaths);
+
+        return view('events.import-waiting', ['cacheKey' => $cacheKey, 'type' => 'events']);
+    }
+
+    public function importPollResult(Request $request)
+    {
+        $cacheKey = $request->input('cache_key');
+        $data = \Illuminate\Support\Facades\Cache::get($cacheKey);
+
+        if (! $data) {
+            return response()->json(['status' => 'not_found']);
         }
 
-        return view('events.import-confirm', [
-            'rows' => $result['events'] ?? [],
-            'unknown' => [],
-            'tour' => $result['tour'] ?? '',
-            'deadlines' => $result['deadlines'] ?? [],
-        ]);
+        return response()->json($data);
     }
 
     /**

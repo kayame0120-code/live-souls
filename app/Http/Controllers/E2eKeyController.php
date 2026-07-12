@@ -131,17 +131,33 @@ class E2eKeyController extends Controller
             'password.starts_with' => 'E2E暗号文のみ受け付けます',
         ]);
 
-        $update = array_filter($validated, fn ($v) => $v !== null && $v !== '');
-        if (! empty($update)) {
-            $fcMembership->update($update);
-        }
+        \Illuminate\Support\Facades\DB::transaction(function () use ($fcMembership, $validated) {
+            $raw = $fcMembership->getRawOriginal();
 
-        E2eAccessLog::create([
-            'user_id' => Auth::id(),
-            'fc_membership_id' => $fcMembership->id,
-            'action' => 'migrate_to_e2e',
-            'ip_address' => request()->ip(),
-        ]);
+            $update = [];
+            foreach (['member_no', 'login_id', 'password'] as $field) {
+                if (! empty($validated[$field])) {
+                    $update[$field] = $validated[$field];
+                } elseif (isset($raw[$field]) && $raw[$field] !== null && $raw[$field] !== '' && ! FcMembership::isE2eValue($raw[$field])) {
+                    $update[$field] = null;
+                }
+            }
+
+            if (! empty($validated['member_no_hint'])) {
+                $update['member_no_hint'] = mb_substr($validated['member_no_hint'], -3);
+            }
+
+            if (! empty($update)) {
+                $fcMembership->update($update);
+            }
+
+            E2eAccessLog::create([
+                'user_id' => Auth::id(),
+                'fc_membership_id' => $fcMembership->id,
+                'action' => 'migrate_to_e2e',
+                'ip_address' => request()->ip(),
+            ]);
+        });
 
         return response()->json(['ok' => true]);
     }

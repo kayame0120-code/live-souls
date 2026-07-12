@@ -101,7 +101,8 @@ class SetlistController extends Controller
 
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                $imagePaths[] = $file->getRealPath();
+                $stored = $file->store('ai-temp', 'local');
+                $imagePaths[] = storage_path('app/' . $stored);
             }
         }
 
@@ -109,16 +110,11 @@ class SetlistController extends Controller
             return back()->with('error', '画像またはテキストを入力してください');
         }
 
-        try {
-            $result = $this->llm->parseSetlist($text, $imagePaths);
-        } catch (\Throwable $e) {
-            return back()->with('error', 'AI解析に失敗しました: ' . $e->getMessage());
-        }
+        $cacheKey = 'llm-parse:' . \Illuminate\Support\Str::uuid();
+        \Illuminate\Support\Facades\Cache::put($cacheKey, ['status' => 'processing'], now()->addHour());
+        \App\Jobs\ParseWithLlm::dispatch($cacheKey, 'setlist', $text, $imagePaths);
 
-        $tour->load('setlists.items');
-        $aiItems = $result['items'] ?? [];
-
-        return view('setlists.show', compact('tour', 'aiItems'));
+        return view('events.import-waiting', ['cacheKey' => $cacheKey, 'type' => 'setlist']);
     }
 
     public function bulkStore(Request $request, Tour $tour)

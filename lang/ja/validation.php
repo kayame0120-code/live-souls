@@ -285,6 +285,7 @@ return [
         'work'                     => '仕事',
         'year'                     => '年',
 
+        'person_name'              => '氏名',
         'member_no'                => '会員番号',
         'login_id'                 => 'ログインID',
         'joined_on'                => '入会日',
