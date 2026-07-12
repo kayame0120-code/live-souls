@@ -44,7 +44,7 @@ class IdentityDuplicateTest extends TestCase
         ]);
         $this->source = FcMembership::create([
             'user_id' => $this->user->id, 'person_id' => $person->id, 'group_id' => $this->igSnowMan->id,
-            'artist_name' => '目黒蓮', 'member_no' => 'SM-001', 'oshi_color' => '#212121',
+            'artist_name' => '目黒蓮', 'member_no' => 'e2e:test-cipher-SM001', 'oshi_color' => '#212121',
             'group_member_id' => $this->memberA->id,
         ]);
     }

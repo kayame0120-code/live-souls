@@ -12,9 +12,13 @@ class IdolGroupController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+        ], [
+            'name.required' => 'グループ名を入力してください',
         ]);
 
-        $group = IdolGroup::firstOrCreate(['name' => $validated['name']]);
+        $trimmedName = trim($validated['name']);
+        $existing = IdolGroup::whereRaw('TRIM(name) = ?', [$trimmedName])->first();
+        $group = $existing ?? IdolGroup::create(['name' => $trimmedName]);
 
         if (! Auth::user()->idolGroups()->where('idol_group_id', $group->id)->exists()) {
             $maxOrder = Auth::user()->idolGroups()->max('sort_order') ?? 0;

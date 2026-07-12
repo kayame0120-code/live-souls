@@ -17,17 +17,50 @@ class LotController extends Controller
     }
 
     /**
-     * 当落一覧＝ツアーカード（v1.4・spec §5「当落画面のツアー単位グルーピング」）。
-     * attendances.event_id → events.tour_id を辿り、自分の申込があるツアーだけをまとめる。
-     * 配下に pending を含めば「当落待ちあり」、無ければ「発表済」。
+     * 当落一覧 第1層＝グループカード一覧。
+     * 自分の申込があるツアーのidol_group_idからグループを集約する。
      */
     public function index()
     {
-        $attendances = Attendance::with(['event.tour', 'fcMemberships'])
+        $attendances = Attendance::with(['event.tour.idolGroup', 'fcMemberships'])
             ->whereHas('fcMemberships')
             ->get();
 
-        // ツアー単位でグルーピング（新テーブル不要・表示ロジックのみ）
+        $toursByGroup = $attendances
+            ->filter(fn ($a) => $a->event?->tour)
+            ->groupBy(fn ($a) => $a->event->tour->idol_group_id ?? 0)
+            ->map(function ($group, $groupId) {
+                $tours = $group->groupBy(fn ($a) => $a->event->tour->id);
+                $hasPending = $group->contains(
+                    fn ($a) => $a->fcMemberships->contains(fn ($m) => $m->pivot->result === 'pending')
+                );
+                $idolGroup = $groupId ? $group->first()->event->tour->idolGroup : null;
+                return (object) [
+                    'idol_group' => $idolGroup,
+                    'idol_group_id' => $groupId,
+                    'tour_count' => $tours->count(),
+                    'has_pending' => $hasPending,
+                ];
+            })
+            ->sortBy(fn ($g) => $g->idol_group?->name ?? 'zzz')
+            ->values();
+
+        return view('lots.index', compact('toursByGroup'));
+    }
+
+    /**
+     * 当落 第2層＝グループ内ツアー一覧。
+     */
+    public function groupTours(\App\Models\IdolGroup $idolGroup = null)
+    {
+        $query = Attendance::with(['event.tour', 'fcMemberships'])
+            ->whereHas('fcMemberships')
+            ->whereHas('event.tour', fn ($q) => $idolGroup
+                ? $q->where('idol_group_id', $idolGroup->id)
+                : $q->whereNull('idol_group_id'));
+
+        $attendances = $query->get();
+
         $tours = $attendances
             ->filter(fn ($a) => $a->event?->tour)
             ->groupBy(fn ($a) => $a->event->tour->id)
@@ -45,7 +78,7 @@ class LotController extends Controller
             ->sortByDesc('latest')
             ->values();
 
-        return view('lots.index', compact('tours'));
+        return view('lots.group-tours', compact('idolGroup', 'tours'));
     }
 
     /**

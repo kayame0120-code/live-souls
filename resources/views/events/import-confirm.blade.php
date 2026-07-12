@@ -65,7 +65,7 @@
     </form>
     @endif
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     const input = document.getElementById('tour_name');
     const list = document.getElementById('tour-list');

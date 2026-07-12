@@ -36,8 +36,14 @@ class TourHierarchyTest extends TestCase
         $this->makeEvent('Prism Tour', '2026-08-09', $this->makeVenue('東京ドーム'));
         $this->makeEvent('Prism Tour', '2026-08-23', $this->makeVenue('京セラ'));
 
-        // 一覧＝ツアー名と全n公演
+        // v2.7: 公演一覧は3階層化。第1層はグループカード。
+        // 未分類ツアー(idol_group_idなし)は「未分類」カードに集約
         $this->get(route('events.index'))
+            ->assertOk()
+            ->assertSee('未分類');
+
+        // 未分類ツアー一覧にツアー名が出る
+        $this->get(route('events.uncategorized'))
             ->assertOk()
             ->assertSee('Prism Tour')
             ->assertSee('全2公演');
@@ -92,10 +98,10 @@ class TourHierarchyTest extends TestCase
         $a2 = $this->makeAttendance($this->user, $wonEvent, 'planned');
         $a2->fcMemberships()->attach($membership->id, ['result' => 'won']);
 
-        // 一覧＝ツアーカード（当落待ちあり）
+        // 一覧＝グループカード（3階層化: 当落待ちあり表示）
         $this->get(route('lots.index'))
             ->assertOk()
-            ->assertSee('当落ツアー')
+            ->assertSee('未分類')
             ->assertSee('当落待ちあり');
 
         // 詳細＝待ち/結果の区分と会場

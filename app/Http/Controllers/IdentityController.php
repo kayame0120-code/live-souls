@@ -75,14 +75,18 @@ class IdentityController extends Controller
             'group_id' => ['required', 'exists:idol_groups,id'],
             'group_member_id' => ['required', 'exists:group_members,id'],
             'label' => ['nullable', 'string', 'max:255'],
-            'member_no' => ['nullable', 'string', 'max:255'],
-            'login_id' => ['nullable', 'string', 'max:255'],
+            'member_no' => ['nullable', 'string', 'max:255', 'starts_with:e2e:'],
+            'member_no_hint' => ['nullable', 'string', 'max:3'],
+            'login_id' => ['nullable', 'string', 'max:255', 'starts_with:e2e:'],
             'email' => ['nullable', 'email', 'max:255'],
-            'fc_password' => ['nullable', 'string', 'max:255'],
+            'fc_password' => ['nullable', 'string', 'max:255', 'starts_with:e2e:'],
             'joined_month_input' => ['nullable', 'regex:' . JoinedMonthConverter::FORMAT_PATTERN],
             'oshi_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
         ], [
             'group_member_id.required' => '担当メンバーを選択してください',
+            'member_no.starts_with' => '会員番号はクライアント側で暗号化してから送信してください',
+            'login_id.starts_with' => 'ログインIDはクライアント側で暗号化してから送信してください',
+            'fc_password.starts_with' => 'パスワードはクライアント側で暗号化してから送信してください',
         ]);
 
         $member = GroupMember::find($validated['group_member_id']);
@@ -94,6 +98,9 @@ class IdentityController extends Controller
             'artist_name' => $member->name,
             'label' => $validated['label'] ?? null,
             'member_no' => $validated['member_no'] ?? null,
+            'member_no_hint' => IdentityService::resolveMemberNoHint(
+                $validated['member_no'] ?? null, $validated['member_no_hint'] ?? null
+            ),
             'login_id' => $validated['login_id'] ?? null,
             'email' => $validated['email'] ?? null,
             'password' => $validated['fc_password'] ?? null,
@@ -132,14 +139,18 @@ class IdentityController extends Controller
             'group_id' => ['required', 'exists:idol_groups,id'],
             'group_member_id' => ['required', 'exists:group_members,id'],
             'artist_name' => ['nullable', 'string', 'max:255'],
-            'member_no' => ['nullable', 'string', 'max:255'],
-            'login_id' => ['nullable', 'string', 'max:255'],
+            'member_no' => ['nullable', 'string', 'max:255', 'starts_with:e2e:'],
+            'member_no_hint' => ['nullable', 'string', 'max:3'],
+            'login_id' => ['nullable', 'string', 'max:255', 'starts_with:e2e:'],
             'email' => ['nullable', 'email', 'max:255'],
-            'fc_password' => ['nullable', 'string', 'max:255'],
+            'fc_password' => ['nullable', 'string', 'max:255', 'starts_with:e2e:'],
             'joined_month_input' => ['nullable', 'regex:' . JoinedMonthConverter::FORMAT_PATTERN],
             'oshi_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
         ], [
             'group_member_id.required' => '担当メンバーを選択してください',
+            'member_no.starts_with' => '会員番号はクライアント側で暗号化してから送信してください',
+            'login_id.starts_with' => 'ログインIDはクライアント側で暗号化してから送信してください',
+            'fc_password.starts_with' => 'パスワードはクライアント側で暗号化してから送信してください',
         ]);
 
         $member = GroupMember::find($validated['group_member_id']);
@@ -156,6 +167,7 @@ class IdentityController extends Controller
             'artist_name' => $member->name,
             'label' => $validated['label'] ?? null,
             'member_no' => $validated['member_no'] ?? null,
+            'member_no_hint' => $validated['member_no_hint'] ?? null,
             'login_id' => $validated['login_id'] ?? null,
             'email' => $validated['email'] ?? null,
             'password' => $validated['fc_password'] ?? null,

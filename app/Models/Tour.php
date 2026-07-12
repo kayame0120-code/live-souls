@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -14,7 +15,13 @@ class Tour extends Model
 {
     protected $fillable = [
         'name',
+        'idol_group_id',
     ];
+
+    public function idolGroup(): BelongsTo
+    {
+        return $this->belongsTo(IdolGroup::class);
+    }
 
     public function events(): HasMany
     {

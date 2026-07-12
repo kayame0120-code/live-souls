@@ -13,4 +13,9 @@ class IdolGroup extends Model
     {
         return $this->hasMany(GroupMember::class, 'idol_group_id')->orderBy('sort_order');
     }
+
+    public function tours(): HasMany
+    {
+        return $this->hasMany(Tour::class);
+    }
 }

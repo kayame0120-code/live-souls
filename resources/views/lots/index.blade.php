@@ -1,15 +1,14 @@
 <x-app-layout>
     <div class="link-row">
         <a href="{{ route('lots.create') }}" class="primary">＋ 申込を登録</a>
-        <a href="{{ route('events.index') }}">公演一覧</a>
     </div>
 
-    <div class="sec-label">申込中の公演（ツアー）</div>
-    @forelse($tours as $row)
-    <a href="{{ route('lots.tour', $row->tour) }}" class="tour-card">
+    <div class="sec-label">申込中のグループ</div>
+    @forelse($toursByGroup as $row)
+    <a href="{{ $row->idol_group ? route('lots.group-tours', $row->idol_group) : route('lots.uncategorized') }}" class="tour-card">
         <div class="tc-body">
-            <div class="tc-name">{{ $row->tour->name }}</div>
-            <div class="tc-sub">{{ $row->has_pending ? '当落待ちあり' : '発表済' }}</div>
+            <div class="tc-name">{{ $row->idol_group?->name ?? '未分類' }}</div>
+            <div class="tc-sub">{{ $row->tour_count }}ツアー{{ $row->has_pending ? ' ・ 当落待ちあり' : '' }}</div>
         </div>
         <span class="tc-arrow">›</span>
     </a>

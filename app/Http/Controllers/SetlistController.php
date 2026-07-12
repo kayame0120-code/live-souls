@@ -69,8 +69,14 @@ class SetlistController extends Controller
 
         $result = json_decode($json, true);
 
-        if (! is_array($result) || ! isset($result['items'])) {
+        if (! is_array($result) || ! isset($result['items']) || ! is_array($result['items'])) {
             return back()->with('error', 'JSONの形式が正しくありません。{"items":[...]} の形式にしてください');
+        }
+
+        foreach ($result['items'] as $i => $item) {
+            if (empty($item['title'])) {
+                return back()->with('error', ($i + 1) . '行目: title（曲名）が空です');
+            }
         }
 
         $tour->load('setlists.items');
@@ -81,20 +87,34 @@ class SetlistController extends Controller
 
     public function aiParse(Request $request, Tour $tour)
     {
-        $validated = $request->validate([
-            'text' => ['required', 'string'],
+        $request->validate([
+            'text' => ['nullable', 'string'],
+            'images' => ['nullable', 'array', 'max:5'],
+            'images.*' => ['image', 'mimes:jpeg,png,webp', 'max:10240'],
+        ], [
+            'images.max' => '画像は最大5枚までです',
+            'images.*.mimes' => '対応形式はjpeg・png・webpです',
         ]);
 
-        try {
-            $result = $this->llm->parseSetlist($validated['text']);
-        } catch (\Throwable $e) {
-            return back()->with('error', 'AI解析に失敗しました: ' . $e->getMessage());
+        $text = $request->input('text');
+        $imagePaths = [];
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $stored = $file->store('ai-temp', 'local');
+                $imagePaths[] = storage_path('app/' . $stored);
+            }
         }
 
-        $tour->load('setlists.items');
-        $aiItems = $result['items'] ?? [];
+        if (empty($text) && empty($imagePaths)) {
+            return back()->with('error', '画像またはテキストを入力してください');
+        }
 
-        return view('setlists.show', compact('tour', 'aiItems'));
+        $cacheKey = 'llm-parse:' . \Illuminate\Support\Str::uuid();
+        \Illuminate\Support\Facades\Cache::put($cacheKey, ['status' => 'processing', 'user_id' => \Illuminate\Support\Facades\Auth::id()], now()->addHour());
+        \App\Jobs\ParseWithLlm::dispatch($cacheKey, 'setlist', $text, $imagePaths, \Illuminate\Support\Facades\Auth::id());
+
+        return view('events.import-waiting', ['cacheKey' => $cacheKey, 'type' => 'setlist']);
     }
 
     public function bulkStore(Request $request, Tour $tour)

@@ -21,9 +21,9 @@
       "Read(//tmp/**)"
     ],
     "deny": [
-      "Bash(git push*)",
       "Bash(fly *)",
-      "Bash(flyctl *)",
+      "Bash(git push *)",
+      "Bash(gh pr merge *)",
       "Bash(php artisan migrate:fresh*)",
       "Edit(.env)",
       "Edit(.env.*)",

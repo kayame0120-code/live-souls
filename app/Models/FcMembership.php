@@ -5,14 +5,22 @@ namespace App\Models;
 use App\Models\Scopes\UserScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Crypt;
 
 #[ScopedBy(UserScope::class)]
 class FcMembership extends Model
 {
+    /**
+     * E2E暗号文の識別プレフィックス（セキュリティ正本・エンベロープ方式）。
+     * クライアント側で暗号化された値はこのプレフィックス付きで届き、
+     * サーバーは復号できない（そのまま保存・そのまま返却）。
+     */
+    public const E2E_PREFIX = 'e2e:';
     protected $fillable = [
         'user_id',
         'person_id',
@@ -20,6 +28,7 @@ class FcMembership extends Model
         'artist_name',
         'label',
         'member_no',
+        'member_no_hint',
         'login_id',
         'email',
         'password',
@@ -32,12 +41,83 @@ class FcMembership extends Model
     protected function casts(): array
     {
         return [
-            'login_id' => 'encrypted',
             'email' => 'encrypted',
-            'password' => 'encrypted',
             'joined_on' => 'date',
             'renewal_dismissed_at' => 'datetime',
         ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | E2E対象3項目（member_no / login_id / password）の読み出し
+    |--------------------------------------------------------------------------
+    | 3形式が混在しうる:
+    |  1. E2E暗号文（"e2e:"プレフィックス）→ そのまま返す（クライアントで復号）
+    |  2. レガシーAPP_KEY暗号文（Crypt形式）→ サーバー側で復号して返す
+    |  3. レガシー平文（旧member_no等）→ そのまま返す
+    | 書き込み時の暗号化はIdentityService::protectE2eField()が担う。
+    */
+
+    /** E2E/レガシー両対応の読み出し（復号失敗時は生値を返す） */
+    private static function readProtectedField(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return $value;
+        }
+        if (str_starts_with($value, self::E2E_PREFIX)) {
+            return $value; // E2E暗号文: サーバーは復号不能・クライアントに委ねる
+        }
+        // レガシーAPP_KEY暗号文（base64 JSON = "eyJ..."で始まる）の復号を試みる
+        if (str_starts_with($value, 'eyJ')) {
+            try {
+                return Crypt::decryptString($value);
+            } catch (\Throwable) {
+                return $value;
+            }
+        }
+        return $value; // レガシー平文
+    }
+
+    protected function memberNo(): Attribute
+    {
+        return Attribute::make(get: fn ($value) => self::readProtectedField($value));
+    }
+
+    protected function loginId(): Attribute
+    {
+        return Attribute::make(get: fn ($value) => self::readProtectedField($value));
+    }
+
+    protected function password(): Attribute
+    {
+        return Attribute::make(get: fn ($value) => self::readProtectedField($value));
+    }
+
+    /** このフィールド値がE2E暗号文か */
+    public static function isE2eValue(?string $value): bool
+    {
+        return $value !== null && str_starts_with($value, self::E2E_PREFIX);
+    }
+
+    /**
+     * 一覧カード等での会員番号表示用（下3桁のみ常時表示・残りは伏字）。
+     * - E2E暗号文: 保存時に別送された下3桁ヒント（member_no_hint）を使う。ヒントが無ければ全伏字
+     * - レガシー値: サーバーで復号できるため下3桁をその場で算出
+     * 全桁の確認は詳細画面の👁（ブラウザ内復号）で行う。
+     */
+    public function displayMemberNo(): ?string
+    {
+        $value = $this->member_no;
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (self::isE2eValue($value)) {
+            return $this->member_no_hint ? '•••••' . $this->member_no_hint : '••••••••';
+        }
+
+        // レガシー値（アクセサ復号済みの平文）から下3桁を算出
+        return '•••••' . mb_substr($value, -3);
     }
 
     public function user(): BelongsTo
