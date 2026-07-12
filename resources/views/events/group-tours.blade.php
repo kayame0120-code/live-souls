@@ -32,8 +32,8 @@
             </div>
         </a>
         <div class="tour-edit-controls" style="display:none;margin-top:8px;">
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <form method="POST" action="{{ route('tours.update-group', $tour) }}" style="display:flex;gap:4px;align-items:center;">
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                <form method="POST" action="{{ route('tours.update-group', $tour) }}" style="display:flex;gap:4px;align-items:center;flex:1;min-width:0;">
                     @csrf
                     <select name="idol_group_id" class="f-input" style="font-size:11px;padding:2px 6px;min-width:0;flex:1;">
                         <option value="">未分類</option>
@@ -45,10 +45,12 @@
                 </form>
                 @if($tour->events_count === 0)
                 <form method="POST" action="{{ route('tours.destroy', $tour) }}" style="display:inline;"
-                      onsubmit="return confirm('「{{ $tour->name }}」を削除しますか？')">
+                      data-confirm="「{{ $tour->name }}」を削除しますか？">
                     @csrf @method('DELETE')
-                    <button type="submit" class="copy-btn" style="font-size:10px;padding:2px 8px;color:#C7414F;">削除</button>
+                    <button type="submit" class="copy-btn" style="font-size:10px;padding:2px 8px;color:#C7414F;white-space:nowrap;">削除</button>
                 </form>
+                @else
+                <span style="font-size:10px;color:var(--color-ink-sub);white-space:nowrap;">削除不可(日程あり)</span>
                 @endif
             </div>
         </div>
@@ -61,12 +63,18 @@
 document.addEventListener('DOMContentLoaded', function(){
     var btn = document.getElementById('edit-toggle');
     var editing = false;
-    if(!btn) return;
-    btn.addEventListener('click', function(){
-        editing = !editing;
-        btn.textContent = editing ? '完了' : '編集';
-        document.querySelectorAll('.tour-edit-controls').forEach(function(el){
-            el.style.display = editing ? '' : 'none';
+    if(btn){
+        btn.addEventListener('click', function(){
+            editing = !editing;
+            btn.textContent = editing ? '完了' : '編集';
+            document.querySelectorAll('.tour-edit-controls').forEach(function(el){
+                el.style.display = editing ? '' : 'none';
+            });
+        });
+    }
+    document.querySelectorAll('form[data-confirm]').forEach(function(form){
+        form.addEventListener('submit', function(e){
+            if(!confirm(form.dataset.confirm)) e.preventDefault();
         });
     });
 });
