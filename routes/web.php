@@ -53,10 +53,12 @@ Route::middleware('auth')->group(function () {
 
 
 
-    // 当落（S9・v1.4: ツアーカード一覧→当落詳細）。create は tour より前に定義
+    // 当落（3階層: グループ→ツアー→申込詳細）
     Route::get('/lots', [LotController::class, 'index'])->name('lots.index');
     Route::get('/lots/create', [LotController::class, 'create'])->name('lots.create');
     Route::post('/lots', [LotController::class, 'store'])->name('lots.store');
+    Route::get('/lots/groups/uncategorized', [LotController::class, 'groupTours'])->name('lots.uncategorized');
+    Route::get('/lots/groups/{idolGroup}', [LotController::class, 'groupTours'])->name('lots.group-tours');
     Route::get('/lots/tours/{tour}', [LotController::class, 'showByTour'])->name('lots.tour');
 
     // ツアー共有マスタ（v1.4・全ユーザー可）

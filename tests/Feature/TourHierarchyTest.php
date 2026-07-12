@@ -98,10 +98,10 @@ class TourHierarchyTest extends TestCase
         $a2 = $this->makeAttendance($this->user, $wonEvent, 'planned');
         $a2->fcMemberships()->attach($membership->id, ['result' => 'won']);
 
-        // 一覧＝ツアーカード（当落待ちあり）
+        // 一覧＝グループカード（3階層化: 当落待ちあり表示）
         $this->get(route('lots.index'))
             ->assertOk()
-            ->assertSee('当落ツアー')
+            ->assertSee('未分類')
             ->assertSee('当落待ちあり');
 
         // 詳細＝待ち/結果の区分と会場
