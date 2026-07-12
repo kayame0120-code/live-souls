@@ -23,6 +23,7 @@
         </p>
         <form method="POST" action="{{ route('events.import.parse') }}" enctype="multipart/form-data">
             @csrf
+            @if(request('idol_group_id'))<input type="hidden" name="idol_group_id" value="{{ request('idol_group_id') }}">@endif
             <div id="ai-drop-zone" style="border:2px dashed var(--color-keisen-strong);border-radius:12px;padding:24px;text-align:center;margin-bottom:12px;cursor:pointer;transition:border-color .2s,background .2s;">
                 <div style="font-size:13px;font-weight:600;margin-bottom:4px;">画像をドロップ または クリックで選択</div>
                 <div style="font-size:11px;color:var(--color-ink-sub);">jpeg / png / webp・最大5枚</div>
@@ -53,13 +54,15 @@
         </p>
         <div class="d-block" style="padding:10px 14px;margin-bottom:12px;font-size:11px;color:var(--color-ink-sub);line-height:1.8;">
             <div class="d-h">公演JSON</div>
-            <code style="font-size:10px;display:block;white-space:pre;overflow-x:auto;">{"tour":"ツアー名","events":[{"event_label":null,"event_date":"YYYY-MM-DD","start_time":"HH:MM","venue":"会場名"}]}</code>
+            <code style="font-size:10px;display:block;white-space:pre;overflow-x:auto;">{"tour":"ツアー名","group":"グループ���","events":[{"event_label":null,"event_date":"YYYY-MM-DD","start_time":"HH:MM","venue":"会場名"}]}</code>
             <div class="d-h" style="margin-top:8px;">セットリストJSON</div>
-            <code style="font-size:10px;display:block;white-space:pre;overflow-x:auto;">{"tour":"ツアー名","items":[{"order":1,"title":"曲名","note":null}]}</code>
+            <code style="font-size:10px;display:block;white-space:pre;overflow-x:auto;">{"tour":"ツアー名","group":"グループ名","items":[{"order":1,"title":"曲名","note":null}]}</code>
+            <div style="margin-top:4px;font-size:10px;color:var(--color-ink-sub);">※ group は省略可（グループ画面からアクセスした場合は自動設定）</div>
             <div style="margin-top:6px;">公演・セットリストを同時にアップロードできます</div>
         </div>
         <form method="POST" action="{{ route('events.import.json') }}" enctype="multipart/form-data" id="json-form">
             @csrf
+            @if(request('idol_group_id'))<input type="hidden" name="idol_group_id" value="{{ request('idol_group_id') }}">@endif
             <div id="drop-zone" style="border:2px dashed var(--color-keisen-strong);border-radius:12px;padding:24px;text-align:center;margin-bottom:12px;cursor:pointer;transition:border-color .2s,background .2s;">
                 <div style="font-size:13px;font-weight:600;margin-bottom:4px;">ここにJSONファイルをドロップ</div>
                 <div style="font-size:11px;color:var(--color-ink-sub);">または クリックでファイル選択（複数可）</div>

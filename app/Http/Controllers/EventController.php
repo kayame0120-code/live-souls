@@ -229,6 +229,7 @@ class EventController extends Controller
                 $eventsGroups[] = [
                     'source' => $source,
                     'tour' => $decoded['tour'] ?? null,
+                    'group' => $decoded['group'] ?? null,
                     'events' => $decoded['events'],
                     'deadlines' => $decoded['deadlines'] ?? [],
                 ];
@@ -236,6 +237,7 @@ class EventController extends Controller
                 $setlistGroups[] = [
                     'source' => $source,
                     'tour' => $decoded['tour'] ?? null,
+                    'group' => $decoded['group'] ?? null,
                     'items' => $decoded['items'],
                 ];
             } elseif (is_array($decoded) && isset($decoded[0])) {
@@ -244,6 +246,7 @@ class EventController extends Controller
                         $eventsGroups[] = [
                             'source' => $source . '[' . $i . ']',
                             'tour' => $entry['tour'] ?? null,
+                            'group' => $entry['group'] ?? null,
                             'events' => $entry['events'],
                             'deadlines' => $entry['deadlines'] ?? [],
                         ];
@@ -251,6 +254,7 @@ class EventController extends Controller
                         $setlistGroups[] = [
                             'source' => $source . '[' . $i . ']',
                             'tour' => $entry['tour'] ?? null,
+                            'group' => $entry['group'] ?? null,
                             'items' => $entry['items'],
                         ];
                     } else {
@@ -293,8 +297,10 @@ class EventController extends Controller
 
         $validationErrors = $this->validateJsonEntries($eventsGroups, $setlistGroups);
 
+        $idolGroupId = $request->input('idol_group_id');
+
         return view('events.import-confirm-json', compact(
-            'eventsGroups', 'setlistGroups', 'unknownFiles', 'errors', 'validationErrors'
+            'eventsGroups', 'setlistGroups', 'unknownFiles', 'errors', 'validationErrors', 'idolGroupId'
         ));
     }
 
@@ -342,9 +348,12 @@ class EventController extends Controller
             'setlist_groups.*.tour_name.required' => 'セットリストのツアー名を入力してください',
         ];
 
+        $rules['idol_group_id'] = ['nullable', 'integer', 'exists:idol_groups,id'];
+
         if ($request->has('events_groups')) {
             $rules['events_groups'] = ['nullable', 'array'];
             $rules['events_groups.*.tour_name'] = ['required', 'string', 'max:255'];
+            $rules['events_groups.*.group_name'] = ['nullable', 'string', 'max:255'];
             $rules['events_groups.*.events'] = ['required', 'array'];
             $rules['events_groups.*.events.*.include'] = ['nullable'];
             $rules['events_groups.*.events.*.event_date'] = ['required', 'date'];
@@ -360,6 +369,7 @@ class EventController extends Controller
         if ($request->has('setlist_groups')) {
             $rules['setlist_groups'] = ['nullable', 'array'];
             $rules['setlist_groups.*.tour_name'] = ['required', 'string', 'max:255'];
+            $rules['setlist_groups.*.group_name'] = ['nullable', 'string', 'max:255'];
             $rules['setlist_groups.*.items'] = ['required', 'array', 'min:1'];
             $rules['setlist_groups.*.items.*.include'] = ['nullable'];
             $rules['setlist_groups.*.items.*.title'] = ['required', 'string', 'max:255'];
@@ -376,10 +386,15 @@ class EventController extends Controller
         $validated = $validator->validated();
         $importedEvents = 0;
         $importedSetlists = 0;
+        $fallbackGroupId = $validated['idol_group_id'] ?? null;
 
-        DB::transaction(function () use ($validated, &$importedEvents, &$importedSetlists) {
+        DB::transaction(function () use ($validated, &$importedEvents, &$importedSetlists, $fallbackGroupId) {
             foreach ($validated['events_groups'] ?? [] as $tourData) {
-                $tourId = $this->service->resolveTourId(['tour_name' => $tourData['tour_name']]);
+                $groupId = $this->resolveIdolGroupId($tourData['group_name'] ?? null, $fallbackGroupId);
+                $tourId = $this->service->resolveTourId([
+                    'tour_name' => $tourData['tour_name'],
+                    'idol_group_id' => $groupId,
+                ]);
 
                 foreach ($tourData['events'] as $row) {
                     if (empty($row['include']) || empty($row['event_date'])) {
@@ -407,7 +422,11 @@ class EventController extends Controller
             }
 
             foreach ($validated['setlist_groups'] ?? [] as $setlistData) {
-                $tourId = $this->service->resolveTourId(['tour_name' => $setlistData['tour_name']]);
+                $groupId = $this->resolveIdolGroupId($setlistData['group_name'] ?? null, $fallbackGroupId);
+                $tourId = $this->service->resolveTourId([
+                    'tour_name' => $setlistData['tour_name'],
+                    'idol_group_id' => $groupId,
+                ]);
                 $setlist = \App\Models\Setlist::create(['tour_id' => $tourId, 'label' => null]);
                 $order = 0;
 
@@ -472,7 +491,11 @@ class EventController extends Controller
         \Illuminate\Support\Facades\Cache::put($cacheKey, ['status' => 'processing', 'user_id' => \Illuminate\Support\Facades\Auth::id()], now()->addHour());
         \App\Jobs\ParseWithLlm::dispatch($cacheKey, 'events', $text, $imagePaths, \Illuminate\Support\Facades\Auth::id());
 
-        return view('events.import-waiting', ['cacheKey' => $cacheKey, 'type' => 'events']);
+        return view('events.import-waiting', [
+            'cacheKey' => $cacheKey,
+            'type' => 'events',
+            'idolGroupId' => $request->input('idol_group_id'),
+        ]);
     }
 
     public function importPollResult(Request $request)
@@ -500,6 +523,7 @@ class EventController extends Controller
     {
         $validator = validator($request->all(), [
             'tour_name' => ['required', 'string', 'max:255'],
+            'idol_group_id' => ['nullable', 'integer', 'exists:idol_groups,id'],
             'rows' => ['required', 'array', 'min:1'],
             'rows.*.include' => ['nullable', 'boolean'],
             'rows.*.event_label' => ['nullable', 'string', 'max:255'],
@@ -521,9 +545,13 @@ class EventController extends Controller
 
         $validated = $validator->validated();
         $imported = 0;
+        $groupId = $validated['idol_group_id'] ?? null;
 
-        DB::transaction(function () use ($validated, &$imported) {
-            $tourId = $this->service->resolveTourId(['tour_name' => $validated['tour_name']]);
+        DB::transaction(function () use ($validated, &$imported, $groupId) {
+            $tourId = $this->service->resolveTourId([
+                'tour_name' => $validated['tour_name'],
+                'idol_group_id' => $groupId,
+            ]);
 
             foreach ($validated['rows'] as $row) {
                 if (empty($row['include']) || empty($row['event_date'])) {
@@ -560,5 +588,21 @@ class EventController extends Controller
 
         return redirect()->route('events.index')
             ->with('success', "{$imported}件の日程を共有マスタに登録しました");
+    }
+
+    /**
+     * JSONの group 名またはフォームから渡された idol_group_id を解決する。
+     * JSON内の group 名が優先、無ければフォーム経由の fallback を使う。
+     */
+    private function resolveIdolGroupId(?string $groupName, ?int $fallbackGroupId): ?int
+    {
+        if (! empty($groupName)) {
+            $group = \App\Models\IdolGroup::where('name', $groupName)->first();
+            if ($group) {
+                return $group->id;
+            }
+        }
+
+        return $fallbackGroupId;
     }
 }
