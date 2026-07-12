@@ -286,6 +286,8 @@ return [
         'year'                     => '年',
 
         'person_name'              => '氏名',
+        'group_id'                 => 'グループ',
+        'fc_password'              => 'FCパスワード',
         'member_no'                => '会員番号',
         'login_id'                 => 'ログインID',
         'joined_on'                => '入会日',
