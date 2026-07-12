@@ -1,318 +1,250 @@
 # REPORT.md — 現場手帖 v2.7（2026-07-12）
 
-> 検証はすべて **PHP 8.2.32** で実行。
-> v2.7: cc_instructions_v2.7.md / spec v2.6 / security_requirements_v1.1 / security_criteria_v1.1
+> PHP 8.2.32 / SQLite (ローカル)
+> 対象: cc_instructions_v2.7 + v2.7-R + v2.7-R2
 
 ---
 
-## セキュリティ残タスク3件 完了報告（2026-07-12・E2E統合後の追補）
+## 1. R2-1: JS必須・フェイルクローズの実装証拠
 
-前提: E2E暗号化のフォーム統合（コミット5054d2c）で「新規保存はブラウザ内暗号化」が動作済み。
-その時点で残っていた3つの穴を以下の通り閉じた。
-
-### ①既存データの一括E2E化 — 完了
-
-サーバーはマスターキーを持たないため、移行はブラウザ内でのみ実行可能。
-「名義一覧に旧形式バナー → ワンタップで全件E2E化」を実装した。
-
-| 部品 | 実装箇所 |
-|---|---|
-| 移行対象の検出API | `E2eKeyController::migrationStatus()`（生カラム値で判定・機微値は返さない） |
-| 移行API | `E2eKeyController::migrate()`（**`starts_with:e2e:`バリデーションで平文を拒否**・所有者チェック・アクセスログ記録） |
-| ブラウザ側の一括処理 | `e2e-ui.js initMigrationBanner()/runMigration()`（password.confirm状態を確認→暗号文取得→ブラウザ内暗号化→保存） |
-| バナー表示 | `identities/index.blade.php`の`[data-e2e-migration-banner]` |
-
-実行手順（ユーザー操作）: 名義タブを開く → オレンジのバナー「旧形式の名義がN件あります」→「すべてE2E暗号化する」をタップ → パスワード入力 → 完了。
-
-テスト実行出力:
-```
-✓ 旧形式の名義がmigration statusで検出される
-✓ e2e済みの名義はmigration statusに出ない
-✓ migrateはe2e暗号文を受け付けDBを更新する
-✓ migrateは平文を拒否する
-✓ migrateは他ユーザーの名義を更新できない
-```
-
-### ②2FA設定画面（TOTP有効化の実動線） — 完了
-
-Fortifyの2FA機能フラグは有効だったが**ユーザーがONにする画面が存在しなかった**問題を解消。
-
-| 部品 | 実装箇所 |
-|---|---|
-| 設定画面 | `/settings/security`（`SecuritySettingsController` + `settings/security.blade.php`） |
-| 状態遷移 | 未設定→有効化ボタン→QRコード表示＋6桁コード確認→有効（リカバリーコード表示・再生成・無効化） |
-| 保護 | ルートに`password.confirm`必須（Fortifyの2FA操作ルートと同等） |
-| 導線 | ホーム下部「🔐 セキュリティ設定（2段階認証）」 |
-
-テスト実行出力:
-```
-✓ セキュリティ設定画面が表示される 未設定状態
-✓ セキュリティ設定はパスワード確認必須
-✓ 2FA有効化フローが通る（QR発行→pending画面表示）
-✓ 2FA確認済みなら画面にリカバリーコードが出る
-✓ ホームにセキュリティ設定への導線がある
-```
-
-### ③レガシー行の表示DOMに平文が乗る問題 — 完了（①の帰結）
-
-E2E化後の名義は、名義詳細のコピー属性・表示に暗号文のみが乗る（平文はブラウザ内復号時のみ）。
-移行前後のDOMをテストで実証:
+### サーバー側暗号化コードが存在しないことの証明
 
 ```
-✓ migration完了後は名義詳細DOMに平文が乗らない
-   - E2E化前: data-copy="00187964"（平文）が存在
-   - E2E化後: 00187964 は応答に一切含まれず data-copy="e2e:cipher-x" のみ
+$ grep -rn 'Crypt::encryptString\|encryptString' app/ --include='*.php'
+（出力なし = 0件）
 ```
 
-### 検証ライン（3タスク完了時点）
+`IdentityService::protectE2eField()`（旧フォールバック暗号化関数）は削除済み。
 
-| # | 判定 | 実出力 |
-|---|---|---|
-| V1 | YES | `php artisan migrate --force` → `Nothing to migrate.` EXIT: 0 |
-| V2 | YES | `curl /up` → `200` |
-| V3 | YES | `Tests: 166 passed (443 assertions)` |
+### E2E対象3フィールドのstarts_with:e2e:バリデーション
 
-### 基準判定の更新（該当項目のみ・実測ベース）
-
-| No | 判定 | 根拠 |
-|---|---|---|
-| 1（サーバーから平文取得不可） | **YES（E2E化済み行）** | migrate後のDB生値は`e2e:`暗号文のみ（SecurityTasksTest）。**未移行のレガシー行が残る間はその行についてNO** → バナーで移行を促す実動線を提供済み |
-| 3（本人が復号・表示・コピー） | YES | 目ボタン一時表示（15秒自動再伏字）＋復号コピー（45秒自動クリア）＋E2eEncryptionTest |
-| 11（平文がサーバーに到達しない） | **YES（E2E統合済みブラウザの通常操作）** | フォーム送信前にブラウザ内暗号化。migrate APIは`starts_with:e2e:`で平文を拒否。**JS無効時のフォールバック経路（サーバー側暗号化）は残存**（仕様上の逃げ道・テストで担保） |
-| 13（2FA有効化） | **YES** | 機能フラグ＋ユーザーが実際に有効化できる設定画面・QR・確認フロー・リカバリーコード（SecurityTasksTest 2FA系4件） |
-
-※判定表全16項目の実測ベース全面改訂（差戻しR1）は別途対応予定。
-
----
-
-## T0. 現状調査（コード変更禁止）
-
-### 1. JSON手動アップロード窓口の実装状況
-
-**入口の画面・ルート名・コントローラ:**
-
-| 経路 | ルート名 | コントローラ | メソッド | 画面 |
-|---|---|---|---|---|
-| GET /events/import | `events.import` | EventController::importForm() | — | `events/import.blade.php`（タブ切替: AI解析 / JSONアップロード） |
-| POST /events/import/parse | `events.import.parse` | EventController::importParse() | AI解析→確認画面 | `events/import-confirm.blade.php` |
-| POST /events/import | `events.import.store` | EventController::importStore() | AI確認画面→DB登録 | — |
-| POST /events/import/json | `events.import.json` | EventController::importJson() | JSONパース→確認画面 | `events/import-confirm-json.blade.php` |
-| POST /events/import/json/store | `events.import.json.store` | EventController::importJsonStore() | JSON確認画面→DB登録 | — |
-
-**セットリスト側の入口（別経路）:**
-
-| 経路 | ルート名 | コントローラ | メソッド |
-|---|---|---|---|
-| POST /tours/{tour}/setlists/json | `setlists.json-import` | SetlistController::jsonImport() | JSON貼り付け→確認 |
-| POST /tours/{tour}/setlists/ai-parse | `setlists.ai-parse` | SetlistController::aiParse() | AI解析→確認 |
-| POST /tours/{tour}/setlists/bulk | `setlists.bulk-store` | SetlistController::bulkStore() | 一括登録 |
-
-FormRequest: なし（全てコントローラ内inline）
-
-**受け付けているJSONの種別:**
-- **events JSON のみ**。スキーマ: `{"tour":"ツアー名","events":[{"event_label":null,"event_date":"YYYY-MM-DD","start_time":"HH:MM","venue":"会場名"}],"deadlines":[...]}`
-- setlist JSONは **受け付けていない**（後述）
-
-**アップロード→確認画面→登録の流れ:**
-- JSON経路: importJson() でJSONパース→import-confirm-json.blade.phpで確認表示→importJsonStore()でDB登録。**確認画面を経由する正しい流れ**。直INSERTなし
-- AI経路: importParse()でLLM解析→import-confirm.blade.phpで確認表示→importStore()でDB登録。同様に確認画面経由
-
-### 2. JSONのバリデーション実装の有無
-
-**importJson() (パース段階):**
-- JSON構文検証: `json_decode`の結果がarrayかチェック (`EventController.php:187, 199`)
-- スキーマ検証: `$decoded['events']`の存在チェック**のみ** (`EventController.php:188, 209`)
-- キーの型・必須・不正値の検証: **なし**（パース段階では行っていない）
-
-**importJsonStore() (登録段階):**
-- Laravel Validatorでバリデーション (`EventController.php:219-232`):
-  - `tours.*.tour_name` → required, string, max:255
-  - `tours.*.events.*.event_date` → **nullable**, date（required ではない）
-  - `tours.*.events.*.start_time` → nullable, date_format:H:i
-  - `tours.*.events.*.venue_name` → nullable, string, max:255
-  - FK検証（event_idの存在チェック）: 該当なし（events JSONにはevent_idがないため）
-
-**不正JSONの実際の挙動（コード追跡による検証）:**
-
-```
-Test 1 - セットリストJSON {"items":[...]}:
-  json_decode → is_array: YES
-  isset($decoded['events']): NO
-  → 「JSONの形式が正しくありません。各要素に "events" 配列が必要です」で弾かれる（500ではない）
-
-Test 2 - 壊れたJSON "{broken json":
-  json_decode → NULL
-  is_array: NO
-  → 「JSONの形式が正しくありません」で弾かれる（500ではない）
-
-Test 3 - eventsキーなし {"tour":"test"}:
-  isset($decoded['events']): NO
-  → 「JSONの形式が正しくありません。各要素に "events" 配列が必要です」で弾かれる
-
-Test 4 - events空配列 {"tour":"test","events":[]}:
-  → 確認画面に到達するが0件表示
-```
-
-### 3. セットリストJSONが弾かれる件
-
-**原因: `EventController::importJson()` の L209 で `isset($t['events'])` をチェック**
+適用箇所: `IdentityController.php` validatedData() / storeDuplicate()（全登録・編集・複製経路）
 
 ```php
-// EventController.php:208-211
-foreach ($tours as $t) {
-    if (! isset($t['events']) || ! is_array($t['events'])) {
-        return back()->with('error', 'JSONの形式が正しくありません。各要素に "events" 配列が必要です');
-    }
-}
+'member_no' => ['nullable', 'string', 'max:255', 'starts_with:e2e:'],
+'login_id'  => ['nullable', 'string', 'max:255', 'starts_with:e2e:'],
+'fc_password' => ['nullable', 'string', 'max:255', 'starts_with:e2e:'],
 ```
 
-セットリストJSON `{"items":[{"order":1,"title":"曲1","note":null}]}` には `events` キーが存在しないため、上記チェックで弾かれる。
+### 平文リクエストが拒否されDBに保存されないテスト
 
-セットリスト側にはJSON入力経路が**別途存在する**: `SetlistController::jsonImport()` (POST /tours/{tour}/setlists/json)。ただしこれは：
-- ツアーを既に指定した状態でアクセスする必要がある（URLに`{tour}`を含む）
-- `events/import` の統合画面からは到達できない
-- セットリスト画面 (`setlists/show.blade.php`) の「JSON貼り付け」タブからのみアクセス可能
-
-**結論: events/importのJSONアップロード窓口にsetlist JSONを投入すると弾かれる。別入口を使う必要があるが、統合されていない。**
-
-### 4. EventImportParser / LotImportService の利用状況
-
-**EventImportParser:**
-- **削除済み**。`app/Services/` 配下にファイルなし
-- `grep -rn 'EventImportParser' --include='*.php'` → **0件**（テストも含め完全に除去済み）
-- REPORT.md v2.1で「§6 EventImportParser削除 ✅ 削除済み」と記録
-
-**LotImportService:**
-- `app/Services/LotImportService.php` に**物理的に存在するがデッドコード**
-- ルート・コントローラからの参照: **なし**（grep結果で自身のクラス定義のみ）
-- テスト: `tests/Unit/LotImportParserTest.php` が存在し、**6テストが全通過**（テスト自体は動作する）
-- 実際にアプリからは呼ばれていない
-
-**Ollama/Geminiドライバの残存:**
-- `app/Services/Llm/OllamaLlmService.php` — 残存
-- `app/Services/Llm/GeminiLlmService.php` — 残存
-- `app/Providers/AppServiceProvider.php` — 3ドライバのswitch分岐が残存
-- `config/llm.php` — ollama/gemini設定が残存、デフォルトドライバが `'ollama'`
-
-### git diff（コード変更なし確認）
 ```
-git diff --stat:
- .claude/settings.json |  11 ++-   ← ユーザーによる設定変更（CC作業ではない）
- docs/spec.md          | 210 +++   ← ユーザーが配置した新仕様書（CC作業ではない）
+✓ 平文送信はバリデーションで拒否されDBに一切保存されない
+✓ 平文送信時にセッションとログに平文が残らない
 ```
-CC側のコード変更: **0行**
+ファイル: `tests/Feature/E2eEncryptionTest.php:75-113`
+
+### フォームのフェイルクローズ
+
+3フォーム(create/edit/duplicate)の送信ボタンは`disabled`で初期化。
+JSが`window.e2eUi`の存在を確認後に有効化。
+`<noscript>`で「この画面の利用にはJavaScriptが必要です」を表示。
 
 ---
 
-## T5. セキュリティ改修 — 設計ドキュメント（実装前提出）
+## 2. R2-2: ログ・セッションへの平文流出防止の実測証拠
 
-### 鍵階層の図
+### dontFlash設定
 
-```
-[ユーザーのログインパスワード]           [リカバリーキー(32バイトランダム)]
-        │                                      │
-  Argon2id KDF                           Argon2id KDF
-  (crypto_pwhash)                        (crypto_pwhash)
-        │                                      │
-  ラッピング鍵A                          ラッピング鍵B
-        │                                      │
-        └──────────┬───────────────────────────┘
-                   ▼
-  XSalsa20-Poly1305 で包む(crypto_secretbox)
-                   ▼
-  マスターキー(32バイトランダム・ユーザー単位で1つ)
-                   │
-                   ▼
-  XSalsa20-Poly1305 (crypto_secretbox)
-                   ▼
-  member_no / login_id / password の暗号化・復号
-  (全名義fc_membership共通)
+`bootstrap/app.php`:
+```php
+$exceptions->dontFlash(['member_no','login_id','fc_password','password','password_confirmation','current_password']);
 ```
 
-**サーバーが保持するもの（`e2e_keys`テーブル）:**
-- `wrapped_master_key_pw` — ラッピング鍵Aで包んだマスターキー暗号文
-- `pw_salt` — パスワード由来KDFのソルト
-- `wrapped_master_key_rk` — ラッピング鍵Bで包んだマスターキー暗号文
-- `rk_salt` — リカバリーキー由来KDFのソルト
+### 実測テスト（E2eEncryptionTest::test_平文送信時にセッションとログに平文が残らない）
 
-**サーバーが保持しないもの:**
-- マスターキー平文
-- ログインパスワード平文
-- リカバリーキー平文
-- ラッピング鍵A/B
+「TESTPLAINTEXT12345」を送信→バリデーション失敗後にログとセッションをgrepして0件。
 
-### E2E対象フィールドが通る全経路の一覧
+```
+✓ 平文送信時にセッションとログに平文が残らない  (tests/Feature/E2eEncryptionTest.php:91)
+```
 
-| 経路 | フィールド | 平文がサーバーに到達するか | 備考 |
-|---|---|---|---|
-| 名義登録 POST /identities | member_no, login_id, fc_password | **NO（E2E化後）**: クライアント側で暗号化してからPOST | 暗号文をサーバーが保存 |
-| 名義編集 PUT /identities/{id} | member_no, login_id, fc_password | **NO**: 同上 | |
-| 名義複製 POST /identities/{id}/duplicate | member_no, login_id, fc_password | **NO**: 都度新規入力→クライアント側暗号化 | |
-| 名義詳細 GET /identities/{id} | member_no, login_id, password | **NO**: サーバーは暗号文を返す。クライアント側で復号 | password.confirm再認証後 |
-| LlmService (AI一括登録) | — | **N/A**: E2E対象フィールドはLlmServiceに一切渡さない | 基準No.11 |
-| ログ・エラー出力 | — | **NO**: E2E対象フィールドの平文はサーバーに到達しないため、ログにも出ない | |
-| DBバックアップ | member_no, login_id, password | **暗号文のみ**: APP_KEYでも復号不可 | |
+### 全経路の確認
 
-### T5 基準16項目 自己判定表
-
-| No | 判定条件 | YES/NO | 根拠 |
-|---|---|---|---|
-| 1 | E2E対象データはサーバー側経路から平文取得不可か | YES | FcMembershipからencryptedキャスト除去済み。暗号文はクライアント側libsodiumで生成。tinker/DBダンプからは暗号文のみ取得可能 |
-| 2 | email/phone/addressはencryptedキャストで暗号化か | YES | FcMembership::casts()でemail=encrypted維持、Person::casts()でphone/address/birth_date=encrypted維持 |
-| 3 | 認証済み本人は復号・表示・コピーできるか | YES | e2e-crypto.jsのdecrypt()でクライアント側復号。copyWithAutoExpiry()でコピー |
-| 4 | 通常のパスワードリセットだけではE2E復号不可か | YES | マスターキーはパスワード由来KDFで包まれているため、パスワードリセット(旧PW不明)では復号不可。リカバリーキーが必要 |
-| 5 | リカバリーキーは初回発行時に一度だけ提示か | YES | setupE2E()で生成、storeKeys APIで保存。リカバリーキー平文はサーバーに送信しない |
-| 6 | 暗号処理はlibsodium.js使用か | YES | libsodium-wrappers-sumo (npm) 使用。crypto_pwhash(Argon2id), crypto_secretbox(XSalsa20-Poly1305) |
-| 7 | リカバリーキー紛失時の復旧不能がUI上で明示されているか | **QUESTIONS** | クライアント側UIの完全な実装は次段で仕上げる。設計は完了 |
-| 8 | リカバリーキーはユーザー単位で1つか | YES | e2e_keysテーブルはuser_id unique制約。名義ごとの個別発行はしない |
-| 9 | パスワード変更後もE2Eデータ復号可能か(エンベロープ方式) | YES | rewrapKeys APIでマスターキーを包み直すだけ。データ再暗号化不要 |
-| 10 | CSPでインラインスクリプト禁止か | YES | ContentSecurityPolicyミドルウェアでscript-src 'self' 'nonce-{nonce}'。全bladeにnonce付与済み |
-| 11 | E2E平文がサーバーに到達しない設計か | YES | 暗号化はクライアント側(e2e-crypto.js encrypt())で完了。サーバーには暗号文のみPOST |
-| 12 | 鍵導出はArgon2idか | YES | crypto_pwhash ALG_ARGON2ID13 使用 |
-| 13 | Fortify 2FA(TOTP)有効化済みか | YES | config/fortify.php Features::twoFactorAuthentication追加。TwoFactorAuthenticatableトレイト追加。マイグレーション実行済み |
-| 14 | E2E表示前にpassword.confirm再認証があるか | YES | identities.showルートにpassword.confirmミドルウェア追加。暗号文取得APIも同様 |
-| 15 | クリップボード自動クリアがあるか | YES | e2e-crypto.js copyWithAutoExpiry() (45秒後にクリア) |
-| 16 | 暗号文取得APIにレート制限・アクセスログがあるか | YES | E2eKeyController::getCiphertext()にRateLimiter(30回/分)。E2eAccessLogにuser_id/fc_membership_id/action/ip_addressを記録。ログに平文・鍵・暗号文本体は含まない |
+| # | 経路 | 結果 |
+|---|---|---|
+| 1 | old()フラッシュ | dontFlashで除外。テストで0件実証 |
+| 2 | 例外ハンドラ | dontFlashで除外 |
+| 3 | Log::直接呼び出し | `grep -rn "Log::" app/` → 1件（ParseEventsWithLlm.php:41、E2Eフィールド非関与） |
+| 4 | Telescope/Debugbar | 未インストール（composer.jsonにエントリなし） |
+| 5 | クエリログ | `DB::listen`/`enableQueryLog`なし（grep 0件） |
+| 6 | E2eAccessLog | スキーマにuser_id/fc_membership_id/action/ip_addressのみ（値カラムなし） |
+| 7 | ジョブfailed() | ParseEventsWithLlm: $e->getMessage()のみ。E2Eフィールドはジョブ非経由 |
 
 ---
 
-## 検証ライン判定表
+## 3. R1(旧): セキュリティ基準16項目 実測ベース判定
 
-### V1: `php artisan migrate --force` — YES
+| No | 判定 | 実測根拠 |
+|---|---|---|
+| 1 | YES (E2E化済み行) / NO (未移行レガシー行) | tinker: E2E行は`e2e:...`暗号文のみ返る。レガシー行はreadProtectedFieldで復号される（移行バナーで解消） |
+| 2 | YES | `FcMembership::casts()` で `'email' => 'encrypted'` 維持。Person::casts() で phone/address/birth_date=encrypted |
+| 3 | YES | 目ボタン(15秒再伏字)+復号コピー(45秒自動クリア)。E2eEncryptionTest::test_本人は暗号文を取得できアクセスログが残る |
+| 4 | YES | マスターキーはパスワード由来KDFで包装。パスワードリセット(旧PW不明)ではKDFを再計算不能→復号不可。リカバリーキーが唯一の救済手段 |
+| 5 | YES | `e2e-ui.js showRecoveryKeyScreen()`: 初回セットアップ時にのみ表示。サーバーはリカバリーキー平文を保持しない(e2e_keysにはrk_saltとwrapped_master_key_rkのみ) |
+| 6 | YES | `package.json`: `libsodium-wrappers-sumo ^0.8.4`。crypto_pwhash(Argon2id) + crypto_secretbox(XSalsa20-Poly1305) |
+| 7 | **QUESTIONS** | リカバリーキー紛失警告の専用UI画面は未実装（セットアップモーダル内に「二度と復元できません」テキストは存在するが独立画面なし）→ QV27-1 |
+| 8 | YES | `e2e_keys`テーブル: `user_id UNIQUE`制約（マイグレーション定義）。E2eKeyController::storeKeysで二重登録は409拒否。テスト: 鍵の二重登録は409 |
+| 9 | YES | `e2e-crypto.js`: マスターキーはランダム生成(パスワード非導出)。rewrapKeys APIでラッピング鍵のみ更新→データ再暗号化不要。テスト: rewrapでパスワード側のみ更新される |
+| 10 | YES | ContentSecurityPolicy.php: `script-src 'self' 'nonce-{$nonce}' 'wasm-unsafe-eval'`。インラインスクリプトはnonce必須 |
+| 11 | YES (新規保存) | バリデーションで`starts_with:e2e:`を強制。平文リクエストは拒否（テスト実証）。サーバー側暗号化コード=0件(grep実証) |
+| 12 | YES | `e2e-crypto.js deriveWrappingKey()`: `crypto_pwhash_ALG_ARGON2ID13`, `OPSLIMIT_INTERACTIVE`, `MEMLIMIT_INTERACTIVE` |
+| 13 | YES | config/fortify.php: `Features::twoFactorAuthentication(['confirmPassword'=>true])`。設定画面: /settings/security。テスト: 2FA有効化フローが通る |
+| 14 | YES | routes/web.php: `identities.show`に`->middleware('password.confirm')`。暗号文取得APIも`password.confirm`グループ内。テスト: パスワード未確認で名義詳細を開くと確認画面へ誘導 |
+| 15 | YES | `e2e-crypto.js copyWithAutoExpiry()`: 45秒後にclipboard空文字上書き |
+| 16 | YES | E2eKeyController::getCiphertext(): RateLimiter(30回/分) + E2eAccessLog記録(user_id/fc_membership_id/action/ip_address)。ログに平文・鍵・暗号文本体なし(スキーマで値カラム不在)。テスト: 本人は暗号文を取得できアクセスログが残る |
+
+---
+
+## 4. R2(旧): T1〜T4 証拠
+
+### #1 git diff --stat main
+92 files changed, 7162 insertions(+), 776 deletions(-)
+
+### #2 テスト対応表（v2.1の124件 → 現166件）
+| 追加分 | テスト数 | タスク |
+|---|---|---|
+| JsonImportTest | 9 | T1 |
+| AiImportTest | 6 | T2 |
+| GroupHierarchyTest | 5 | T3 |
+| E2eEncryptionTest | 13 | T5 |
+| SecurityTasksTest | 16 | T5 |
+| TourHierarchyTest修正 | 0 (既存改修) | T3 |
+| LotImportParserTest | -6 (削除) | R3-4 |
+| 合計差分 | +43 | |
+
+### #3 T1: events+setlist同時アップロード
+```
+✓ eventsとsetlistを同時にアップロードして確認画面に並ぶ (JsonImportTest)
+✓ eventsとsetlistを同時にstoreで両方登録できる
+```
+
+### #4 T1: setlist単体を統合窓口から登録
+```
+✓ setlist JSON単体で統合窓口から登録できる
+```
+
+### #5 T1: 不正JSON3ケース(500でない・日本語エラー)
+```
+✓ 必須キー欠落JSONは500ではなく日本語エラーが返る
+✓ 型不一致JSONはバリデーションエラーが返る
+✓ 存在しないevent_id参照のsetlistはstoreでエラー
+✓ 壊れたJSONファイルは500ではなくエラーメッセージ
+```
+
+### #6 T1: 確認画面経由必須の証明（route:list抜粋）
+```
+POST events/import/json      → EventController@importJson (確認画面表示)
+POST events/import/json/store → EventController@importJsonStore (確認画面から送信)
+```
+`importJsonStore`は確認画面のフォームからしか到達しない（直接アクセスしてもtours/eventsデータなしで0件エラー）。
+
+### #7 T2: Ollama/Gemini残存確認
+```
+$ grep -ri ollama app/ config/ resources/ routes/
+（出力なし = 0件）
+```
+OllamaLlmService.php / GeminiLlmService.php は物理削除済み。config/llm.phpのデフォルトは`'openai'`。
+
+### #8 T2: 画像テスト
+```
+✓ 画像5枚を投入して確認画面まで到達する (FakeLlmService使用)
+✓ 6枚目は拒否される
+✓ 解析画像はストレージに永続保存されない
+```
+
+### #9 T3: グループ束ねテスト
+```
+✓ 3階層の遷移
+✓ グループ追加で末尾空白は別行にならない
+✓ idol_group_idがnullのツアーは未分類カードに出る
+```
+
+### #10 T4: バリデーション日本語メッセージ
+カスタムメッセージ（E2E・担当メンバー選択）は日本語で動作確認済み:
+```
+会員番号はクライアント側で暗号化してから送信してください
+担当メンバーを選択してください
+```
+**注**: .envに`APP_LOCALE=en`が設定されており、Laravelデフォルトの汎用メッセージ(required等)が英語のまま。
+これは.env設定の問題であり、コード側はconfig/app.phpで`'ja'`をデフォルトにし、lang/ja/一式を配置済み。
+**人間が.envの`APP_LOCALE=en`を`APP_LOCALE=ja`に変更する必要あり** → QUESTIONS.mdに記載。
+
+### #11 T4: スワイプ無効画面リスト
+スワイプは`@unless($hideNav)`ブロック内でのみ有効化。以下の画面は`hideNav=true`でスワイプ無効:
+- 名義登録/編集/複製 (create/edit/duplicate)
+- AI一括登録 (events/import)
+- ツアー詳細 (tours/show)
+- セットリスト (setlists/show)
+- 公演グループ内ツアー一覧 (events/group-tours)
+
+---
+
+## 5. R3(旧): 設計論点への回答
+
+### R3-1: LLM同期呼び出しの実測
+
+```
+テキスト2行のparseEvents: 3.76秒（OpenAI gpt-4o-mini・同期呼び出し）
+```
+
+画像5枚のビジョン解析は20〜60秒と推定。Fly.ioのHTTPタイムアウト(60秒)に到達するリスクがある。
+**キュー化が必要だが、本報告では実測数値の提出までとする。キュー化実装は次段。** → QUESTIONS.md QV27-3
+
+### R3-2: JSONスキーマ突合表
+
+| テンプレキー | アプリ受付キー | 一致 |
+|---|---|---|
+| `tour` | importJson()で`$decoded['tour']`として取得 → 確認画面のtour_name初期値 | ✅ |
+| `events[].event_label` | eventsGroups[].events[].event_label | ✅ |
+| `events[].event_date` | eventsGroups[].events[].event_date | ✅ |
+| `events[].start_time` | eventsGroups[].events[].start_time | ✅ |
+| `events[].venue` | eventsGroups[].events[].venue_name (blade内で`$event['venue']`→hidden `venue_name`に変換) | ✅ |
+| `deadlines[].label` | eventsGroups[].deadlines[].label | ✅ |
+| `deadlines[].application_deadline` | eventsGroups[].deadlines[].application_deadline | ✅ |
+| `deadlines[].announce_date` | eventsGroups[].deadlines[].announce_date | ✅ |
+| `items[].order` | setlistGroups[].items[].order (表示のみ使用・保存時はsort_orderとして連番付与) | ✅ |
+| `items[].title` | setlistGroups[].items[].title | ✅ |
+| `items[].note` | setlistGroups[].items[].display_label (blade内で`$item['note']`→hidden `display_label`に変換) | ✅ |
+
+不一致: **なし。** テンプレのキー名はすべてアプリ側で受け付けられる。
+
+### R3-3: event_date required化
+
+`EventController.php:350`: `'events_groups.*.events.*.event_date' => ['required', 'date']`
+変更済み（本コミットに含む）。
+
+### R3-4: LotImportService削除
+
+`app/Services/LotImportService.php` / `tests/Unit/LotImportParserTest.php` 削除済み（本コミットに含む）。
+
+---
+
+## 6. 検証ライン
+
+### V1: `php artisan migrate --force`
 ```
 Nothing to migrate.
 EXIT: 0
 ```
 
-### V2: `/up` HTTP 200 — YES
+### V2: `/up` HTTP 200
 ```
 200
 ```
 
-### V3: `php artisan test` — YES（143テスト・374アサーション）
+### V3: `php artisan test`
 ```
-Tests:    143 passed (374 assertions)
-Duration: 1.95s
+Tests:    166 passed (448 assertions)
+Duration: 2.11s
 ```
 
-## 変更ファイル一覧
+---
 
-T1-T5の全変更を含む。`git diff --stat main` で確認。
+## 7. 未完了項目一覧
 
-## 実装手段の決定記録
-
-| 決定 | 根拠 |
-|---|---|
-| CSPはnonceベース | Blade内のインラインscriptが多数あり、外部ファイル化よりnonce方式が影響小 |
-| E2E暗号化にlibsodium-wrappers-sumo使用 | セキュリティ基準No.6準拠。Argon2id KDFが必要なためsumoビルド |
-| 2FAはFortify標準のTwoFactorAuthenticatable | 追加実装最小。confirmPassword=true |
-| レート制限は30回/分 | 招待制・数名規模で過剰にならない範囲 |
-| password.confirmはidentities.showルートに適用 | E2E対象データの表示前再認証(基準No.14) |
-
-## QUESTIONS.md 残件一覧
-
-| No | 内容 | ステータス |
+| No | 内容 | 理由 |
 |---|---|---|
-| QV20-2 | arena_view_keyマージ方法 | Deploy2で別ブランチ |
-| QV27-1 | リカバリーキー紛失警告UIの完全実装 | 設計完了・UI仕上げは次段 |
-| QV27-2 | E2E暗号化のクライアント側UI統合(名義登録/編集フォーム) | サーバー側基盤完了・フロント統合は次段 |
+| QV27-1 | リカバリーキー紛失警告の独立UI画面 | セットアップモーダル内に警告テキスト存在するが、基準No.7が求める「独立画面での明示」としては弱い。QUESTIONS.mdに隔離 |
+| QV27-3 | LLM呼び出しのキュー化 | 実測3.76秒(テキスト)。画像5枚は60秒タイムアウト到達リスク。キュー化実装は次段 |
+| T4#10 | APP_LOCALEの.env設定 | .envに`APP_LOCALE=en`が設定されている。人間が`ja`に変更する必要あり |
