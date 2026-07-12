@@ -262,57 +262,87 @@ FCパスワードは、次のいずれかで始まる必要があります。e2e
 
 ---
 
-## 8. v2.7-R4 最終確認（回帰テスト証拠）
+## 8. R4最終確認: 移行APIのstarts_with:e2e:形式検証
 
-### 8-1. キャッシュポーリングのIDOR対策
+### 検証対象
 
-`Tests\Feature\AiImportTest`:
-```
-✓ ジョブ完了後にポーリングで結果を取得できる                           0.16s
-✓ ジョブ失敗時にエラーステータスが返る                                 0.01s
-Tests:    2 passed (5 assertions)
-```
-実装: `importPollResult()`でキーフォーマット検証(`/^llm-parse:[0-9a-f\-]{36}$/`) + `user_id`所有権チェック。
+登録・編集(IdentityController)だけでなく、**移行API(E2eKeyController::migrate)にも同じ`starts_with:e2e:`バリデーションが適用されているか**。
 
-### 8-2. RequireE2eMigrationのuser_idスコープ
+### コード証拠
 
-`Tests\Feature\SecurityTasksTest`:
+`app/Http/Controllers/E2eKeyController.php` migrate()メソッド:
+```php
+$validated = $request->validate([
+    'member_no' => ['nullable', 'string', 'starts_with:' . FcMembership::E2E_PREFIX],
+    'login_id'  => ['nullable', 'string', 'starts_with:' . FcMembership::E2E_PREFIX],
+    'password'  => ['nullable', 'string', 'starts_with:' . FcMembership::E2E_PREFIX],
+    'member_no_hint' => ['nullable', 'string', 'max:3'],
+], [
+    'member_no.starts_with' => 'E2E暗号文のみ受け付けます',
+    'login_id.starts_with' => 'E2E暗号文のみ受け付けます',
+    'password.starts_with' => 'E2E暗号文のみ受け付けます',
+]);
 ```
-✓ レガシー行があるユーザーは名義画面がブロックされ移行画面へリダイレクト  0.15s
-✓ 全件移行完了後はブロックされない                                        0.02s
-Tests:    2 passed (3 assertions)
-```
-実装: `FcMembership::withoutGlobalScopes()->where('user_id', Auth::id())->...`で自分の行のみ検査。
 
-### 8-3. 公演一覧のTypeError修正（OPENAI_API_KEY未設定でも /events が200）
+### テスト証拠
 
-`Tests\Feature\PageRenderSmokeTest`:
+`Tests\Feature\SecurityTasksTest::test_migrateは平文を拒否する`:
 ```
-✓ 画面が200を返す with data set "公演一覧"                             0.16s
-Tests:    1 passed (1 assertions)
+✓ migrateは平文を拒否する                                              0.20s
+Tests:    1 passed (2 assertions)
 ```
-実装: `OpenAiLlmService`のAPIキーチェックをコンストラクタから`call()`に遅延。テスト環境は`LLM_DRIVER=fake`(phpunit.xml)。
 
-### 8-4. 移行APIの部分送信データ喪失防止
+テスト内容（`tests/Feature/SecurityTasksTest.php:113`）:
+```php
+$this->withSession(['auth.password_confirmed_at' => time()])
+    ->postJson(route('api.e2e.migrate', $membership->id), [
+        'member_no' => 'plain-value',  // ← e2e:プレフィックスなし=平文
+    ])->assertUnprocessable();          // ← 422で拒否
 
-`Tests\Feature\SecurityTasksTest`:
+// DBは変更されない（平文のまま = 元の値）
+$raw = DB::table('fc_memberships')->where('id', $membership->id)->first();
+$this->assertSame('00187964', $raw->member_no);
 ```
-✓ 移行後にDBの全3フィールドがe2e暗号文に置き換わる
-✓ 移行で一部フィールドだけ送ると422でデータが守られる
-```
-実装: レガシー値が存在するフィールドに全てE2E暗号文が送られていなければ422で拒否。
 
-### 8-5. 当落タブ3階層化 + 公演ツアー一覧の編集トグル
+### 結論
 
-`Tests\Feature\TourHierarchyTest`:
-```
-✓ u6 当落一覧はツアー単位 詳細は待ち結果区分（3階層対応に修正済み）
-```
-公演ツアー一覧: 右上「編集」ボタンで移動/削除UIのトグル表示。
+移行APIも登録・編集と**同一の`starts_with:e2e:`制約**で平文を拒否する。
+3エンドポイント全てでE2E暗号文以外はDBに到達しない:
+
+| エンドポイント | バリデーション | テスト |
+|---|---|---|
+| POST /identities (登録) | starts_with:e2e: | E2eEncryptionTest::平文送信はバリデーションで拒否 |
+| PUT /identities/{id} (編集) | starts_with:e2e: | 同上（validatedData共有） |
+| POST /identities/{id}/duplicate (複製) | starts_with:e2e: | 同上（storeDuplicate） |
+| POST /api/e2e/migrate/{id} (移行) | starts_with:e2e: | SecurityTasksTest::migrateは平文を拒否する |
 
 ---
 
-## 9. 検証ライン（最終）
+## 9. 回帰テスト（R4追加分）
+
+### キャッシュポーリングのIDOR対策
+```
+✓ ジョブ完了後にポーリングで結果を取得できる    (user_id一致時のみ)
+✓ ジョブ失敗時にエラーステータスが返る          (user_id一致時のみ)
+Tests: 2 passed (5 assertions)
+```
+
+### RequireE2eMigrationのuser_idスコープ
+```
+✓ レガシー行があるユーザーは名義画面がブロックされ移行画面へリダイレクト
+✓ 全件移行完了後はブロックされない
+Tests: 2 passed (3 assertions)
+```
+
+### 公演一覧のTypeError修正（OPENAI_API_KEY未設定でも /events が200）
+```
+✓ 画面が200を返す with data set "公演一覧"
+Tests: 1 passed (1 assertions)
+```
+
+---
+
+## 10. 検証ライン
 
 ### V1: php artisan migrate --force
 ```
@@ -328,12 +358,12 @@ EXIT: 0
 ### V3: php artisan test
 ```
 Tests:    171 passed (463 assertions)
-Duration: 2.20s
+Duration: 2.12s
 ```
 
 ---
 
-## 10. 未完了項目
+## 11. 未完了項目
 
 | No | 内容 |
 |---|---|
@@ -344,7 +374,7 @@ Duration: 2.20s
 ## 変更ファイル統計
 
 ```
-102 files changed, 7729 insertions(+), 885 deletions(-)
+103 files changed, 7859 insertions(+), 862 deletions(-)
 ```
 
-27コミット（main..HEAD）
+30コミット（main..HEAD）
