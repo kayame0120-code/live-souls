@@ -197,7 +197,7 @@ class SecurityTasksTest extends TestCase
         $response->assertSee('No. •••••964');
     }
 
-    public function test_平文フォールバック保存時はサーバーが下3桁ヒントを算出する(): void
+    public function test_平文送信は拒否されヒントもDBに残らない(): void
     {
         $group = IdolGroup::firstOrCreate(['name' => 'テストグループ']);
         $member = GroupMember::firstOrCreate(
@@ -205,14 +205,15 @@ class SecurityTasksTest extends TestCase
             ['color_name' => '赤', 'color_hex' => '#E53935', 'source_type' => '公式', 'sort_order' => 1],
         );
 
-        $this->post(route('identities.store'), [
+        $response = $this->post(route('identities.store'), [
             'person_name' => 'ヒントテスト',
             'group_id' => $group->id,
             'group_member_id' => $member->id,
             'member_no' => '12345678',
         ]);
 
-        $this->assertDatabaseHas('fc_memberships', ['member_no_hint' => '678']);
+        $response->assertSessionHasErrors('member_no');
+        $this->assertDatabaseCount('fc_memberships', 0);
     }
 
     public function test_migrateでヒントも保存される(): void

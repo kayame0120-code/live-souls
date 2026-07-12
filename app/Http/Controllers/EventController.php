@@ -347,7 +347,7 @@ class EventController extends Controller
             $rules['events_groups.*.tour_name'] = ['required', 'string', 'max:255'];
             $rules['events_groups.*.events'] = ['required', 'array'];
             $rules['events_groups.*.events.*.include'] = ['nullable'];
-            $rules['events_groups.*.events.*.event_date'] = ['nullable', 'date'];
+            $rules['events_groups.*.events.*.event_date'] = ['required', 'date'];
             $rules['events_groups.*.events.*.start_time'] = ['nullable', 'date_format:H:i'];
             $rules['events_groups.*.events.*.venue_name'] = ['nullable', 'string', 'max:255'];
             $rules['events_groups.*.events.*.event_label'] = ['nullable', 'string', 'max:255'];

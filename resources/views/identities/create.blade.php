@@ -73,6 +73,12 @@
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary">登録する</button>
+        <noscript><div class="warn">この画面の利用にはJavaScriptが必要です。ブラウザの設定を確認してください。</div></noscript>
+        <button type="submit" class="btn btn-primary" id="e2e-submit-btn" disabled>登録する</button>
     </form>
+<script nonce="{{ $cspNonce ?? '' }}">
+document.addEventListener('DOMContentLoaded', function(){
+    if(window.e2eUi){ document.getElementById('e2e-submit-btn').disabled = false; }
+});
+</script>
 </x-app-layout>

@@ -72,21 +72,38 @@ class E2eEncryptionTest extends TestCase
         $this->assertSame($cipher, $membership->member_no);
     }
 
-    public function test_平文送信はフォールバックでサーバー側暗号化される(): void
+    public function test_平文送信はバリデーションで拒否されDBに一切保存されない(): void
     {
-        // JS無効環境のフォールバック: 平文がDBにそのまま入らない
-        $this->post(route('identities.store'), $this->payload([
-            'member_no' => '12345678',
+        $response = $this->post(route('identities.store'), $this->payload([
+            'member_no' => 'TESTPLAINTEXT12345',
+            'login_id' => 'plain-login-id',
             'fc_password' => 'plain-password',
-        ]))->assertRedirect();
+        ]));
 
-        $raw = DB::table('fc_memberships')->first();
-        $this->assertNotSame('12345678', $raw->member_no);
-        $this->assertNotSame('plain-password', $raw->password);
-        // アクセサ経由では復号され本人には見える
-        $membership = FcMembership::first();
-        $this->assertSame('12345678', $membership->member_no);
-        $this->assertSame('plain-password', $membership->password);
+        $response->assertSessionHasErrors(['member_no', 'login_id', 'fc_password']);
+        $this->assertDatabaseCount('fc_memberships', 0);
+    }
+
+    public function test_平文送信時にセッションとログに平文が残らない(): void
+    {
+        $this->post(route('identities.store'), $this->payload([
+            'member_no' => 'TESTPLAINTEXT12345',
+            'login_id' => 'TESTPLAINLOGINID',
+            'fc_password' => 'TESTPLAINPASSWORD',
+        ]));
+
+        $logContent = file_exists(storage_path('logs/laravel.log'))
+            ? file_get_contents(storage_path('logs/laravel.log'))
+            : '';
+        $this->assertStringNotContainsString('TESTPLAINTEXT12345', $logContent);
+        $this->assertStringNotContainsString('TESTPLAINLOGINID', $logContent);
+        $this->assertStringNotContainsString('TESTPLAINPASSWORD', $logContent);
+
+        $sessionFiles = glob(storage_path('framework/sessions/*'));
+        $sessionContent = implode('', array_map('file_get_contents', $sessionFiles ?: []));
+        $this->assertStringNotContainsString('TESTPLAINTEXT12345', $sessionContent);
+        $this->assertStringNotContainsString('TESTPLAINLOGINID', $sessionContent);
+        $this->assertStringNotContainsString('TESTPLAINPASSWORD', $sessionContent);
     }
 
     public function test_レガシーAPP_KEY暗号文はアクセサで復号できる(): void
@@ -110,15 +127,24 @@ class E2eEncryptionTest extends TestCase
         $this->assertSame('00187964', $membership->member_no);
     }
 
-    public function test_編集でe2e値を送るとレガシー行がe2e化される(): void
+    public function test_migrateルートでレガシー行がe2e化される(): void
     {
-        $this->post(route('identities.store'), $this->payload(['member_no' => 'plain-no']));
+        $person = \App\Models\Person::create(['user_id' => $this->user->id, 'name' => 'レガシー移行']);
+        DB::table('fc_memberships')->insert([
+            'user_id' => $this->user->id,
+            'person_id' => $person->id,
+            'group_id' => $this->idolGroup->id,
+            'artist_name' => 'テスト',
+            'member_no' => 'plain-no',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
         $membership = FcMembership::first();
 
         $cipher = 'e2e:migrated-ciphertext';
-        $this->put(route('identities.update', $membership), $this->payload([
-            'member_no' => $cipher,
-        ]))->assertRedirect();
+        $this->withSession(['auth.password_confirmed_at' => time()])
+            ->postJson(route('api.e2e.migrate', $membership->id), [
+                'member_no' => $cipher,
+            ])->assertOk();
 
         $raw = DB::table('fc_memberships')->where('id', $membership->id)->first();
         $this->assertSame($cipher, $raw->member_no);

@@ -69,6 +69,12 @@
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary">この名義を複製する</button>
+        <noscript><div class="warn">この画面の利用にはJavaScriptが必要です。ブラウザの設定を確認してください。</div></noscript>
+        <button type="submit" class="btn btn-primary" id="e2e-submit-btn" disabled>この名義を複製する</button>
     </form>
+<script nonce="{{ $cspNonce ?? '' }}">
+document.addEventListener('DOMContentLoaded', function(){
+    if(window.e2eUi){ document.getElementById('e2e-submit-btn').disabled = false; }
+});
+</script>
 </x-app-layout>
