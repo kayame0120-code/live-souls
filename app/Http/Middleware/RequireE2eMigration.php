@@ -40,18 +40,15 @@ class RequireE2eMigration
             }
         }
 
-        $hasLegacy = FcMembership::whereNotNull('member_no')
-            ->where('member_no', 'NOT LIKE', 'e2e:%')
-            ->where('member_no', '!=', '')
-            ->exists()
-            || FcMembership::whereNotNull('login_id')
-                ->where('login_id', 'NOT LIKE', 'e2e:%')
-                ->where('login_id', '!=', '')
-                ->exists()
-            || FcMembership::whereNotNull('password')
-                ->where('password', 'NOT LIKE', 'e2e:%')
-                ->where('password', '!=', '')
-                ->exists();
+        $userId = Auth::id();
+        $hasLegacy = FcMembership::withoutGlobalScopes()
+            ->where('user_id', $userId)
+            ->where(function ($q) {
+                $q->where(function ($q) { $q->whereNotNull('member_no')->where('member_no', 'NOT LIKE', 'e2e:%')->where('member_no', '!=', ''); })
+                  ->orWhere(function ($q) { $q->whereNotNull('login_id')->where('login_id', 'NOT LIKE', 'e2e:%')->where('login_id', '!=', ''); })
+                  ->orWhere(function ($q) { $q->whereNotNull('password')->where('password', 'NOT LIKE', 'e2e:%')->where('password', '!=', ''); });
+            })
+            ->exists();
 
         if ($hasLegacy) {
             return redirect()->route('e2e.migrate-page');

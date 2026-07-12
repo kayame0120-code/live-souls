@@ -62,9 +62,10 @@ class AiImportTest extends TestCase
 
     public function test_ジョブ完了後にポーリングで結果を取得できる(): void
     {
-        $cacheKey = 'llm-parse:test-uuid';
+        $cacheKey = 'llm-parse:' . fake()->uuid();
         Cache::put($cacheKey, [
             'status' => 'completed',
+            'user_id' => $this->user->id,
             'result' => [
                 'tour' => 'テストツアー',
                 'events' => [['event_date' => '2026-08-15', 'venue' => '東京ドーム', 'start_time' => '17:00', 'event_label' => null]],
@@ -83,10 +84,11 @@ class AiImportTest extends TestCase
 
     public function test_ジョブ失敗時にエラーステータスが返る(): void
     {
-        $cacheKey = 'llm-parse:test-fail';
+        $cacheKey = 'llm-parse:' . fake()->uuid();
         Cache::put($cacheKey, [
             'status' => 'failed',
             'error' => 'AI解析に失敗しました',
+            'user_id' => $this->user->id,
         ], now()->addHour());
 
         $response = $this->actingAs($this->user)->postJson(route('events.import.poll'), [

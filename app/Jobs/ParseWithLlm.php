@@ -27,6 +27,7 @@ class ParseWithLlm implements ShouldQueue
         private string $type,
         private ?string $text,
         private array $imagePaths,
+        private ?int $userId = null,
     ) {}
 
     public function handle(LlmService $llm): void
@@ -41,11 +42,13 @@ class ParseWithLlm implements ShouldQueue
             Cache::put($this->cacheKey, [
                 'status' => 'completed',
                 'result' => $result,
+                'user_id' => $this->userId,
             ], now()->addHour());
         } catch (\Throwable $e) {
             Cache::put($this->cacheKey, [
                 'status' => 'failed',
                 'error' => $e->getMessage(),
+                'user_id' => $this->userId,
             ], now()->addHour());
         }
 

@@ -469,20 +469,25 @@ class EventController extends Controller
         }
 
         $cacheKey = 'llm-parse:' . \Illuminate\Support\Str::uuid();
-        \Illuminate\Support\Facades\Cache::put($cacheKey, ['status' => 'processing'], now()->addHour());
-        \App\Jobs\ParseWithLlm::dispatch($cacheKey, 'events', $text, $imagePaths);
+        \Illuminate\Support\Facades\Cache::put($cacheKey, ['status' => 'processing', 'user_id' => \Illuminate\Support\Facades\Auth::id()], now()->addHour());
+        \App\Jobs\ParseWithLlm::dispatch($cacheKey, 'events', $text, $imagePaths, \Illuminate\Support\Facades\Auth::id());
 
         return view('events.import-waiting', ['cacheKey' => $cacheKey, 'type' => 'events']);
     }
 
     public function importPollResult(Request $request)
     {
-        $cacheKey = $request->input('cache_key');
-        $data = \Illuminate\Support\Facades\Cache::get($cacheKey);
-
-        if (! $data) {
+        $cacheKey = (string) $request->input('cache_key');
+        if (! preg_match('/^llm-parse:[0-9a-f\-]{36}$/', $cacheKey)) {
             return response()->json(['status' => 'not_found']);
         }
+
+        $data = \Illuminate\Support\Facades\Cache::get($cacheKey);
+        if (! $data || ($data['user_id'] ?? null) !== \Illuminate\Support\Facades\Auth::id()) {
+            return response()->json(['status' => 'not_found']);
+        }
+
+        unset($data['user_id']);
 
         return response()->json($data);
     }

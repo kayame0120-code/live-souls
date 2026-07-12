@@ -111,8 +111,8 @@ class SetlistController extends Controller
         }
 
         $cacheKey = 'llm-parse:' . \Illuminate\Support\Str::uuid();
-        \Illuminate\Support\Facades\Cache::put($cacheKey, ['status' => 'processing'], now()->addHour());
-        \App\Jobs\ParseWithLlm::dispatch($cacheKey, 'setlist', $text, $imagePaths);
+        \Illuminate\Support\Facades\Cache::put($cacheKey, ['status' => 'processing', 'user_id' => \Illuminate\Support\Facades\Auth::id()], now()->addHour());
+        \App\Jobs\ParseWithLlm::dispatch($cacheKey, 'setlist', $text, $imagePaths, \Illuminate\Support\Facades\Auth::id());
 
         return view('events.import-waiting', ['cacheKey' => $cacheKey, 'type' => 'setlist']);
     }
