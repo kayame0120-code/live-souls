@@ -281,6 +281,47 @@ Duration: 2.06s
 
 ---
 
+---
+
+## 追加修正（R3対応後のバグ修正）
+
+### 移行APIの部分送信によるデータ喪失を防止
+
+**問題**: 移行APIが一部フィールド(例: member_noだけ)しか受け取らなかった場合に、
+残りのフィールド(login_id/password)をnullに上書きしてデータを消していた。
+
+**修正**: レガシー値が存在するフィールドに対応するE2E暗号文が**全て**送られていなければ
+422で拒否してDBを一切変更しない。
+
+テスト:
+```
+✓ 移行後にDBの全3フィールドがe2e暗号文に置き換わる      (SecurityTasksTest)
+✓ 移行で一部フィールドだけ送ると422でデータが守られる    (SecurityTasksTest)
+```
+
+### キャッシュポーリングのIDOR対策
+
+**問題**: `importPollResult`が任意のキャッシュキーを受け付け、他ユーザーの解析結果を読み取れた。
+
+**修正**: キーフォーマット検証(UUID形式のみ) + キャッシュ内のuser_id所有権チェック。
+
+### RequireE2eMigrationのuser_idスコープ
+
+**問題**: FcMembershipクエリにuser_idスコープがなく、他ユーザーのレガシー行で自分がブロックされた。
+
+**修正**: `where('user_id', Auth::id())`で自分の行のみ検査。
+
+### 公演一覧のTypeError修正
+
+**問題**: `OpenAiLlmService`のコンストラクタで`OPENAI_API_KEY`未設定時にstring型プロパティへ
+null代入→TypeError。EventControllerがLlmServiceをコンストラクタ注入しているため、
+公演一覧(index)アクセスでもインスタンス化が走りクラッシュ。
+
+**修正**: APIキーをnullable型に変更し、チェックを`call()`実行時に遅延。
+LLMを使わない画面ではインスタンス化のみ通りエラーにならない。
+
+---
+
 ## 9. 未完了項目
 
 | No | 内容 |
@@ -289,10 +330,18 @@ Duration: 2.06s
 
 ---
 
+## 検証ライン（最終）
+
+```
+V1: php artisan migrate --force → Nothing to migrate. EXIT:0
+V2: curl /up → 200
+V3: php artisan test → Tests: 171 passed (463 assertions)
+```
+
 ## 変更ファイル統計
 
 ```
 100 files changed, 7614 insertions(+), 848 deletions(-)
 ```
 
-21コミット（main..HEAD）
+24コミット（main..HEAD）

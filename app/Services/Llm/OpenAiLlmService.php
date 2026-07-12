@@ -9,17 +9,13 @@ use RuntimeException;
 
 class OpenAiLlmService implements LlmService
 {
-    private string $apiKey;
+    private ?string $apiKey;
     private string $model;
 
     public function __construct()
     {
         $this->apiKey = config('llm.openai.api_key');
-        $this->model = config('llm.openai.model');
-
-        if (empty($this->apiKey)) {
-            throw new RuntimeException('OPENAI_API_KEY が設定されていません。');
-        }
+        $this->model = config('llm.openai.model') ?? 'gpt-4o-mini';
     }
 
     public function parseEvents(?string $text = null, array $imagePaths = []): array
@@ -48,6 +44,10 @@ class OpenAiLlmService implements LlmService
 
     private function call(string $system, string|array $userContent): array
     {
+        if (empty($this->apiKey)) {
+            throw new RuntimeException('OPENAI_API_KEY が設定されていません。.envを確認してください。');
+        }
+
         try {
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->apiKey}",
