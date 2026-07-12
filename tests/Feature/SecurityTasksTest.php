@@ -225,6 +225,8 @@ class SecurityTasksTest extends TestCase
         $this->withSession(['auth.password_confirmed_at' => time()])
             ->postJson(route('api.e2e.migrate', $membership->id), [
                 'member_no' => 'e2e:migrated',
+                'login_id' => 'e2e:migrated-login',
+                'password' => 'e2e:migrated-pass',
                 'member_no_hint' => '964',
             ])->assertOk();
 
@@ -256,20 +258,36 @@ class SecurityTasksTest extends TestCase
         $this->get(route('identities.index'))->assertOk();
     }
 
-    public function test_移行後にDBの旧暗号文がnullになる(): void
+    public function test_移行後にDBの全3フィールドがe2e暗号文に置き換わる(): void
     {
         $membership = $this->makeLegacyMembership($this->user);
 
         $this->withSession(['auth.password_confirmed_at' => time()])
             ->postJson(route('api.e2e.migrate', $membership->id), [
-                'member_no' => 'e2e:new-val',
+                'member_no' => 'e2e:new-member-no',
+                'login_id' => 'e2e:new-login-id',
+                'password' => 'e2e:new-password',
             ])->assertOk();
 
         $raw = DB::table('fc_memberships')->where('id', $membership->id)->first();
-        $this->assertSame('e2e:new-val', $raw->member_no);
-        // login_id/passwordはE2E値を送っていないためnullに上書きされる(旧暗号文の破棄)
-        $this->assertNull($raw->login_id);
-        $this->assertNull($raw->password);
+        $this->assertSame('e2e:new-member-no', $raw->member_no);
+        $this->assertSame('e2e:new-login-id', $raw->login_id);
+        $this->assertSame('e2e:new-password', $raw->password);
+    }
+
+    public function test_移行で一部フィールドだけ送ると422でデータが守られる(): void
+    {
+        $membership = $this->makeLegacyMembership($this->user);
+
+        $this->withSession(['auth.password_confirmed_at' => time()])
+            ->postJson(route('api.e2e.migrate', $membership->id), [
+                'member_no' => 'e2e:partial-only',
+                // login_id/password を送らない → 部分送信
+            ])->assertStatus(422);
+
+        // DBは変更されない（データ喪失防止）
+        $raw = DB::table('fc_memberships')->where('id', $membership->id)->first();
+        $this->assertSame('00187964', $raw->member_no);
     }
 
     // ---- ②2FA設定画面 ----

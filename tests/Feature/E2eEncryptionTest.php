@@ -140,6 +140,7 @@ class E2eEncryptionTest extends TestCase
         ]);
         $membership = FcMembership::first();
 
+        // member_noのみがレガシー(login_id/passwordはnull=移行対象外)
         $cipher = 'e2e:migrated-ciphertext';
         $this->withSession(['auth.password_confirmed_at' => time()])
             ->postJson(route('api.e2e.migrate', $membership->id), [

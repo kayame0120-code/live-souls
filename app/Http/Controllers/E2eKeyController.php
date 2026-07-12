@@ -134,12 +134,26 @@ class E2eKeyController extends Controller
         \Illuminate\Support\Facades\DB::transaction(function () use ($fcMembership, $validated) {
             $raw = $fcMembership->getRawOriginal();
 
+            // 移行対象のレガシーフィールドを特定
+            $legacyFields = [];
+            foreach (['member_no', 'login_id', 'password'] as $field) {
+                $v = $raw[$field] ?? null;
+                if ($v !== null && $v !== '' && ! FcMembership::isE2eValue($v)) {
+                    $legacyFields[] = $field;
+                }
+            }
+
+            // レガシー値が存在するフィールドは全てE2E値が送られていなければ拒否
+            // （部分送信によるデータ喪失を防止）
+            $missingE2e = array_filter($legacyFields, fn ($f) => empty($validated[$f]));
+            if (! empty($missingE2e)) {
+                abort(422, '移行対象の全フィールド(' . implode('/', $missingE2e) . ')にE2E暗号文を送ってください');
+            }
+
             $update = [];
             foreach (['member_no', 'login_id', 'password'] as $field) {
                 if (! empty($validated[$field])) {
                     $update[$field] = $validated[$field];
-                } elseif (isset($raw[$field]) && $raw[$field] !== null && $raw[$field] !== '' && ! FcMembership::isE2eValue($raw[$field])) {
-                    $update[$field] = null;
                 }
             }
 
