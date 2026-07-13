@@ -1,4 +1,6 @@
 {
+  "tour": "ツアー名をここに入れる",
+  "group": "グループ名をここに入れる",
   "items": [
     { "order": 1, "title": "曲名1", "note": null },
     { "order": 2, "title": "曲名2", "note": null },

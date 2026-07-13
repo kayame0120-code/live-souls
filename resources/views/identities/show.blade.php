@@ -41,6 +41,7 @@
         <div class="copy-field">
             <span class="cf-k">会員番号</span>
             <span class="cf-v">••••••••</span>
+            <button class="reveal-btn" data-copy="{{ $fcMembership->member_no }}" type="button" title="一時表示" style="border:none;background:none;cursor:pointer;font-size:14px;padding:2px 4px;">👁</button>
             <button class="copy-btn" data-copy="{{ $fcMembership->member_no }}" type="button">コピー</button>
         </div>
         @endif
@@ -48,6 +49,7 @@
         <div class="copy-field">
             <span class="cf-k">パスワード</span>
             <span class="cf-v">••••••••</span>
+            <button class="reveal-btn" data-copy="{{ $fcMembership->password }}" type="button" title="一時表示" style="border:none;background:none;cursor:pointer;font-size:14px;padding:2px 4px;">👁</button>
             <button class="copy-btn" data-copy="{{ $fcMembership->password }}" type="button">コピー</button>
         </div>
         @endif
@@ -55,6 +57,7 @@
         <div class="copy-field">
             <span class="cf-k">ID</span>
             <span class="cf-v">••••••••</span>
+            <button class="reveal-btn" data-copy="{{ $fcMembership->login_id }}" type="button" title="一時表示" style="border:none;background:none;cursor:pointer;font-size:14px;padding:2px 4px;">👁</button>
             <button class="copy-btn" data-copy="{{ $fcMembership->login_id }}" type="button">コピー</button>
         </div>
         @endif
@@ -67,6 +70,7 @@
         <div class="copy-field">
             <span class="cf-k">住所</span>
             <span class="cf-v">••••••••••••</span>
+            <button class="reveal-btn" data-copy="{{ $fcMembership->person->address }}" type="button" title="一時表示" style="border:none;background:none;cursor:pointer;font-size:14px;padding:2px 4px;">👁</button>
             <button class="copy-btn" data-copy="{{ $fcMembership->person->address }}" type="button">コピー</button>
         </div>
         @endif
@@ -74,6 +78,7 @@
         <div class="copy-field">
             <span class="cf-k">電話番号</span>
             <span class="cf-v">••••••••••</span>
+            <button class="reveal-btn" data-copy="{{ $fcMembership->person->phone }}" type="button" title="一時表示" style="border:none;background:none;cursor:pointer;font-size:14px;padding:2px 4px;">👁</button>
             <button class="copy-btn" data-copy="{{ $fcMembership->person->phone }}" type="button">コピー</button>
         </div>
         @endif
@@ -81,6 +86,7 @@
         <div class="copy-field">
             <span class="cf-k">メールアドレス</span>
             <span class="cf-v">••••••••••••</span>
+            <button class="reveal-btn" data-copy="{{ $fcMembership->email }}" type="button" title="一時表示" style="border:none;background:none;cursor:pointer;font-size:14px;padding:2px 4px;">👁</button>
             <button class="copy-btn" data-copy="{{ $fcMembership->email }}" type="button">コピー</button>
         </div>
         @endif
@@ -134,27 +140,23 @@
         <button type="submit" class="f-danger">この名義を削除する</button>
     </form>
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', function() {
+        // E2E暗号文("e2e:")はブラウザ内で復号してコピー（45秒後自動クリア）
+        if (window.e2eUi) {
+            window.e2eUi.handleCopyButton(this);
+            return;
+        }
+        // フォールバック（バンドル未読込時・平文のみ）
         const text = this.dataset.copy;
+        if (text.startsWith('e2e:')) { alert('復号モジュールの読み込みに失敗しました。再読み込みしてください。'); return; }
         const done = () => {
             this.textContent = 'コピー済';
             this.classList.add('copied');
             setTimeout(() => { this.textContent = 'コピー'; this.classList.remove('copied'); }, 1500);
         };
-        if (navigator.clipboard) {
-            navigator.clipboard.writeText(text).then(done);
-        } else {
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            ta.style.cssText = 'position:fixed;left:-9999px';
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
-            done();
-        }
+        navigator.clipboard.writeText(text).then(done);
     });
 });
 </script>

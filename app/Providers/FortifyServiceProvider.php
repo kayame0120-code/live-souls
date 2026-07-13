@@ -28,6 +28,10 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
         Fortify::loginView(fn () => view('auth.login'));
+        // password.confirm ミドルウェア用（名義詳細・暗号文取得APIの再認証・基準No.14）
+        Fortify::confirmPasswordView(fn () => view('auth.confirm-password'));
+        // 2FA(TOTP)ログイン時のコード入力画面（基準No.13）
+        Fortify::twoFactorChallengeView(fn () => view('auth.two-factor-challenge'));
 
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());

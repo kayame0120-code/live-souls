@@ -42,7 +42,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/identities', [IdentityController::class, 'index'])->name('identities.index');
     Route::get('/identities/create', [IdentityController::class, 'create'])->name('identities.create');
     Route::post('/identities', [IdentityController::class, 'store'])->name('identities.store');
-    Route::get('/identities/{fcMembership}', [IdentityController::class, 'show'])->name('identities.show');
+    Route::get('/identities/{fcMembership}', [IdentityController::class, 'show'])->name('identities.show')
+        ->middleware('password.confirm');
     Route::get('/identities/{fcMembership}/edit', [IdentityController::class, 'edit'])->name('identities.edit');
     Route::put('/identities/{fcMembership}', [IdentityController::class, 'update'])->name('identities.update');
     Route::get('/identities/{fcMembership}/duplicate', [IdentityController::class, 'duplicate'])->name('identities.duplicate');
@@ -52,14 +53,17 @@ Route::middleware('auth')->group(function () {
 
 
 
-    // 当落（S9・v1.4: ツアーカード一覧→当落詳細）。create は tour より前に定義
+    // 当落（3階層: グループ→ツアー→申込詳細）
     Route::get('/lots', [LotController::class, 'index'])->name('lots.index');
     Route::get('/lots/create', [LotController::class, 'create'])->name('lots.create');
     Route::post('/lots', [LotController::class, 'store'])->name('lots.store');
+    Route::get('/lots/groups/uncategorized', [LotController::class, 'groupTours'])->name('lots.uncategorized');
+    Route::get('/lots/groups/{idolGroup}', [LotController::class, 'groupTours'])->name('lots.group-tours');
     Route::get('/lots/tours/{tour}', [LotController::class, 'showByTour'])->name('lots.tour');
 
     // ツアー共有マスタ（v1.4・全ユーザー可）
     Route::get('/tours/{tour}', [TourController::class, 'show'])->name('tours.show');
+    Route::post('/tours/{tour}/group', [TourController::class, 'updateGroup'])->name('tours.update-group');
     Route::post('/tours/{tour}/deadlines', [TourController::class, 'updateDeadlines'])->name('tours.update-deadlines');
     Route::put('/tours/{tour}/deadlines/{deadline}', [TourController::class, 'updateDeadline'])->name('tours.update-deadline');
     Route::delete('/tours/{tour}/deadlines/{deadline}', [TourController::class, 'destroyDeadline'])->name('tours.destroy-deadline');
@@ -68,10 +72,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/tours/{tour}/events/create', [EventController::class, 'create'])->name('events.create');
     Route::post('/tours/{tour}/events', [EventController::class, 'store'])->name('events.store');
 
-    // 公演一覧（ツアーカード）＋一括インポート（S11）
+    // 公演一覧（グループカード→ツアー一覧→公演詳細の3階層）
     Route::get('/events', [EventController::class, 'index'])->name('events.index');
+    Route::get('/events/groups/uncategorized', [EventController::class, 'uncategorizedTours'])->name('events.uncategorized');
+    Route::get('/events/groups/{idolGroup}', [EventController::class, 'groupTours'])->name('events.group-tours');
     Route::get('/events/import', [EventController::class, 'importForm'])->name('events.import');
     Route::post('/events/import/parse', [EventController::class, 'importParse'])->name('events.import.parse');
+    Route::post('/events/import/poll', [EventController::class, 'importPollResult'])->name('events.import.poll');
     Route::post('/events/import/json', [EventController::class, 'importJson'])->name('events.import.json');
     Route::post('/events/import/json/store', [EventController::class, 'importJsonStore'])->name('events.import.json.store');
     Route::post('/events/import', [EventController::class, 'importStore'])->name('events.import.store');
@@ -95,6 +102,31 @@ Route::middleware('auth')->group(function () {
     Route::put('/venues/{venue}/note', [VenueController::class, 'updateNote'])->name('venues.update-note');
 
     Route::resource('invitations', InvitationController::class)->only(['index', 'store', 'destroy']);
+
+    // E2E鍵管理API
+    Route::get('/api/e2e/keys', [\App\Http\Controllers\E2eKeyController::class, 'getKeys'])->name('api.e2e.keys');
+    Route::post('/api/e2e/keys', [\App\Http\Controllers\E2eKeyController::class, 'storeKeys'])->name('api.e2e.keys.store');
+    Route::put('/api/e2e/keys/rewrap', [\App\Http\Controllers\E2eKeyController::class, 'rewrapKeys'])->name('api.e2e.keys.rewrap');
+    Route::post('/api/e2e/verify-password', [\App\Http\Controllers\E2eKeyController::class, 'verifyPassword'])->name('api.e2e.verify-password');
+
+    // セキュリティ設定（2FA有効化・基準No.13）。Fortifyの2FA操作ルートと同じくpassword.confirm必須
+    Route::get('/settings/security', [\App\Http\Controllers\SecuritySettingsController::class, 'show'])
+        ->middleware('password.confirm')->name('settings.security');
+
+    // E2E移行専用画面（未移行がある場合に強制リダイレクトされる）
+    Route::get('/e2e/migrate', fn () => view('e2e.migrate'))->name('e2e.migrate-page');
+
+    // E2E移行対象の一覧（名義名とIDのみ・機微値は含まない）
+    Route::get('/api/e2e/migration-status', [\App\Http\Controllers\E2eKeyController::class, 'migrationStatus'])
+        ->name('api.e2e.migration-status');
+
+    // 暗号文取得・E2E移行API（password.confirm再認証 + レート制限）
+    Route::middleware('password.confirm')->group(function () {
+        Route::get('/api/e2e/ciphertext/{fcMembership}', [\App\Http\Controllers\E2eKeyController::class, 'getCiphertext'])
+            ->name('api.e2e.ciphertext');
+        Route::post('/api/e2e/migrate/{fcMembership}', [\App\Http\Controllers\E2eKeyController::class, 'migrate'])
+            ->name('api.e2e.migrate');
+    });
 
     // 会場サジェストAPI
     Route::get('/api/venues/suggest', [VenueController::class, 'suggest'])->name('api.venues.suggest');

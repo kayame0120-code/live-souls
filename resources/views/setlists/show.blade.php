@@ -75,9 +75,17 @@
         </form>
         @else
         <div id="spane-ai">
-            <form method="POST" action="{{ route('setlists.ai-parse', $tour) }}" id="setlist-ai-form">
+            <form method="POST" action="{{ route('setlists.ai-parse', $tour) }}" enctype="multipart/form-data" id="setlist-ai-form">
                 @csrf
-                <textarea class="f-input" name="text" rows="5" placeholder="セットリストのテキストを貼り付け" required>{{ old('text') }}</textarea>
+                <div style="border:2px dashed var(--color-keisen-strong);border-radius:12px;padding:16px;text-align:center;margin-bottom:8px;cursor:pointer;" onclick="document.getElementById('setlist-images').click()">
+                    <div style="font-size:12px;font-weight:600;">セトリ画像をドロップ / クリック</div>
+                    <div style="font-size:11px;color:var(--color-ink-sub);">jpeg/png/webp・最大5枚</div>
+                    <input type="file" name="images[]" accept="image/jpeg,image/png,image/webp" multiple style="display:none;" id="setlist-images">
+                </div>
+                <details>
+                    <summary style="font-size:12px;color:var(--color-ink-sub);cursor:pointer;">テキストで入力</summary>
+                    <textarea class="f-input" name="text" rows="5" placeholder="セットリストのテキストを貼り付け" style="margin-top:6px;">{{ old('text') }}</textarea>
+                </details>
                 <button type="submit" class="btn btn-primary" id="setlist-ai-btn" style="margin-top:8px;">AI解析する</button>
                 <div id="setlist-loading" style="display:none;text-align:center;padding:16px;">
                     <div style="font-size:13px;font-weight:600;">AI解析中...</div>
@@ -96,7 +104,7 @@
         @endif
     </div>
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     var stabAi = document.getElementById('stab-ai');
     var stabJson = document.getElementById('stab-json');

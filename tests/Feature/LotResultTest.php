@@ -62,7 +62,7 @@ class LotResultTest extends TestCase
 
     public function test_FCパスワード空送信で既存値が維持される(): void
     {
-        $this->membership->update(['password' => 'secret-fc-pass']);
+        $this->membership->update(['password' => 'e2e:test-cipher-secret-fc-pass']);
 
         $ig = IdolGroup::create(['name' => 'テスト']);
         $member = GroupMember::create([
@@ -77,6 +77,6 @@ class LotResultTest extends TestCase
             'fc_password' => '',
         ])->assertRedirect(route('identities.show', $this->membership));
 
-        $this->assertSame('secret-fc-pass', $this->membership->fresh()->password);
+        $this->assertSame('e2e:test-cipher-secret-fc-pass', $this->membership->fresh()->password);
     }
 }

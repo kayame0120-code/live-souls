@@ -1,5 +1,5 @@
 {{-- 座席3フィールド → seat_raw 自動合成（手動編集後は上書きしない / spec §5-8） --}}
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     const block = document.getElementById('seat_block');
     const row = document.getElementById('seat_row');

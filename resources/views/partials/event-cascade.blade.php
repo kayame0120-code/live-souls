@@ -26,7 +26,7 @@
     @error('event_id')<div class="form-error">{{ $message }}</div>@enderror
 </div>
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     const tourSel = document.getElementById('tour_select');
     const eventSel = document.getElementById('event_select');

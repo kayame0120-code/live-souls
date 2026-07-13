@@ -55,7 +55,8 @@ class PageRenderSmokeTest extends TestCase
         $venue = \App\Models\Venue::first();
 
         $this->get(route('identities.edit', $membership))->assertOk();
-        $this->get(route('identities.show', $membership))->assertOk();
+        $this->withSession(['auth.password_confirmed_at' => time()])
+            ->get(route('identities.show', $membership))->assertOk();
         $this->get(route('venues.show', $venue))->assertOk();
     }
 

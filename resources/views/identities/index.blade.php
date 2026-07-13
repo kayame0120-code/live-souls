@@ -1,4 +1,7 @@
 <x-app-layout :hide-fab="true">
+    {{-- 旧形式名義のE2E化バナー（JSが対象を検出したときのみ表示） --}}
+    <div data-e2e-migration-banner></div>
+
     @if($memberships->isEmpty() && $myGroups->isEmpty())
         <div class="empty-state">
             まだ名義がありません<br>
@@ -48,7 +51,8 @@
                     <div class="m-name">{{ $m->person->name }}@if($m->label)<small>{{ $m->label }}</small>@endif</div>
                 </div>
                 @if($m->member_no)
-                <div class="m-no">No. {{ $m->member_no }}</div>
+                {{-- E2E暗号化済みの会員番号は伏字（詳細画面の👁で復号表示） --}}
+                <div class="m-no">No. {{ $m->displayMemberNo() }}</div>
                 @endif
                 <div class="m-foot">
                     <span>
@@ -79,7 +83,7 @@
         @endif
     @endif
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     var btn = document.getElementById('toggle-add-group');
     var formWrap = document.getElementById('add-group-form');

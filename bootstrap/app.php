@@ -12,7 +12,16 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+        $middleware->append(\App\Http\Middleware\ContentSecurityPolicy::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\RequireE2eMigration::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->dontFlash([
+            'member_no',
+            'login_id',
+            'fc_password',
+            'password',
+            'password_confirmation',
+            'current_password',
+        ]);
     })->create();

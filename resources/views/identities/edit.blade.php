@@ -1,7 +1,7 @@
 <x-app-layout :hide-fab="true" :hide-nav="true">
     <a href="{{ route('identities.show', $fcMembership) }}" class="detail-back">‹ 編集をやめる</a>
 
-    <form method="POST" action="{{ route('identities.update', $fcMembership) }}">
+    <form method="POST" action="{{ route('identities.update', $fcMembership) }}" data-e2e-form>
         @csrf @method('PUT')
 
         {{-- 名義の基本 --}}
@@ -25,6 +25,7 @@
             <div class="f-field">
                 <label for="member_no">会員番号</label>
                 <input class="f-input" type="text" id="member_no" name="member_no" value="{{ old('member_no', $fcMembership->member_no) }}" placeholder="会員番号">
+                <input type="hidden" id="member_no_hint" name="member_no_hint" value="">
             </div>
             <div class="f-field">
                 <label for="fc_password">パスワード</label>
@@ -78,6 +79,12 @@
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary">保存する</button>
+        <noscript><div class="warn">この画面の利用にはJavaScriptが必要です。ブラウザの設定を確認してください。</div></noscript>
+        <button type="submit" class="btn btn-primary" id="e2e-submit-btn" disabled>保存する</button>
     </form>
+<script nonce="{{ $cspNonce ?? '' }}">
+document.addEventListener('DOMContentLoaded', function(){
+    if(window.e2eUi){ document.getElementById('e2e-submit-btn').disabled = false; }
+});
+</script>
 </x-app-layout>

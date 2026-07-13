@@ -13,7 +13,7 @@
            value="{{ old('venue_address') }}" placeholder="空欄可">
 </div>
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     const input = document.getElementById('venue_name');
     const hidden = document.getElementById('venue_id');

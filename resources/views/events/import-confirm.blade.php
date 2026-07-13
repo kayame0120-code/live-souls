@@ -11,6 +11,7 @@
 
     <form method="POST" action="{{ route('events.import.store') }}">
         @csrf
+        @if(request('idol_group_id'))<input type="hidden" name="idol_group_id" value="{{ request('idol_group_id') }}">@endif
 
         <div class="f-field">
             <label for="tour_name">ツアー名</label>
@@ -65,7 +66,7 @@
     </form>
     @endif
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
 document.addEventListener('DOMContentLoaded', function () {
     const input = document.getElementById('tour_name');
     const list = document.getElementById('tour-list');

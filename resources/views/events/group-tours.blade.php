@@ -1,0 +1,82 @@
+<x-app-layout :hide-fab="true" :hide-nav="true">
+    <a href="{{ route('events.index') }}" class="detail-back">‹ グループ一覧へ戻る</a>
+
+    <div class="venue-hero" style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+            <div class="vh-name">{{ $idolGroup?->name ?? '未分類' }}</div>
+            <div class="vh-sub">{{ $tours->count() }}ツアー</div>
+        </div>
+        <button type="button" id="edit-toggle" class="copy-btn" style="font-size:11px;padding:4px 10px;">編集</button>
+    </div>
+
+    <div class="ev-actions">
+        <a href="{{ route('events.import', $idolGroup ? ['idol_group_id' => $idolGroup->id] : []) }}" class="ev-import">一覧を貼って一括登録</a>
+    </div>
+
+    @php $allGroups = \App\Models\IdolGroup::orderBy('name')->get(); @endphp
+
+    <div class="sec-label">ツアー</div>
+    @forelse($tours as $tour)
+    <div class="d-block" style="margin-bottom:6px;padding:10px 14px;">
+        <a href="{{ route('tours.show', $tour) }}" style="text-decoration:none;color:inherit;display:block;">
+            <div style="font-size:14px;font-weight:600;">{{ $tour->name }}</div>
+            <div style="font-size:12px;color:var(--color-ink-sub);">
+                @if($tour->status_label === '開催中')
+                <span style="font-weight:700;color:#E65100;">開催中</span>
+                @elseif($tour->status_label === '終了')
+                <span style="font-weight:700;">終了</span>
+                @else
+                <span>{{ $tour->status_label }}</span>
+                @endif
+                ・ 全{{ $tour->events_count }}公演
+            </div>
+        </a>
+        <div class="tour-edit-controls" style="display:none;margin-top:8px;">
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                <form method="POST" action="{{ route('tours.update-group', $tour) }}" style="display:flex;gap:4px;align-items:center;flex:1;min-width:0;">
+                    @csrf
+                    <select name="idol_group_id" class="f-input" style="font-size:11px;padding:2px 6px;min-width:0;flex:1;">
+                        <option value="">未分類</option>
+                        @foreach($allGroups as $ig)
+                        <option value="{{ $ig->id }}" {{ $tour->idol_group_id == $ig->id ? 'selected' : '' }}>{{ $ig->name }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="copy-btn" style="font-size:10px;padding:2px 8px;white-space:nowrap;">移動</button>
+                </form>
+                @if($tour->events_count === 0)
+                <form method="POST" action="{{ route('tours.destroy', $tour) }}" style="display:inline;"
+                      data-confirm="「{{ $tour->name }}」を削除しますか？">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="copy-btn" style="font-size:10px;padding:2px 8px;color:#C7414F;white-space:nowrap;">削除</button>
+                </form>
+                @else
+                <span style="font-size:10px;color:var(--color-ink-sub);white-space:nowrap;">削除不可(日程あり)</span>
+                @endif
+            </div>
+        </div>
+    </div>
+    @empty
+    <div class="empty-state" style="padding:24px;">このグループにはまだツアーがありません</div>
+    @endforelse
+
+<script nonce="{{ $cspNonce ?? '' }}">
+document.addEventListener('DOMContentLoaded', function(){
+    var btn = document.getElementById('edit-toggle');
+    var editing = false;
+    if(btn){
+        btn.addEventListener('click', function(){
+            editing = !editing;
+            btn.textContent = editing ? '完了' : '編集';
+            document.querySelectorAll('.tour-edit-controls').forEach(function(el){
+                el.style.display = editing ? '' : 'none';
+            });
+        });
+    }
+    document.querySelectorAll('form[data-confirm]').forEach(function(form){
+        form.addEventListener('submit', function(e){
+            if(!confirm(form.dataset.confirm)) e.preventDefault();
+        });
+    });
+});
+</script>
+</x-app-layout>
