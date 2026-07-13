@@ -211,6 +211,24 @@ class PersonE2eTest extends TestCase
         $this->assertSame($e2ePhone, $raw->phone);
     }
 
+    public function test_fc全移行済みpersonsレガシーでmigration_statusが500にならない(): void
+    {
+        $group = IdolGroup::firstOrCreate(['name' => 'テスト']);
+        $membership = FcMembership::create([
+            'user_id' => $this->user->id,
+            'person_id' => $this->person->id,
+            'group_id' => $group->id,
+            'artist_name' => 'テスト',
+            'member_no' => 'e2e:migrated-no',
+            'login_id' => 'e2e:migrated-id',
+            'password' => 'e2e:migrated-pw',
+        ]);
+
+        $this->getJson(route('api.e2e.migration-status'))
+            ->assertOk()
+            ->assertJsonPath('pending.0.type', 'person');
+    }
+
     public function test_C_B7_nameとbirth_dateに差分がない(): void
     {
         $person = Person::withoutGlobalScopes()->find($this->person->id);

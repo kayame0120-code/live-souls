@@ -125,9 +125,7 @@ class E2eKeyController extends Controller
             ->map(fn ($p) => ['id' => $p->id, 'name' => $p->name, 'type' => 'person'])
             ->values();
 
-        $merged = $pending->merge($pendingPersons);
-
-        return response()->json(['pending' => $merged]);
+        return response()->json(['pending' => $pending->toBase()->merge($pendingPersons)]);
     }
 
     /**
