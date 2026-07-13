@@ -174,20 +174,23 @@ pg_restore はスキーマごとバックアップ時点に戻すため、マイ
 **旧イメージ稼働下で実行すること**（新コードのencryptedキャストが平文を読んでDecryptExceptionになるため）。
 
 ```bash
-# 1. 旧イメージに戻す（コードを先に旧版に切り替え）
+# 1. アプリを停止（リストア中のDB書込みを防ぐ）
+fly scale count 0 --app live-souls
+
+# 2. 旧イメージに戻す（コードを先に旧版に切り替え）
 fly releases
 fly deploy --image <1つ前のimage>
 
-# 2. §1のダンプをPostgres VMにアップロードしてリストア
+# 3. §1のダンプをPostgres VMにアップロードしてリストア
 fly sftp shell --app live-souls-db
 put backup_before_deployA.dump /tmp/backup_before_deployA.dump
 exit
 fly ssh console -C "sh -c 'pg_restore --clean --if-exists -d \"postgres://live_souls:****@live-souls-db.flycast:5432/live_souls?sslmode=disable\" /tmp/backup_before_deployA.dump'" --app live-souls-db
 
-# 3. 復元確認（平文の氏名が表示されること）
+# 4. 復元確認（平文の氏名が表示されること）
 fly ssh console -C "php /var/www/html/artisan tinker --execute=\"echo DB::table('persons')->first()->name;\"" --app live-souls
 
-# 4. 後片付け
+# 5. 後片付け
 fly ssh console -C "rm /tmp/backup_before_deployA.dump" --app live-souls-db
 ```
 
