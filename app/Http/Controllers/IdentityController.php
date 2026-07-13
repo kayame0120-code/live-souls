@@ -133,8 +133,8 @@ class IdentityController extends Controller
         $validated = $request->validate([
             'person_name' => ['required', 'string', 'max:255'],
             'birth_date' => ['nullable', 'date', 'before:today'],
-            'phone' => ['nullable', 'string', 'max:255'],
-            'address' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:255', 'starts_with:e2e:'],
+            'address' => ['nullable', 'string', 'max:500', 'starts_with:e2e:'],
             'label' => ['nullable', 'string', 'max:255'],
             'group_id' => ['required', 'exists:idol_groups,id'],
             'group_member_id' => ['required', 'exists:group_members,id'],

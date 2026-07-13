@@ -347,4 +347,42 @@ class SecurityTasksTest extends TestCase
             ->assertOk()
             ->assertSee('セキュリティ設定');
     }
+
+    public function test_secret未設定ユーザーは2FAチャレンジに出ない(): void
+    {
+        $email = $this->user->email;
+        \Auth::logout();
+
+        $this->post('/login', ['email' => $email, 'password' => 'secret-login-pw'])
+            ->assertRedirect('/');
+    }
+
+    public function test_secret有りconfirmed未完了ユーザーは2FAチャレンジに出ない(): void
+    {
+        $this->withSession(['auth.password_confirmed_at' => time()])
+            ->post(url('user/two-factor-authentication'));
+        $this->user->refresh();
+        $this->assertNotNull($this->user->two_factor_secret);
+        $this->assertNull($this->user->two_factor_confirmed_at);
+
+        $email = $this->user->email;
+        \Auth::logout();
+
+        $this->post('/login', ['email' => $email, 'password' => 'secret-login-pw'])
+            ->assertRedirect('/');
+    }
+
+    public function test_confirmed済みユーザーは2FAチャレンジに出る(): void
+    {
+        $this->withSession(['auth.password_confirmed_at' => time()])
+            ->post(url('user/two-factor-authentication'));
+        $this->user->refresh();
+        $this->user->forceFill(['two_factor_confirmed_at' => now()])->save();
+
+        $email = $this->user->email;
+        \Auth::logout();
+
+        $this->post('/login', ['email' => $email, 'password' => 'secret-login-pw'])
+            ->assertRedirect('/two-factor-challenge');
+    }
 }

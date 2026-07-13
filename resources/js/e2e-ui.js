@@ -270,7 +270,7 @@ export async function decryptValue(value) {
 
 // ---- フォーム統合 ----
 
-const E2E_FIELD_IDS = ['member_no', 'login_id', 'fc_password'];
+const E2E_FIELD_IDS = ['member_no', 'login_id', 'fc_password', 'phone', 'address'];
 
 function wireE2eForm(form) {
     let encrypted = false;
@@ -418,21 +418,33 @@ async function runMigration(banner, pending) {
         for (const item of pending) {
             status.textContent = `E2E化中… (${done + 1}/${pending.length}) ${item.name}`;
 
-            // 現在値を取得（レガシー行はサーバーが復号した平文が返る）
-            const values = await api('GET', `/api/e2e/ciphertext/${item.id}`);
-            const payload = {};
-            for (const field of ['member_no', 'login_id', 'password']) {
-                const v = values[field];
-                if (v && !v.startsWith(E2E_PREFIX)) {
-                    payload[field] = E2E_PREFIX + (await encrypt(v, mk));
-                    // 会員番号は下3桁を一覧表示ヒントとして別送
-                    if (field === 'member_no') {
-                        payload.member_no_hint = v.slice(-3);
+            if (item.type === 'person') {
+                const values = await api('GET', `/api/e2e/person-ciphertext/${item.id}`);
+                const payload = {};
+                for (const field of ['phone', 'address']) {
+                    const v = values[field];
+                    if (v && !v.startsWith(E2E_PREFIX)) {
+                        payload[field] = E2E_PREFIX + (await encrypt(v, mk));
                     }
                 }
-            }
-            if (Object.keys(payload).length > 0) {
-                await api('POST', `/api/e2e/migrate/${item.id}`, payload);
+                if (Object.keys(payload).length > 0) {
+                    await api('POST', `/api/e2e/person-migrate/${item.id}`, payload);
+                }
+            } else {
+                const values = await api('GET', `/api/e2e/ciphertext/${item.id}`);
+                const payload = {};
+                for (const field of ['member_no', 'login_id', 'password']) {
+                    const v = values[field];
+                    if (v && !v.startsWith(E2E_PREFIX)) {
+                        payload[field] = E2E_PREFIX + (await encrypt(v, mk));
+                        if (field === 'member_no') {
+                            payload.member_no_hint = v.slice(-3);
+                        }
+                    }
+                }
+                if (Object.keys(payload).length > 0) {
+                    await api('POST', `/api/e2e/migrate/${item.id}`, payload);
+                }
             }
             done++;
         }

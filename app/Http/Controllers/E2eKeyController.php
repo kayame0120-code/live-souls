@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\E2eAccessLog;
 use App\Models\E2eKey;
 use App\Models\FcMembership;
+use App\Models\Person;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -108,7 +109,25 @@ class E2eKeyController extends Controller
             ->map(fn ($m) => ['id' => $m->id, 'name' => $m->displayName()])
             ->values();
 
-        return response()->json(['pending' => $pending]);
+        $pendingPersons = Person::withoutGlobalScopes()
+            ->where('user_id', Auth::id())
+            ->get()
+            ->filter(function ($p) {
+                $raw = $p->getRawOriginal();
+                foreach (['phone', 'address'] as $field) {
+                    $value = $raw[$field] ?? null;
+                    if ($value !== null && $value !== '' && ! Person::isE2eValue($value)) {
+                        return true;
+                    }
+                }
+                return false;
+            })
+            ->map(fn ($p) => ['id' => $p->id, 'name' => $p->name, 'type' => 'person'])
+            ->values();
+
+        $merged = $pending->merge($pendingPersons);
+
+        return response()->json(['pending' => $merged]);
     }
 
     /**
@@ -171,6 +190,65 @@ class E2eKeyController extends Controller
                 'action' => 'migrate_to_e2e',
                 'ip_address' => request()->ip(),
             ]);
+        });
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function getPersonCiphertext(Person $person)
+    {
+        abort_unless($person->user_id === Auth::id(), 403);
+
+        $rateLimitKey = 'e2e-ciphertext:' . Auth::id();
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 30)) {
+            return response()->json(['error' => 'レート制限を超えました。しばらくしてから再度お試しください。'], 429);
+        }
+        RateLimiter::hit($rateLimitKey, 60);
+
+        return response()->json([
+            'phone' => $person->phone,
+            'address' => $person->address,
+        ]);
+    }
+
+    public function migratePerson(Request $request, Person $person)
+    {
+        abort_unless($person->user_id === Auth::id(), 403);
+
+        $validated = $request->validate([
+            'phone' => ['nullable', 'string', 'max:255', 'starts_with:' . Person::E2E_PREFIX],
+            'address' => ['nullable', 'string', 'max:500', 'starts_with:' . Person::E2E_PREFIX],
+        ], [
+            'phone.starts_with' => 'E2E暗号文のみ受け付けます',
+            'address.starts_with' => 'E2E暗号文のみ受け付けます',
+        ]);
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($person, $validated) {
+            $raw = $person->getRawOriginal();
+
+            $legacyFields = [];
+            foreach (['phone', 'address'] as $field) {
+                $v = $raw[$field] ?? null;
+                if ($v !== null && $v !== '' && ! Person::isE2eValue($v)) {
+                    $legacyFields[] = $field;
+                }
+            }
+
+            $missingE2e = array_filter($legacyFields, fn ($f) => empty($validated[$f]));
+            if (! empty($missingE2e)) {
+                abort(422, '移行対象の全フィールド(' . implode('/', $missingE2e) . ')にE2E暗号文を送ってください');
+            }
+
+            $update = [];
+            foreach (['phone', 'address'] as $field) {
+                if (! empty($validated[$field])) {
+                    $update[$field] = $validated[$field];
+                }
+            }
+
+            if (! empty($update)) {
+                $person->update($update);
+            }
         });
 
         return response()->json(['ok' => true]);
