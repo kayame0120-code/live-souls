@@ -88,14 +88,31 @@ class PersonE2eTest extends TestCase
         $this->assertSame($raw1->address, $raw2->address);
     }
 
-    public function test_C_B4_トランザクション内で部分更新が残らない(): void
+    public function test_C_B4_部分送信は422でDB値が移行前のまま残る(): void
     {
         $originalRaw = DB::table('persons')->where('id', $this->person->id)->first();
 
+        // phoneのみ送信（addressが未送信）→ 422で拒否
         $this->withSession(['auth.password_confirmed_at' => time()])
             ->postJson(route('api.e2e.person-migrate', $this->person), [
                 'phone' => 'e2e:only-phone',
             ])->assertStatus(422);
+
+        $afterRaw = DB::table('persons')->where('id', $this->person->id)->first();
+        $this->assertSame($originalRaw->phone, $afterRaw->phone);
+        $this->assertSame($originalRaw->address, $afterRaw->address);
+    }
+
+    public function test_C_B4b_バリデーション失敗時もDB値が壊れない(): void
+    {
+        $originalRaw = DB::table('persons')->where('id', $this->person->id)->first();
+
+        // 平文を含む送信 → 422
+        $this->withSession(['auth.password_confirmed_at' => time()])
+            ->postJson(route('api.e2e.person-migrate', $this->person), [
+                'phone' => 'plain-text',
+                'address' => 'e2e:valid',
+            ])->assertUnprocessable();
 
         $afterRaw = DB::table('persons')->where('id', $this->person->id)->first();
         $this->assertSame($originalRaw->phone, $afterRaw->phone);
@@ -129,6 +146,48 @@ class PersonE2eTest extends TestCase
                 'phone' => '090-plain-text',
                 'address' => 'e2e:valid',
             ])->assertUnprocessable();
+    }
+
+    public function test_C_B_address上限_日本語80文字級のE2E暗号文が保存できる(): void
+    {
+        $group = IdolGroup::firstOrCreate(['name' => 'テスト']);
+        FcMembership::create([
+            'user_id' => $this->user->id,
+            'person_id' => $this->person->id,
+            'group_id' => $group->id,
+            'artist_name' => 'テスト',
+        ]);
+
+        // 日本語80文字のE2E暗号文（実測380文字、max:500以内）
+        $sodium = sodium_crypto_secretbox_keygen();
+        $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+        $plain80 = str_repeat('あ', 80);
+        $e2eAddress = 'e2e:' . base64_encode($nonce . sodium_crypto_secretbox($plain80, $nonce, $sodium));
+        $this->assertGreaterThan(255, strlen($e2eAddress));
+        $this->assertLessThanOrEqual(500, strlen($e2eAddress));
+
+        $e2ePhone = 'e2e:' . base64_encode($nonce . sodium_crypto_secretbox('09012345678', $nonce, $sodium));
+
+        DB::table('persons')->where('id', $this->person->id)->update([
+            'phone' => 'e2e:migrated',
+            'address' => 'e2e:migrated',
+        ]);
+
+        $this->actingAs($this->user)
+            ->put(route('identities.update', FcMembership::first()), [
+                'person_name' => 'テスト太郎',
+                'group_id' => $group->id,
+                'group_member_id' => \App\Models\GroupMember::firstOrCreate([
+                    'idol_group_id' => $group->id, 'name' => 'テスト', 'color_name' => '赤',
+                    'color_hex' => '#FF0000', 'source_type' => '公式', 'sort_order' => 1,
+                ])->id,
+                'phone' => $e2ePhone,
+                'address' => $e2eAddress,
+            ])
+            ->assertRedirect();
+
+        $raw = DB::table('persons')->where('id', $this->person->id)->first();
+        $this->assertSame($e2eAddress, $raw->address);
     }
 
     public function test_C_B7_nameとbirth_dateに差分がない(): void
