@@ -19,12 +19,14 @@ v2.0-draft〜v2.5を本書で置き換える。**
 ---
 
 ## 0. 準拠するプロジェクト規約
-- 認証は **Fortify限定**(Breeze禁止)。登録は招待制。**Fortify標準の2要素認証(TOTP)を有効化する**(v2.5・セキュリティ正本による)。
+- 認証は **Fortify限定**(Breeze禁止)。登録は招待制。**Fortify標準の2要素認証(TOTP)を有効化する**(v2.5・セキュリティ正本による)。2FAは任意オプトインとする。実装条件として `Features::twoFactorAuthentication(['confirm' => true, 'confirmPassword' => true])` を必須とする（`[確定]`・変更禁止）。`confirm => true` が無い場合、有効化ボタン押下（secret生成）の時点で2FAが有効扱いとなり、認証アプリでの確認未完了ユーザーが次回ログインでロックアウトされる（2026-07-13実証・修正済み）。チャレンジ対象は `two_factor_confirmed_at` 非NULLのユーザーのみ。
 - DBは **PostgreSQL** / デプロイ **Fly.io(nrt)**。
 - **機密情報の保護は2階層**(v2.5で改訂。旧「`encrypted`キャストで暗号化保存」を置き換え):
-  - **E2E(クライアントサイド暗号化)**: `fc_memberships.member_no` / `login_id` / `password`。
-    サーバー・管理者・DBからは復号不可。鍵階層はエンベロープ方式。詳細はセキュリティ正本
-  - **標準暗号化(`encrypted`キャスト・APP_KEY方式)**: `persons.email` / `phone` / `address` / `birth_date`。従来どおり
+  - **E2E(クライアントサイド暗号化)**: `fc_memberships.member_no` / `login_id` / `password` ＋ `persons.phone` / `address`（`[確定]`）。サーバー・管理者・DBからは復号不可。鍵階層はエンベロープ方式。詳細はセキュリティ正本。`persons.name` / `birth_date` はサーバー側`encrypted`維持（E2E化しない・デプロイA確定）
+  - `Person`の`phone`/`address`は`encrypted`キャストを持たず、`readProtectedField`型アクセサで読む（`e2e:`素通し／`eyJ`はCrypt復号／それ以外素通し）。キャスト除去とアクセサ追加は不可分（`[確定]`）
+  - 平文拒否（`[確定]`）: 編集・移行の両経路とも「空 or `e2e:`先頭」のみ受理。上限は`phone` max:255／`address` max:500（日本語80文字級住所のE2E暗号文=380文字の実測根拠による。両経路で同値必須）
+  - 移行: `RequireE2eMigration`の対象に`persons.phone`/`address`を含む。除外ルートに`password.confirmation`（Fortifyパスワード確認status API）を含める（`[確定]`・2026-07-13のループ障害の再発防止）。既存リカバリキー保有者への移行では新キーを発行しない
+  - **標準暗号化(`encrypted`キャスト・APP_KEY方式)**: `persons.name` / `birth_date` / `persons.email`。APP_KEY漏洩時に読めるのは氏名・誕生日・users.email。住所・電話・FC情報は読めない。名前×住所×電話のセットは崩れている
 - **マルチテナント**(全テーブル `user_id` スコープ・他人のデータは403)。ただし `attendance_photos` は例外(規約0-6の例外②、閲覧はメンバー間共有・書込削除は投稿者のみPolicy)。
 - 状態は **ENUM禁止**、`string` + バリデーションで表現。
 - 申込/当選履歴・当選率は **pivot(attendance_identity)から集計**。手入力させない。
@@ -333,6 +335,7 @@ main
 - ブランチ名・Git運用・CI/CDの具体手順は本書(アプリ仕様)の対象外。CC向けの作業指示(`cc_instructions`)側で定める(プロジェクトのカスタム指示による層分けを踏襲)。
 
 ## 変更履歴
+- v2.7 (2026-07-13): デプロイA/B反映。persons.name/birth_dateサーバー側暗号化(A)、persons.phone/address E2E化(B)、2FA confirm必須化、RequireE2eMigration除外ルート追加、残存リスクの明示化
 - v2.6 (2026-07-12): AI一括登録の入力実態とLLMアーキテクチャの実測を反映。
   - **入力方式を「画像主・テキスト従」(C')へ改訂**：公演スケジュール・セトリはスクショ/X画像
     (メモ帳スクショ)で流通するのが大半という運用実態による。画像は1回最大5枚・jpeg/png/webp・
