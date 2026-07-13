@@ -61,7 +61,7 @@
             </div>
             <div class="f-field" style="margin-bottom:0;">
                 <label for="birth_date">誕生日</label>
-                <input class="f-input" type="date" id="birth_date" name="birth_date" value="{{ old('birth_date', optional($fcMembership->person->birth_date)->format('Y-m-d')) }}">
+                <input class="f-input" type="date" id="birth_date" name="birth_date" value="{{ old('birth_date', $fcMembership->person->birth_date ? \Carbon\Carbon::parse($fcMembership->person->birth_date)->format('Y-m-d') : '') }}">
                 <div class="f-hint">年齢は誕生日から自動計算されます。</div>
             </div>
         </div>

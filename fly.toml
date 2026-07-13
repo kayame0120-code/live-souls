@@ -6,6 +6,9 @@ app = 'live-souls'
 primary_region = 'nrt'
 console_command = 'php /var/www/html/artisan tinker'
 
+[deploy]
+  release_command = 'php /var/www/html/artisan migrate --force'
+
 [build]
   [build.args]
     NODE_VERSION = '18'

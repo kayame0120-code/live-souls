@@ -1,34 +1,49 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(php -v)",
-      "Bash(php artisan *)",
-      "Bash(composer install*)",
-      "Bash(composer require *)",
-      "Bash(composer update *)",
-      "Bash(composer show *)",
-      "Bash(git status*)",
-      "Bash(git log*)",
-      "Bash(git diff*)",
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(git switch *)",
-      "Bash(git check-ignore *)",
-      "Bash(curl -s http://127.0.0.1:*)",
-      "Bash(echo *)",
-      "Bash(kill *)",
-      "Bash(mkdir -p docs)",
-      "Read(//tmp/**)"
-    ],
-    "deny": [
-      "Bash(git push*)",
-      "Bash(fly *)",
-      "Bash(flyctl *)",
-      "Bash(php artisan migrate:fresh*)",
-      "Edit(.env)",
-      "Edit(.env.*)",
-      "Write(.env)",
-      "Write(.env.*)"
-    ]
-  }
+    "permissions": {
+        "allow": [
+            "Bash(php -v)",
+            "Bash(php artisan *)",
+            "Bash(composer install*)",
+            "Bash(composer require *)",
+            "Bash(composer update *)",
+            "Bash(composer show *)",
+            "Bash(git status*)",
+            "Bash(git log*)",
+            "Bash(git diff*)",
+            "Bash(git add *)",
+            "Bash(git commit *)",
+            "Bash(git switch *)",
+            "Bash(git check-ignore *)",
+            "Bash(curl -s http://127.0.0.1:*)",
+            "Bash(echo *)",
+            "Bash(kill *)",
+            "Bash(mkdir -p docs)",
+            "Read(//tmp/**)"
+        ],
+        "deny": [
+            "Bash(git push*)",
+            "Bash(gh pr merge*)",
+            "Bash(fly deploy*)",
+            "Bash(flyctl deploy*)",
+            "Bash(fly secrets *)",
+            "Bash(flyctl secrets *)",
+            "Bash(fly scale *)",
+            "Bash(flyctl scale *)",
+            "Bash(fly apps destroy*)",
+            "Bash(flyctl apps destroy*)",
+            "Bash(fly machine *)",
+            "Bash(flyctl machine *)",
+            "Bash(fly ips *)",
+            "Bash(flyctl ips *)",
+            "Bash(fly pg *)",
+            "Bash(fly postgres *)",
+            "Bash(flyctl pg *)",
+            "Bash(flyctl postgres *)",
+            "Bash(php artisan migrate:fresh*)",
+            "Edit(.env)",
+            "Edit(.env.*)",
+            "Write(.env)",
+            "Write(.env.*)"
+        ]
+    }
 }

@@ -25,7 +25,8 @@ class Person extends Model
     protected function casts(): array
     {
         return [
-            'birth_date' => 'date',
+            'name' => 'encrypted',
+            'birth_date' => 'encrypted',
             'phone' => 'encrypted',
             'address' => 'encrypted',
         ];
@@ -47,6 +48,6 @@ class Person extends Model
             return null;
         }
 
-        return $this->birth_date->age;
+        return \Carbon\Carbon::parse($this->birth_date)->age;
     }
 }

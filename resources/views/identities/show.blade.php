@@ -88,7 +88,7 @@
         <div class="d-row" style="border-bottom:none;">
             <span class="k">誕生日</span>
             <span class="v mono">
-                {{ $fcMembership->person->birth_date->format('Y.m.d') }}
+                {{ \Carbon\Carbon::parse($fcMembership->person->birth_date)->format('Y.m.d') }}
                 @if($fcMembership->person->age() !== null)<span style="color:var(--color-ink-sub);font-weight:400;">（{{ $fcMembership->person->age() }}歳）</span>@endif
             </span>
         </div>

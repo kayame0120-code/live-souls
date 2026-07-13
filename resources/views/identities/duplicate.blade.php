@@ -11,7 +11,7 @@
         <div class="d-h">個人情報（引き継ぎ）</div>
         <div class="d-row"><span class="k">氏名</span><span class="v">{{ $fcMembership->person->name }}</span></div>
         @if($fcMembership->person->birth_date)
-        <div class="d-row"><span class="k">誕生日</span><span class="v mono">{{ $fcMembership->person->birth_date->format('Y.m.d') }}</span></div>
+        <div class="d-row"><span class="k">誕生日</span><span class="v mono">{{ \Carbon\Carbon::parse($fcMembership->person->birth_date)->format('Y.m.d') }}</span></div>
         @endif
         @if($fcMembership->person->phone)
         <div class="d-row"><span class="k">電話番号</span><span class="v">••••••••</span></div>
