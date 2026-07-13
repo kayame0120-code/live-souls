@@ -126,6 +126,10 @@ Route::middleware('auth')->group(function () {
             ->name('api.e2e.ciphertext');
         Route::post('/api/e2e/migrate/{fcMembership}', [\App\Http\Controllers\E2eKeyController::class, 'migrate'])
             ->name('api.e2e.migrate');
+        Route::get('/api/e2e/person-ciphertext/{person}', [\App\Http\Controllers\E2eKeyController::class, 'getPersonCiphertext'])
+            ->name('api.e2e.person-ciphertext');
+        Route::post('/api/e2e/person-migrate/{person}', [\App\Http\Controllers\E2eKeyController::class, 'migratePerson'])
+            ->name('api.e2e.person-migrate');
     });
 
     // 会場サジェストAPI

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\FcMembership;
+use App\Models\Person;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -51,6 +52,18 @@ class RequireE2eMigration
             ->exists();
 
         if ($hasLegacy) {
+            return redirect()->route('e2e.migrate-page');
+        }
+
+        $hasLegacyPerson = Person::withoutGlobalScopes()
+            ->where('user_id', $userId)
+            ->where(function ($q) {
+                $q->where(function ($q) { $q->whereNotNull('phone')->where('phone', 'NOT LIKE', 'e2e:%')->where('phone', '!=', ''); })
+                  ->orWhere(function ($q) { $q->whereNotNull('address')->where('address', 'NOT LIKE', 'e2e:%')->where('address', '!=', ''); });
+            })
+            ->exists();
+
+        if ($hasLegacyPerson) {
             return redirect()->route('e2e.migrate-page');
         }
 

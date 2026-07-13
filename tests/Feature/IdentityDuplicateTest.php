@@ -40,7 +40,7 @@ class IdentityDuplicateTest extends TestCase
 
         $person = Person::create([
             'user_id' => $this->user->id, 'name' => '田中太郎',
-            'birth_date' => '1990-01-15', 'phone' => '090-1234-5678', 'address' => '東京都渋谷区',
+            'birth_date' => '1990-01-15', 'phone' => 'e2e:test-phone', 'address' => 'e2e:test-address',
         ]);
         $this->source = FcMembership::create([
             'user_id' => $this->user->id, 'person_id' => $person->id, 'group_id' => $this->igSnowMan->id,
