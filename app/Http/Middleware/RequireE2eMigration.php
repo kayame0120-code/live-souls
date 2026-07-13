@@ -21,6 +21,7 @@ class RequireE2eMigration
         'api.e2e.*',
         'password.confirm',
         'password.confirm.store',
+        'password.confirmation',
     ];
 
     public function handle(Request $request, Closure $next)
