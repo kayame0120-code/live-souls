@@ -190,6 +190,27 @@ class PersonE2eTest extends TestCase
         $this->assertSame($e2eAddress, $raw->address);
     }
 
+    public function test_C_B_migrate経路で日本語80文字級住所のE2E暗号文が通る(): void
+    {
+        $sodium = sodium_crypto_secretbox_keygen();
+        $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+        $plain80 = str_repeat('あ', 80);
+        $e2eAddress = 'e2e:' . base64_encode($nonce . sodium_crypto_secretbox($plain80, $nonce, $sodium));
+        $this->assertGreaterThan(255, strlen($e2eAddress));
+
+        $e2ePhone = 'e2e:' . base64_encode($nonce . sodium_crypto_secretbox('09012345678', $nonce, $sodium));
+
+        $this->withSession(['auth.password_confirmed_at' => time()])
+            ->postJson(route('api.e2e.person-migrate', $this->person), [
+                'phone' => $e2ePhone,
+                'address' => $e2eAddress,
+            ])->assertOk();
+
+        $raw = DB::table('persons')->where('id', $this->person->id)->first();
+        $this->assertSame($e2eAddress, $raw->address);
+        $this->assertSame($e2ePhone, $raw->phone);
+    }
+
     public function test_C_B7_nameとbirth_dateに差分がない(): void
     {
         $person = Person::withoutGlobalScopes()->find($this->person->id);

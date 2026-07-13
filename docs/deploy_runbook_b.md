@@ -6,7 +6,7 @@
 
 - V1: 45マイグレーション全DONE（DBスキーマ変更なし。release_commandは空振りで正常終了）
 - V2: `/up` → `200`
-- V3: `Tests: 181 passed (494 assertions)`
+- V3: `Tests: 184 passed (504 assertions)`
 - V4: レガシーencrypted値のE2E移行→冪等性確認済み
 
 ## 1. バックアップ取得＋サイズ確認
@@ -81,7 +81,7 @@ curl -s -o /dev/null -w "%{http_code}\n" https://live-souls.fly.dev/up
 
 ```bash
 set +H
-fly ssh console --app live-souls -C 'php /var/www/html/artisan tinker --execute="echo json_encode(DB::select(\"SELECT id, email, two_factor_secret IS NOT NULL AS has_secret, two_factor_confirmed_at FROM users WHERE two_factor_secret IS NOT NULL AND two_factor_confirmed_at IS NULL\"));"'
+fly ssh console --app live-souls -C 'php /var/www/html/artisan tinker --execute="echo json_encode(DB::select(\"SELECT id, two_factor_secret IS NOT NULL AS has_secret FROM users WHERE two_factor_secret IS NOT NULL AND two_factor_confirmed_at IS NULL\"));"'
 ```
 
 → `[]`（空配列）であること。該当行があれば以下で応急リセット:
@@ -103,8 +103,7 @@ fly ssh console --app live-souls -C 'php /var/www/html/artisan tinker --execute=
 ### 4-4. 検証SQL（レガシー値が0件であること）
 
 ```bash
-set +H
-fly ssh console --app live-souls -C 'php /var/www/html/artisan tinker --execute="echo json_encode(DB::select(\"SELECT COUNT(*) as cnt FROM persons WHERE (phone IS NOT NULL AND phone != '\\'''\\'' AND phone NOT LIKE '\\''e2e:%'\\'') OR (address IS NOT NULL AND address != '\\'''\\'' AND address NOT LIKE '\\''e2e:%'\\'')\"));"'
+fly ssh console --app live-souls -C 'php /var/www/html/artisan tinker --execute="echo json_encode(DB::select(\"SELECT COUNT(*) as cnt FROM persons WHERE (phone IS NOT NULL AND phone != '''' AND phone NOT LIKE ''e2e:%'') OR (address IS NOT NULL AND address != '''' AND address NOT LIKE ''e2e:%'')\"));"'
 ```
 
 → `[{"cnt":0}]`
@@ -117,25 +116,34 @@ fly ssh console --app live-souls -C 'php /var/www/html/artisan tinker --execute=
 
 ### 主経路: pg_restore（§1のバックアップから復元）
 
-pg_restoreはスキーマごとバックアップ時点に戻す。旧イメージ稼働下で実行すること。
+pg_restoreはスキーマごとバックアップ時点に戻す。
 
 ```bash
 # 1. アプリを停止（リストア中のDB書込みを防ぐ）
 fly scale count 0 --app live-souls --yes
 
-# 2. 旧イメージに戻す
-fly releases
-fly deploy --image <1つ前のimage>
-
-# 3. ダンプをPostgres VMにアップロードしてリストア（<パスワード>を置換）
+# 2. ダンプをPostgres VMにアップロードしてリストア（<パスワード>を§1で取得した値に置換）
 fly sftp shell --app live-souls-db
 put backup_before_deployB.dump /tmp/backup_before_deployB.dump
 exit
 fly ssh console -C "sh -c 'pg_restore --clean --if-exists -d \"postgres://live_souls:<パスワード>@live-souls-db.flycast:5432/live_souls?sslmode=disable\" /tmp/backup_before_deployB.dump'" --app live-souls-db
 
-# 4. 復元確認
-fly ssh console -C "php /var/www/html/artisan tinker --execute=\"echo DB::table('persons')->first()->name;\"" --app live-souls
+# 3. 旧イメージでデプロイ（アプリ起動はここで行われる）
+fly releases
+fly deploy --image <1つ前のimage>
 
+# 4. 復元確認（旧コードはencryptedキャストのため、DB::tableでeyJ始まりの暗号文が表示されるのが正常）
+fly ssh console -C "php /var/www/html/artisan tinker --execute=\"\\\$r = DB::table('persons')->first(); echo 'name=' . substr(\\\$r->name, 0, 10) . ' phone=' . substr(\\\$r->phone, 0, 10);\"" --app live-souls
+```
+
+→ `name=eyJpdiI6Il phone=eyJpdiI6Il` のように `eyJ` で始まる暗号文が表示されれば正常（旧コードの `encrypted` キャストによるAPP_KEY暗号化値がそのまま出力される）。平文が出た場合はリストアに問題がある。
+
+```bash
 # 5. 後片付け
 fly ssh console -C "rm /tmp/backup_before_deployB.dump" --app live-souls-db
 ```
+
+実行順の理由:
+- `scale count 0` でアプリを停止 → pg_restoreでDBを復元 → 旧イメージdeployでアプリ起動
+- この順序により、restore中にアプリがDBに書き込む穴がない
+- `fly deploy --image` は `scale count 0` 後でもマシンを再作成して起動する

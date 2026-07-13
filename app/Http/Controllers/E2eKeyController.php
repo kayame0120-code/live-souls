@@ -216,8 +216,8 @@ class E2eKeyController extends Controller
         abort_unless($person->user_id === Auth::id(), 403);
 
         $validated = $request->validate([
-            'phone' => ['nullable', 'string', 'starts_with:' . Person::E2E_PREFIX],
-            'address' => ['nullable', 'string', 'starts_with:' . Person::E2E_PREFIX],
+            'phone' => ['nullable', 'string', 'max:255', 'starts_with:' . Person::E2E_PREFIX],
+            'address' => ['nullable', 'string', 'max:500', 'starts_with:' . Person::E2E_PREFIX],
         ], [
             'phone.starts_with' => 'E2E暗号文のみ受け付けます',
             'address.starts_with' => 'E2E暗号文のみ受け付けます',
