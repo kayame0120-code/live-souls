@@ -450,7 +450,13 @@ async function runMigration(banner, pending) {
         }
 
         status.textContent = `完了: ${done}件の名義をE2E暗号化しました`;
-        setTimeout(() => window.location.reload(), 1200);
+        const completeEl = document.getElementById('migration-complete');
+        if (completeEl) {
+            completeEl.style.display = '';
+            setTimeout(() => { window.location.href = '/'; }, 2000);
+        } else {
+            setTimeout(() => window.location.reload(), 1200);
+        }
     } catch (e) {
         status.textContent = e.message === 'キャンセルされました'
             ? 'キャンセルしました'
@@ -464,7 +470,13 @@ async function initMigrationBanner() {
 
     try {
         const { pending } = await api('GET', '/api/e2e/migration-status');
-        if (!pending || pending.length === 0) return;
+        if (!pending || pending.length === 0) {
+            const completeEl = document.getElementById('migration-complete');
+            if (completeEl) {
+                completeEl.style.display = '';
+            }
+            return;
+        }
 
         const banner = el('div',
             'background:#FFF3E0;border:1px solid #FFB74D;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;line-height:1.7;');
