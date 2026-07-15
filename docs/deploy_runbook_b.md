@@ -15,7 +15,7 @@ pg_dumpはアプリイメージに存在しない。Postgres VM（`live-souls-db
 
 ```bash
 # アプリVMからDATABASE_URLを取得（パスワード確認用）
-fly ssh console -C "sh -c 'echo \$DATABASE_URL'" --app live-souls
+fly ssh console -C 'sh -c "echo \$DATABASE_URL"' --app live-souls
 ```
 
 → `postgres://live_souls:<パスワード>@live-souls-db.flycast:5432/live_souls?sslmode=disable` が出る。`<パスワード>` を以下のコマンドに使う。
@@ -100,13 +100,13 @@ fly ssh console --app live-souls -C 'php /var/www/html/artisan tinker --execute=
 6. 名義詳細で住所・電話番号の👁ボタン → 復号された値が表示されること
 7. 名義詳細でコピーボタン → 正しい値がコピーされること
 
-### 4-4. 検証SQL（レガシー値が0件であること）
+### 4-4. 検証SQL（実行者自身のレガシー値が残っていないこと）
 
 ```bash
-fly ssh console --app live-souls -C 'php /var/www/html/artisan tinker --execute="echo json_encode(DB::select(\"SELECT COUNT(*) as cnt FROM persons WHERE (phone IS NOT NULL AND phone != '''' AND phone NOT LIKE ''e2e:%'') OR (address IS NOT NULL AND address != '''' AND address NOT LIKE ''e2e:%'')\"));"'
+fly ssh console --app live-souls -C 'php /var/www/html/artisan tinker --execute="echo json_encode(DB::select(\"SELECT user_id, COUNT(*) as cnt FROM persons WHERE (phone IS NOT NULL AND phone != '''' AND phone NOT LIKE ''e2e:%'') OR (address IS NOT NULL AND address != '''' AND address NOT LIKE ''e2e:%'') GROUP BY user_id\"));"'
 ```
 
-→ `[{"cnt":0}]`
+→ **実行者自身のuser_idの行が出力に存在しないこと**が合格。他ユーザーの行が残っているのは正常（各自のログイン時に移行される）。出力が `[]` なら全ユーザー移行済み。
 
 ### 4-5. 友人に開放
 
